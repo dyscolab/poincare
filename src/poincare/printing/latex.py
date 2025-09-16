@@ -47,13 +47,12 @@ class ToLatex:
             norm = Normalizer(self.normalize_name)
 
             def normalize(eq):
-                return substitute(eq, norm)
+                return str(substitute(eq, norm))
 
         for der, eq in self.equations.func.items():
             d = latex_derivative(self.normalize_name(der.variable), der.order)
             eq = normalize(eq)
             yield d, eq
-
 
 class Normalizer(dict):
     def __init__(self, func):
@@ -86,3 +85,6 @@ def latex_derivative(name: str, order: int, with_respect_to: str = "t") -> str:
     if order == 1:
         return f"\\frac{{d{name}}}{{d{with_respect_to}}}"
     return f"\\frac{{d^{order}{name}}}{{d{with_respect_to}^{order}}}"
+
+def latex_equations(model: System) -> str:
+    return as_aligned_lines(ToLatex(model).yield_equations(), align_char= "=")
