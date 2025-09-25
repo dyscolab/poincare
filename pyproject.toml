@@ -39,9 +39,9 @@ dependencies = [
 interactive = ["ipywidgets"]
 
 [project.urls]
-Homepage = "https://github.com/maurosilber/poincare"
-Issues = "https://github.com/maurosilber/poincare/issues"
-Documentation = "https://maurosilber.github.io/poincare"
+Homepage = "https://github.com/dyscolab/poincare"
+Issues = "https://github.com/dyscolab/poincare/issues"
+Documentation = "https://dyscolab.github.io/poincare"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
@@ -113,6 +113,7 @@ matplotlib = "*"
 jax = "*"
 numba = "*"
 ipywidgets = "*"
+ipykernel = "*"
 
 [tool.pixi.feature.numbalsoda.dependencies]
 numbalsoda = "*"

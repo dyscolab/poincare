@@ -2,8 +2,8 @@
 ![Package](https://img.shields.io/pypi/v/poincare?label=PyPI)
 ![Conda Version](https://img.shields.io/conda/vn/conda-forge/poincare)
 ![License](https://img.shields.io/pypi/l/poincare?label=license)
-[![CI](https://github.com/maurosilber/poincare/actions/workflows/ci.yml/badge.svg)](https://github.com/maurosilber/poincare/actions/workflows/ci.yml)
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/maurosilber/poincare/main.svg)](https://results.pre-commit.ci/latest/github/maurosilber/poincare/main)
+[![CI](https://github.com/dyscolab/poincare/actions/workflows/ci.yml/badge.svg)](https://github.com/dyscolab/poincare/actions/workflows/ci.yml)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/dyscolab/poincare/main.svg)](https://results.pre-commit.ci/latest/github/dyscolab/poincare/main)
 
 # Poincaré: simulation of dynamical systems
 
@@ -118,7 +118,7 @@ time
 
 Besides variables,
 we can define parameters and constants,
-and use functions from [symbolite](https://github.com/hgrecco/symbolite).
+and use functions from [symbolite](https://github.com/dyscolab/symbolite).
 
 #### Constants
 
@@ -264,7 +264,7 @@ This project is managed by [pixi](https://pixi.sh).
 You can install it for development using:
 
 ```sh
-git clone https://github.com/maurosilber/poincare
+git clone https://github.com/dyscolab/poincare
 cd poincare
 pixi run pre-commit-install  # install pre-commit hooks
 ```
