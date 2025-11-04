@@ -50,9 +50,6 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "vcs"
 
-[tool.uv]
-cache-keys = [{ file = "pyproject.toml" }, { git = true }]
-
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
 pythonpath = "."
@@ -63,16 +60,16 @@ docstring-code-format = true
 [tool.ruff.lint]
 extend-select = ["I"]
 
-[tool.pixi.project]
-channels = ["https://fast.prefix.dev/conda-forge"]
-platforms = ["osx-arm64", "linux-64"]
+[tool.pixi.workspace]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["linux-64", "osx-arm64", "win-64"]
 
 [tool.pixi.environments]
+default = ["test", "py310"]
 lint = { features = ["lint"], no-default-feature = true }
 build = { features = ["build"], no-default-feature = true }
-test = { features = ["test", "numbalsoda"], solve-group = "default" }
 test-py310 = ["test", "py310", "numbalsoda"]
-test-py311 = ["test", "py311", "numbalsoda"]
+test-py311 = ["test", "py311"]
 test-py312 = ["test", "py312"]
 test-py313 = ["test", "py313"]
 
@@ -110,13 +107,10 @@ publish = "uv publish"
 pytest = "*"
 cloudpickle = "<3.1.0"
 matplotlib = "*"
-jax = "*"
+# jax = "*"
 numba = "*"
 ipywidgets = "*"
 ipykernel = "*"
-
-[tool.pixi.feature.numbalsoda.dependencies]
-numbalsoda = "*"
 
 [tool.pixi.feature.test.pypi-dependencies]
 poincare = { path = ".", editable = true }
@@ -124,14 +118,9 @@ poincare = { path = ".", editable = true }
 [tool.pixi.feature.test.tasks]
 test = "pytest --doctest-modules"
 
-[tool.pixi.feature.py310.dependencies]
-python = "3.10.*"
-
-[tool.pixi.feature.py311.dependencies]
-python = "3.11.*"
-
-[tool.pixi.feature.py312.dependencies]
-python = "3.12.*"
-
-[tool.pixi.feature.py313.dependencies]
-python = "3.13.*"
+[tool.pixi.feature]
+py310.dependencies = { python = "3.10.*" }
+py311.dependencies = { python = "3.11.*" }
+py312.dependencies = { python = "3.12.*" }
+py313.dependencies = { python = "3.13.*" }
+numbalsoda.dependencies = { numbalsoda = "*" }
