@@ -6,15 +6,11 @@ authors = [
   { name = "Hernán E. Grecco", email = "hernan.grecco@gmail.com" },
   { name = "Mauro Silberberg", email = "maurosilber@gmail.com" },
 ]
-readme = { file = "README.md", content-type = "text/markdown" }
-license = { text = "MIT" }
+readme = "README.md"
+license = "MIT"
 classifiers = [
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
   "Operating System :: OS Independent",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
@@ -22,7 +18,7 @@ classifiers = [
   "Topic :: Software Development :: Libraries",
 ]
 keywords = ["dynamical systems", "differential equations", "ODE"]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
   "numpy",
   "pandas",
@@ -65,11 +61,9 @@ channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64", "osx-arm64", "win-64"]
 
 [tool.pixi.environments]
-default = ["test", "py310"]
+default = ["test", "py312"]
 lint = { features = ["lint"], no-default-feature = true }
 build = { features = ["build"], no-default-feature = true }
-test-py310 = ["test", "py310", "numbalsoda"]
-test-py311 = ["test", "py311"]
 test-py312 = ["test", "py312"]
 test-py313 = ["test", "py313"]
 
@@ -119,8 +113,5 @@ poincare = { path = ".", editable = true }
 test = "pytest --doctest-modules"
 
 [tool.pixi.feature]
-py310.dependencies = { python = "3.10.*" }
-py311.dependencies = { python = "3.11.*" }
 py312.dependencies = { python = "3.12.*" }
 py313.dependencies = { python = "3.13.*" }
-numbalsoda.dependencies = { numbalsoda = "*" }
