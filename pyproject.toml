@@ -107,6 +107,7 @@ matplotlib = "*"
 numba = "*"
 ipywidgets = "*"
 ipykernel = "*"
+sympy = "*"
 
 [tool.pixi.feature.test.pypi-dependencies]
 poincare = { path = ".", editable = true }

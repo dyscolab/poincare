@@ -35,6 +35,12 @@ class DampedOscillator(System):
 
 def test_model_report():
     output = model_report(DampedOscillator)
+    assert "damp_{rate}" in output
+
 
 def test_model_report_transform():
-
+    output = model_report(
+        DampedOscillator, transform={DampedOscillator.damp_rate: "\\gamma"}
+    )
+    assert "\\gamma" in output
+    assert "damp_rate" not in output

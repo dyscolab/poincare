@@ -38,7 +38,7 @@ class ToLatex:
 
     def yield_variables(
         self, descriptions: dict[Symbol, str] | None = None
-    ) -> Iterator[tuple[Latex, Latex, Latex]]:
+    ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex, Latex, Latex]]:
         for x in self.equations.variables:
             name = normalize_eq(x, transform=self.transform)
             if descriptions != None:
@@ -79,7 +79,7 @@ class ToLatex:
 
     def yield_parameters(
         self, descriptions: dict | None = None
-    ) -> Iterator[tuple[Latex, Latex]]:
+    ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex]]:
         if descriptions != None:
             for x in self.equations.parameters:
                 yield (
@@ -90,7 +90,7 @@ class ToLatex:
 
         else:
             for x in self.equations.parameters:
-                yield self.normalize_name(x), str(x.default)
+                yield normalize_eq(x, transform=self.transform), str(x.default)
 
     def yield_equations(self) -> Iterator[tuple[Latex, Latex]]:
         for der, eq in self.equations.func.items():
@@ -111,14 +111,14 @@ class Normalizer(dict):
         return key
 
 
-def normalize(expr, transform: dict[Symbol]):
+def normalize(expr, transform: dict[Symbol, str]) -> Latex:
     if isinstance(expr, Symbol):
         return normalize_eq(expr, transform)
     else:
         return str(expr)
 
 
-def normalize_eq(eq, transform):
+def normalize_eq(eq, transform) -> Latex:
     from poincare import Parameter, Constant, Variable, Independent, Derivative
     from symbolite import Scalar
 
@@ -165,7 +165,7 @@ def latex_derivative(name: str, order: int, with_respect_to: str = "t") -> Latex
     return f"\\frac{{d^{order}{name}}}{{d{with_respect_to}^{order}}}"
 
 
-def latex_equations(model: System, transform: dict | None = None) -> Latex:
+def latex_equations(model: type[System], transform: dict | None = None) -> Latex:
     transform = transform if transform is not None else {}
     return as_aligned_lines(
         ToLatex(model, transform=transform).yield_equations(), align_char="&="
@@ -173,7 +173,7 @@ def latex_equations(model: System, transform: dict | None = None) -> Latex:
 
 
 def parameter_table(
-    model: System, transform: dict | None = None, descriptions: dict | None = None
+    model: type[System], transform: dict | None = None, descriptions: dict | None = None
 ) -> Latex:
     transform = transform if transform is not None else {}
     latex = ToLatex(model, transform=transform)
@@ -188,7 +188,7 @@ def parameter_table(
 
 
 def varaible_table(
-    model: System, transform: dict | None = None, descriptions: dict | None = None
+    model: type[System], transform: dict | None = None, descriptions: dict | None = None
 ) -> Latex:
     transform = transform if transform is not None else {}
     latex = ToLatex(model, transform=transform)
@@ -223,12 +223,57 @@ def make_latex_table(
 
 
 def make_model_report(
-    model: System,
+    model: type[System],
     report: TextIOWrapper | StringIO,
     transform: dict | None = None,
     descriptions: dict | None = None,
     standalone=True,
 ):
+    # if standalone:
+    #     report.write("""\\documentclass{article}
+
+    #     \\usepackage{amsmath}
+    #     \\usepackage{float}
+
+    #     \\setcounter{secnumdepth}{0}
+
+    #     \\begin{document}
+    #     """)
+
+    # report.write("""
+    # \\subsection{Equations}
+
+    # """)
+    # report.write("\\[ " + latex_equations(model=model, transform=transform) + " \\]")
+
+    # report.write("""
+
+    # \\subsection{Variables}
+
+    # \\begin{table}[H]
+    # """)
+    # report.write(
+    #     varaible_table(model=model, transform=transform, descriptions=descriptions)
+    # )
+    # report.write("""
+    # \\end{table}
+
+    # """)
+
+    # report.write("""
+    # \\subsection{Parameters}
+
+    # \\begin{table}[H]
+    # """)
+
+    # report.write(
+    #     parameter_table(model=model, transform=transform, descriptions=descriptions)
+    # )
+    # report.write("""
+    # \\end{table}
+
+    # """)
+
     if standalone:
         report.write("""\\documentclass{article}
 
@@ -251,52 +296,38 @@ def make_model_report(
     \\subsection{Variables}
 
     \\begin{table}[H]
-    """)
+     """)
+
     report.write(
         varaible_table(model=model, transform=transform, descriptions=descriptions)
     )
-    report.write("""
+    report.write(
+        """
     \\end{table}
 
-    """)
+    """
+    )
 
-    report.write("""
+    report.write(
+        """
     \\subsection{Parameters}
 
     \\begin{table}[H]
-    """)
+    """
+    )
 
     report.write(
         parameter_table(model=model, transform=transform, descriptions=descriptions)
     )
-    report.write("""
+    report.write(
+        """
     \\end{table}
 
-    """)
+    """
+    )
 
     if standalone:
-        report.write("""\\documentclass{article}
-
-        \\usepackage{amsmath}
-        \\usepackage{float}
-
-        \\setcounter{secnumdepth}{0}
-
-        \\begin{document}
-        """)
-
-    report.write("""
-    \\subsection{Equations}
-
-    """)
-    report.write("\\[ " + latex_equations(model=model, transform=transform) + " \\]")
-
-    report.write("""
-
-    \\subsection{Variables}
-
-    # \\begin{table}[H]
-    # """)
+        report.write("\\end{document}")
 
     # Printing to file:
 
@@ -375,7 +406,7 @@ def make_model_report(
 
 
 def model_report(
-    model: System,
+    model: type[System],
     path: str | None = None,
     transform: dict | None = None,
     descriptions: dict | None = None,
