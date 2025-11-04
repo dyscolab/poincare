@@ -29,6 +29,7 @@ dependencies = [
   "tabulate",
   "typing_extensions",
   "scipy-events >= 0.3.1",
+  "statsmodels",
 ]
 
 [project.optional-dependencies]
@@ -77,6 +78,7 @@ tabulate = "*"
 typing_extensions = "*"
 symbolite = ">=0.6.0,<0.7"
 scipy-events = ">=0.3.1"
+pytest = ">=8.4.0,<9"
 
 [tool.pixi.feature.lint.dependencies]
 pre-commit = "*"

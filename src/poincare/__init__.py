@@ -1,4 +1,5 @@
-from .simulator import Simulator
+from .printing.latex import model_report
+from .simulator import Oscillations, Simulator, SteadyState
 from .types import (
     Constant,
     Derivative,
@@ -20,4 +21,7 @@ __all__ = [
     "assign",
     "initial",
     "Simulator",
+    "SteadyState",
+    "Oscillations",
+    "model_report",
 ]

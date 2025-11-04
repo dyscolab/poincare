@@ -5235,6 +5235,99 @@ packages:
   - pkg:pypi/numba?source=hash-mapping
   size: 5706597
   timestamp: 1759165298367
+- conda: https://prefix.dev/conda-forge/linux-64/numbalsoda-0.3.5-py310h73e678b_1.conda
+  sha256: 33c61b1941aa095d10eaead5eb97f17c9005a4194ba399ab25d498b681ccac99
+  md5: 82bd15b433590b50e4ae89015a3f076f
+  depends:
+  - libgcc-ng >=12
+  - libgfortran-ng
+  - libgfortran5 >=12.2.0
+  - libstdcxx-ng >=12
+  - numba
+  - numpy
+  - python >=3.10,<3.11.0a0
+  - python_abi 3.10.* *_cp310
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/numbalsoda?source=hash-mapping
+  size: 78657
+  timestamp: 1684548883261
+- conda: https://prefix.dev/conda-forge/osx-arm64/numbalsoda-0.3.5-py310h571b739_1.conda
+  sha256: 1f13507837bc88c209bf11859796adc4bc37bb37c99325c34d158dfe62ccefb2
+  md5: 0963602a765a896d99aa7056704ce055
+  depends:
+  - libcxx >=15.0.7
+  - libgfortran >=5
+  - libgfortran5 >=12.2.0
+  - numba
+  - numpy
+  - python >=3.10,<3.11.0a0
+  - python >=3.10,<3.11.0a0 *_cpython
+  - python_abi 3.10.* *_cp310
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/numbalsoda?source=hash-mapping
+  size: 76914
+  timestamp: 1684549280302
+- conda: https://prefix.dev/conda-forge/win-64/numbalsoda-0.3.2-py310heca598e_0.tar.bz2
+  sha256: 2a86d9b9402328e9b340bb8164dbcf6d3711baea0c80f8dfd30c3d275c91afa2
+  md5: 4584002bdfe0885f3e4a47a0f476513f
+  depends:
+  - libflang >=5.0.0,<6.0.0.a0
+  - numba
+  - numpy
+  - python >=3.10,<3.11.0a0
+  - python_abi 3.10.* *_cp310
+  - vc >=14.1,<15
+  - vs2015_runtime >=14.16.27033
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/numbalsoda?source=hash-mapping
+  size: 80066
+  timestamp: 1661453947953
+- conda: https://prefix.dev/conda-forge/linux-64/numpy-2.2.6-py310hefbff90_0.conda
+  sha256: 0ba94a61f91d67413e60fa8daa85627a8f299b5054b0eff8f93d26da83ec755e
+  md5: b0cea2c364bf65cd19e023040eeab05d
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libblas >=3.9.0,<4.0a0
+  - libcblas >=3.9.0,<4.0a0
+  - libgcc >=13
+  - liblapack >=3.9.0,<4.0a0
+  - libstdcxx >=13
+  - python >=3.10,<3.11.0a0
+  - python_abi 3.10.* *_cp310
+  constrains:
+  - numpy-base <0a0
+  license: BSD-3-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/numpy?source=hash-mapping
+  size: 7893263
+  timestamp: 1747545075833
+- conda: https://prefix.dev/conda-forge/linux-64/numpy-2.3.4-py311h2e04523_0.conda
+  sha256: 67cc072b8f5c157df4228a1a2291628e5ca2360f48ef572a64e2cf2bf55d2e25
+  md5: d84afde5a6f028204f24180ff87cf429
+  depends:
+  - python
+  - libstdcxx >=14
+  - libgcc >=14
+  - __glibc >=2.17,<3.0.a0
+  - python_abi 3.11.* *_cp311
+  - liblapack >=3.9.0,<4.0a0
+  - libcblas >=3.9.0,<4.0a0
+  - libblas >=3.9.0,<4.0a0
+  constrains:
+  - numpy-base <0a0
+  license: BSD-3-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/numpy?source=hash-mapping
+  size: 9418119
+  timestamp: 1761162089374
 - conda: https://prefix.dev/conda-forge/linux-64/numpy-2.3.4-py312h33ff503_0.conda
   sha256: c339df1121b7fa2b164ca6f02ce1e6db28758aa82499270618ba91385f3e70ca
   md5: 23494fd5bbca946e6e70ecc648352b2f
@@ -6101,6 +6194,7 @@ packages:
   - pint-pandas
   - scipy
   - scipy-events>=0.3.1
+  - statsmodels
   - symbolite>=0.6.0,<0.7
   - tabulate
   - typing-extensions
