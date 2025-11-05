@@ -14,9 +14,7 @@ from numpy.typing import ArrayLike, NDArray
 from scipy_events import Event, Events, SmallDerivatives
 from scipy_events.typing import Condition
 from symbolite import Symbol
-from scipy.fft import fft, fftfreq
 
-from .period_methods import autoperiod, fft_peak
 from . import solvers
 from ._node import Node
 from ._utils import eval_content
@@ -28,6 +26,7 @@ from .compile import (
     compile_transform,
     depends_on_at_least_one_variable_or_time,
 )
+from .period_methods import autoperiod, fft_peak
 from .types import (
     Constant,
     Derivative,

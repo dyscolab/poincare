@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.tsa.stattools
 from matplotlib.patches import Rectangle
-from scipy.optimize import minimize_scalar
-from scipy.signal import periodogram, correlate
-from scipy.stats import linregress
 from scipy.fft import fft, fftfreq
+from scipy.optimize import minimize_scalar
+from scipy.signal import periodogram
+from scipy.stats import linregress
 
 
 def number_peaks(data: np.ndarray, n: int) -> int:

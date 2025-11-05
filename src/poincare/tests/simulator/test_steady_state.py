@@ -1,16 +1,14 @@
+import numpy as np
+
 from ... import (
-    Variable,
-    Derivative,
-    System,
-    Constant,
     Parameter,
     Simulator,
     SteadyState,
-    initial,
+    System,
+    Variable,
     assign,
+    initial,
 )
-
-import numpy as np
 
 
 class SingleStable(System):
