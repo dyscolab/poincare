@@ -102,8 +102,8 @@ lint = "pre-commit run"
 uv = "*"
 
 [tool.pixi.feature.build.tasks]
-build = "uv build"
-publish = "uv publish"
+_build = "uv build"
+_publish = "uv publish"
 
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
