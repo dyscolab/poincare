@@ -6309,19 +6309,19 @@ packages:
   timestamp: 1747339794916
 - pypi: ./
   name: poincare
-  version: 0.6.4.dev6+g05d68e145.d20251104
-  sha256: b909089c75c14fed38a26fbb889e8fe2b130209b5b38d04780ce7b7c0721c73d
+  version: 0.6.3
+  sha256: abf2c3f77e092fd0939652e95c2b32f28f3564083fafce84e37e1811a4699453
   requires_dist:
   - numpy
   - pandas
   - pint
   - pint-pandas
   - scipy
-  - scipy-events>=0.3.1
-  - statsmodels
   - symbolite>=0.6.0,<0.7
   - tabulate
   - typing-extensions
+  - scipy-events>=0.3.1
+  - statsmodels
   - ipywidgets ; extra == 'interactive'
   requires_python: '>=3.12'
   editable: true

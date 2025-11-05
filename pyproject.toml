@@ -1,7 +1,7 @@
 [project]
 name = "poincare"
 description = "Simulation of dynamical systems."
-dynamic = ["version"]
+version = "0.6.3"
 authors = [
   { name = "Hernán E. Grecco", email = "hernan.grecco@gmail.com" },
   { name = "Mauro Silberberg", email = "maurosilber@gmail.com" },
@@ -41,11 +41,8 @@ Issues = "https://github.com/dyscolab/poincare/issues"
 Documentation = "https://dyscolab.github.io/poincare"
 
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
-
-[tool.hatch.version]
-source = "vcs"
+requires = ["uv_build>=0.9,<0.10"]
+build-backend = "uv_build"
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
