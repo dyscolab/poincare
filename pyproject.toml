@@ -96,7 +96,7 @@ mdformat-ruff = "*"
 
 [tool.pixi.feature.lint.tasks]
 pre-commit-install = "pre-commit install"
-lint = "pre-commit run"
+lint = "pre-commit run --all-files"
 
 [tool.pixi.feature.build.dependencies]
 uv = "*"
