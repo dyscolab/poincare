@@ -276,7 +276,7 @@ class SteadyState:
 
     solver: solvers.Solver = solvers.LSODA()
     condition: Condition = SmallDerivatives()
-    t_end: float = np.inf
+    t_end: float = np.finfo(np.float64).max
 
     def solve(
         self,

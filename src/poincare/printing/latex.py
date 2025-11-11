@@ -2,9 +2,19 @@ from dataclasses import dataclass, field
 from typing import Callable, Iterable, Iterator
 
 from symbolite.core import substitute
+from symbolite import Scalar
 
 from ..compile import build_equation_maps
-from ..types import Node, Symbol, System
+from ..types import (
+    Node,
+    Symbol,
+    System,
+    Parameter,
+    Constant,
+    Variable,
+    Independent,
+    Derivative,
+)
 from ..printing.table import Table
 from io import StringIO, TextIOWrapper
 
@@ -119,9 +129,6 @@ def normalize(expr, transform: dict[Symbol, str]) -> Latex:
 
 
 def normalize_eq(eq, transform) -> Latex:
-    from poincare import Parameter, Constant, Variable, Independent, Derivative
-    from symbolite import Scalar
-
     reps = {}
     for named in eq.yield_named():
         if isinstance(
