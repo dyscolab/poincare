@@ -6310,7 +6310,7 @@ packages:
 - pypi: ./
   name: poincare
   version: 0.6.3
-  sha256: 4e2a0ac601db2fa13192abba7460e7168c66dadcd6b66d359f7bc708a6eb58ee
+  sha256: 706fe6a33419b5557c93bba1793e71a46919d4436b1df67f5269600aaa887adc
   requires_dist:
   - numpy
   - pandas
