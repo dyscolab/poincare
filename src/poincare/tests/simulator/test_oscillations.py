@@ -1,18 +1,17 @@
-from ... import (
-    Variable,
-    Derivative,
-    System,
-    Constant,
-    Parameter,
-    Simulator,
-    Oscillations,
-    Independent,
-    initial,
-    assign,
-)
-
 import numpy as np
 from symbolite import scalar
+
+from ... import (
+    Derivative,
+    Independent,
+    Oscillations,
+    Parameter,
+    Simulator,
+    System,
+    Variable,
+    assign,
+    initial,
+)
 
 
 class ForcedDampedOscillator(System):

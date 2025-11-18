@@ -1,7 +1,7 @@
 [project]
 name = "poincare"
 description = "Simulation of dynamical systems."
-dynamic = ["version"]
+version = "0.6.3"
 authors = [
   { name = "Hernán E. Grecco", email = "hernan.grecco@gmail.com" },
   { name = "Mauro Silberberg", email = "maurosilber@gmail.com" },
@@ -41,11 +41,8 @@ Issues = "https://github.com/dyscolab/poincare/issues"
 Documentation = "https://dyscolab.github.io/poincare"
 
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
-
-[tool.hatch.version]
-source = "vcs"
+requires = ["uv_build>=0.9,<0.10"]
+build-backend = "uv_build"
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
@@ -56,6 +53,15 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 extend-select = ["I"]
+
+[tool.pyright]
+typeCheckingMode = "standard"
+venv = "default"
+venvPath = ".pixi/envs/"
+
+[tool.pyrefly]
+python-interpreter-path = ".pixi/envs/default/bin/python"
+project-excludes = [".pixi", "**/__pycache__"]
 
 [tool.pixi.workspace]
 channels = ["https://prefix.dev/conda-forge"]
@@ -90,14 +96,14 @@ mdformat-ruff = "*"
 
 [tool.pixi.feature.lint.tasks]
 pre-commit-install = "pre-commit install"
-lint = "pre-commit run"
+lint = "pre-commit run --all-files"
 
 [tool.pixi.feature.build.dependencies]
 uv = "*"
 
 [tool.pixi.feature.build.tasks]
-build = "uv build"
-publish = "uv publish"
+_build = "uv build"
+_publish = "uv publish"
 
 [tool.pixi.feature.test.dependencies]
 pytest = "*"

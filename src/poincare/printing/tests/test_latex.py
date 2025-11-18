@@ -1,5 +1,5 @@
+from ... import Constant, Derivative, Parameter, System, Variable, assign, initial
 from ..latex import model_report
-from ... import Variable, Derivative, System, Constant, Parameter, initial, assign
 
 
 class Oscillator(System):

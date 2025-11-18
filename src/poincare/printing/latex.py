@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
+from io import StringIO, TextIOWrapper
 from typing import Callable, Iterable, Iterator
 
+<<<<<<< HEAD
 from symbolite.core import substitute
 from symbolite import Scalar
 
@@ -17,6 +19,10 @@ from ..types import (
 )
 from ..printing.table import Table
 from io import StringIO, TextIOWrapper
+=======
+from ..compile import build_equation_maps
+from ..types import Node, Symbol, System
+>>>>>>> 00d48f11564d3a567aa38996a3fc7c67e7d7bf76
 
 type Latex = str
 
@@ -51,7 +57,7 @@ class ToLatex:
     ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex, Latex, Latex]]:
         for x in self.equations.variables:
             name = normalize_eq(x, transform=self.transform)
-            if descriptions != None:
+            if descriptions is None:
                 try:
                     yield (
                         name,
@@ -65,7 +71,7 @@ class ToLatex:
                 yield name, str(x.initial), "-"
             for order in range(1, x.equation_order):
                 d = x.derivatives[order]
-                if descriptions != None:
+                if descriptions is None:
                     try:
                         yield (
                             normalize_eq(d, transform=self.transform),
@@ -90,7 +96,7 @@ class ToLatex:
     def yield_parameters(
         self, descriptions: dict | None = None
     ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex]]:
-        if descriptions != None:
+        if descriptions is None:
             for x in self.equations.parameters:
                 yield (
                     normalize_eq(x, transform=self.transform),
@@ -129,6 +135,13 @@ def normalize(expr, transform: dict[Symbol, str]) -> Latex:
 
 
 def normalize_eq(eq, transform) -> Latex:
+<<<<<<< HEAD
+=======
+    from symbolite import Scalar
+
+    from poincare import Constant, Derivative, Independent, Parameter, Variable
+
+>>>>>>> 00d48f11564d3a567aa38996a3fc7c67e7d7bf76
     reps = {}
     for named in eq.yield_named():
         if isinstance(
@@ -137,9 +150,9 @@ def normalize_eq(eq, transform) -> Latex:
             reps[named] = Scalar(named.name)
     eq = eq.subs(reps)
     try:
+        import sympy as smp
         from symbolite.impl import libsympy
         from sympy import latex
-        import sympy as smp
 
         smp_exp = eq.eval(libsl=libsympy)
         for symb, trans in transform.items():
@@ -186,7 +199,7 @@ def parameter_table(
     latex = ToLatex(model, transform=transform)
     parameters = latex.yield_parameters(descriptions=descriptions)
 
-    if descriptions != None:
+    if descriptions is None:
         headers = ["Parameter", "Default", "Description"]
     else:
         headers = ["Parameter", "Default"]
@@ -201,7 +214,7 @@ def varaible_table(
     latex = ToLatex(model, transform=transform)
     variables = latex.yield_variables(descriptions=descriptions)
 
-    if descriptions != None:
+    if descriptions is None:
         headers = ["Variable", "Default", "Derivative", "Description"]
     else:
         headers = ["Variable", "Default", "Derivative"]
