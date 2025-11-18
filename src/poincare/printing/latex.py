@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from io import StringIO, TextIOWrapper
 from typing import Callable, Iterable, Iterator
 
-<<<<<<< HEAD
 from symbolite.core import substitute
 from symbolite import Scalar
 
@@ -19,10 +18,6 @@ from ..types import (
 )
 from ..printing.table import Table
 from io import StringIO, TextIOWrapper
-=======
-from ..compile import build_equation_maps
-from ..types import Node, Symbol, System
->>>>>>> 00d48f11564d3a567aa38996a3fc7c67e7d7bf76
 
 type Latex = str
 
@@ -57,7 +52,7 @@ class ToLatex:
     ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex, Latex, Latex]]:
         for x in self.equations.variables:
             name = normalize_eq(x, transform=self.transform)
-            if descriptions is None:
+            if descriptions is not None:
                 try:
                     yield (
                         name,
@@ -71,7 +66,7 @@ class ToLatex:
                 yield name, str(x.initial), "-"
             for order in range(1, x.equation_order):
                 d = x.derivatives[order]
-                if descriptions is None:
+                if descriptions is not None:
                     try:
                         yield (
                             normalize_eq(d, transform=self.transform),
@@ -96,7 +91,7 @@ class ToLatex:
     def yield_parameters(
         self, descriptions: dict | None = None
     ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex]]:
-        if descriptions is None:
+        if descriptions is not None:
             for x in self.equations.parameters:
                 yield (
                     normalize_eq(x, transform=self.transform),
@@ -135,13 +130,6 @@ def normalize(expr, transform: dict[Symbol, str]) -> Latex:
 
 
 def normalize_eq(eq, transform) -> Latex:
-<<<<<<< HEAD
-=======
-    from symbolite import Scalar
-
-    from poincare import Constant, Derivative, Independent, Parameter, Variable
-
->>>>>>> 00d48f11564d3a567aa38996a3fc7c67e7d7bf76
     reps = {}
     for named in eq.yield_named():
         if isinstance(
@@ -199,7 +187,7 @@ def parameter_table(
     latex = ToLatex(model, transform=transform)
     parameters = latex.yield_parameters(descriptions=descriptions)
 
-    if descriptions is None:
+    if descriptions is not None:
         headers = ["Parameter", "Default", "Description"]
     else:
         headers = ["Parameter", "Default"]
