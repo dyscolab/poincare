@@ -4,12 +4,13 @@ import inspect
 from dataclasses import dataclass
 from typing import Any, ClassVar, Iterator, Literal, Sequence, TypeVar, overload
 from typing import get_type_hints as get_annotations
-
+from types import ModuleType
 import pandas as pd
 import pint
-from symbolite import Scalar, Symbol
+from symbolite import Real
+from symbolite.core import Value
 from symbolite import abstract as libabstract
-from symbolite.core import evaluate, substitute
+from symbolite.ops import translate, substitute
 from typing_extensions import Self, dataclass_transform
 
 from . import units
@@ -19,27 +20,20 @@ from .printing.table import Table
 T = TypeVar("T")
 
 
-units.register_with_pint(Symbol)
+units.register_with_pint(Real)
 
 
 @units.register_with_pint
-class Constant(Node, Scalar):
+class Constant(Node, Real):
     def __init__(self, *, default: Initial | None):
+        super().__init__()
         self.default = default
         units.check_units(self, default)
-
-    def eval(self, libsl=None):
-        if libsl is libabstract:
-            return self
-        elif self.default is None:
-            raise units.EvalUnitError
-        else:
-            return evaluate(self.default, libsl)
 
     def _copy_from(self, parent: System):
         return self.__class__(default=substitute(self.default, NodeMapper(parent)))
 
-    def __eq__(self, other: Self):
+    def __eq__(self, other: Any):
         if other.__class__ is not self.__class__:
             return NotImplemented
 
@@ -84,28 +78,21 @@ def _assign_equation_order(
 
 
 @units.register_with_pint
-class Parameter(Node, Scalar):
+class Parameter(Node, Real):
     equation_order: int = 0
 
-    def __init__(self, *, default: Initial | Symbol | None):
+    def __init__(self, *, default: Initial | Value | None):
+        super().__init__()
         self.default = default
         units.check_units(self, default)
-
-    def eval(self, libsl=None):
-        if libsl is libabstract:
-            return self
-        elif self.default is None:
-            raise units.EvalUnitError
-        else:
-            return evaluate(self.default, libsl)
 
     def _copy_from(self, parent: System):
         return self.__class__(default=substitute(self.default, NodeMapper(parent)))
 
-    def __set__(self, obj, value: Initial | Symbol):
+    def __set__(self, obj, value: Initial | Value):
         if isinstance(value, Parameter):
             super().__set__(obj, value)
-        elif isinstance(value, Initial | Symbol):
+        elif isinstance(value, Initial | Value):
             # Get or create instance with getattr
             # Update initial value
             variable: Self = getattr(obj, self.name)
@@ -117,34 +104,37 @@ class Parameter(Node, Scalar):
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def __eq__(self, other: Self):
+    def __eq__(self, other: Any):
         if other.__class__ is not self.__class__:
             return NotImplemented
 
         return self.default == other.default and super().__eq__(other)
 
 
+@translate.register
+def translate_constant_parameter(obj: Constant | Parameter, libsl: ModuleType) -> Any:
+    if libsl is libabstract:
+        return obj
+    elif obj.default is None:
+        raise units.EvalUnitError
+    else:
+        return translate(obj.default, libsl)
+
+
 @units.register_with_pint
-class Variable(Node, Scalar):
+class Variable(Node, Real):
     initial: Initial | None
     derivatives: dict[int, Derivative]
     equation_order: int | None = None
 
     def __init__(self, *, initial: Initial | None):
+        super().__init__()
         self.initial = initial
         self.derivatives = {}
         units.check_units(self, initial)
 
     def __getnewargs__(self):
         return (self.initial, self.derivatives, self.equation_order)
-
-    def eval(self, libsl=None):
-        if libsl is libabstract:
-            return self
-        elif self.initial is None:
-            raise units.EvalUnitError
-        else:
-            return evaluate(self.initial, libsl)
 
     def derive(self, *, initial: Initial | None = None) -> Derivative:
         return Derivative(self, initial=initial, order=1)
@@ -202,7 +192,7 @@ class Variable(Node, Scalar):
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def __eq__(self, other: Self):
+    def __eq__(self, other: Any):
         if other.__class__ is not self.__class__:
             return NotImplemented
 
@@ -210,7 +200,7 @@ class Variable(Node, Scalar):
 
 
 @units.register_with_pint
-class Derivative(Node, Symbol):
+class Derivative(Node, Real):
     def __new__(
         cls,
         variable: Variable,
@@ -237,6 +227,7 @@ class Derivative(Node, Symbol):
         initial: Initial | None = None,
         order: int,
     ):
+        super().__init__()
         if self.name != "":
             # Existing derivative
             return
@@ -256,14 +247,6 @@ class Derivative(Node, Symbol):
             "order": self.order,
         }
         return args, kwargs
-
-    def eval(self, libsl=None):
-        if libsl is libabstract:
-            return self
-        elif self.initial is None:
-            raise units.EvalUnitError
-        else:
-            return evaluate(self.initial, libsl)
 
     def _copy_from(self, parent: Node) -> Self:
         variable: Variable = getattr(parent, self.variable.name)
@@ -317,7 +300,7 @@ class Derivative(Node, Symbol):
     def __hash__(self) -> int:
         return hash((self.variable, self.order))
 
-    def __eq__(self, other: Self) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if other.__class__ is not self.__class__:
             return NotImplemented
 
@@ -334,10 +317,20 @@ class Derivative(Node, Symbol):
             return s
 
 
+@translate.register
+def translate_variable_derivative(obj: Variable | Derivative, libsl: ModuleType) -> Any:
+    if libsl is libabstract:
+        return obj
+    elif obj.initial is None:
+        raise units.EvalUnitError
+    else:
+        return translate(obj.initial, libsl)
+
+
 @dataclass
 class Equation(Node):
     lhs: Derivative
-    rhs: Initial | Symbol
+    rhs: Initial | Value
 
     def __post_init__(self):
         units.check_equations_units(self.lhs, self.rhs)
@@ -382,7 +375,7 @@ class EquationGroup(Node):
 @overload
 def assign(
     *,
-    default: Initial | Symbol | None = None,
+    default: Initial | Value | None = None,
     constant: Literal[False] = False,
     init: bool = True,
 ) -> Parameter: ...
@@ -409,8 +402,9 @@ def initial(*, default: Initial | None = None, init: bool = True) -> Variable:
 
 
 @units.register_with_pint
-class Independent(Node, Scalar):
-    def __init__(self, *, default: Initial | Symbol | None = 0):
+class Independent(Node, Real):
+    def __init__(self, *, default: Initial | Value | None = 0):
+        super().__init__()
         self.default = default
         units.check_units(self, default)
 
@@ -430,18 +424,10 @@ class Independent(Node, Scalar):
             case _:
                 raise NotADirectoryError("more than one independent variable")
 
-    def eval(self, libsl=None):
-        if libsl is libabstract:
-            return self
-        elif self.default is None:
-            raise units.EvalUnitError
-        else:
-            return evaluate(self.default, libsl)
-
-    def __set__(self, obj, value: Initial | Symbol):
+    def __set__(self, obj, value: Initial | Value):
         if isinstance(value, Independent):
             super().__set__(obj, value)
-        elif isinstance(value, Initial | Symbol):
+        elif isinstance(value, Initial | Value):
             # Get or create instance with getattr
             # Update initial value
             variable: Self = getattr(obj, self.name)
@@ -453,11 +439,22 @@ class Independent(Node, Scalar):
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def __eq__(self, other: Self):
+    def __eq__(self, other: Any):
         if other.__class__ is not self.__class__:
             return NotImplemented
 
         return self.default == other.default and super().__eq__(other)
+
+
+@translate.register
+def translate_independent(obj: Independent, libsl: ModuleType) -> Any:
+    if libsl is libabstract:
+        return obj
+    elif obj.default is None:
+        raise units.EvalUnitError
+    else:
+        return translate(obj.default, libsl)
+
 
 
 class OwnedNamerDict(dict):
@@ -602,8 +599,8 @@ class System(Node, metaclass=EagerNamer):
 
     def __getattribute__(self, name: str) -> Any:
         value = super().__getattribute__(name)
-        if isinstance(value, Symbol) and not isinstance(value, Node):
-            # Symbol is not a descriptor that knows how to recreate itself in the new instance,
+        if isinstance(value, Value) and not isinstance(value, Node):
+            # Value is not a descriptor that knows how to recreate itself in the new instance,
             # but might have Nodes inside that need to be recreated.
             return substitute(value, NodeMapper(self))
         else:

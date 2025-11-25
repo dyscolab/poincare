@@ -13,7 +13,7 @@ import pint_pandas
 from numpy.typing import ArrayLike, NDArray
 from scipy_events import Event, Events, SmallDerivatives
 from scipy_events.typing import Condition
-from symbolite import Symbol
+from symbolite.core.value import Value
 
 from . import solvers
 from ._node import Node
@@ -76,7 +76,7 @@ class Simulator:
         /,
         *,
         backend: Backend = "numpy",
-        transform: Sequence[Symbol] | Mapping[Hashable, Symbol] | None = None,
+        transform: Sequence[Value] | Mapping[Hashable, Value] | None = None,
     ):
         self.model = system
         self.compiled = compile_diffeq(system, backend)
@@ -84,7 +84,7 @@ class Simulator:
 
     def _compile_transform(
         self,
-        transform: Sequence[Symbol] | Mapping[Hashable, Symbol] | None,
+        transform: Sequence[Value] | Mapping[Hashable, Value] | None,
     ):
         if isinstance(transform, Sequence):
             transform = {str(x): x for x in transform}
@@ -92,10 +92,10 @@ class Simulator:
 
     def create_problem(
         self,
-        values: Mapping[Components, Initial | Symbol] = {},
+        values: Mapping[Components, Initial | Value] = {},
         *,
         t_span: tuple[float, float] = (0, np.inf),
-        transform: Sequence[Symbol] | Mapping[Hashable, Symbol] | None = None,
+        transform: Sequence[Value] | Mapping[Hashable, Value] | None = None,
     ):
         if transform is None:
             compiled_transform = self.transform
@@ -158,7 +158,7 @@ class Simulator:
 
     def solve(
         self,
-        values: Mapping[Components, Initial | Symbol] = {},
+        values: Mapping[Components, Initial | Value] = {},
         *,
         t_span: tuple[float, float] | None = None,
         save_at: ArrayLike | None = None,

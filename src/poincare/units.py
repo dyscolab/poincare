@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 import pint
 from pint.compat import fully_qualified_name, upcast_type_map
-from symbolite.core import evaluate
+from symbolite.ops import translate
 from symbolite.impl import libstd
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ class EvalUnitError(Exception):
 
 def try_eval_units(value):
     try:
-        return evaluate(value, libsl=libstd)
+        return translate(value, libsl=libstd)
     except EvalUnitError:
         return None
 

@@ -1,5 +1,5 @@
 import numpy as np
-from symbolite import scalar
+from symbolite import real
 
 from ... import (
     Derivative,
@@ -23,7 +23,7 @@ class ForcedDampedOscillator(System):
     spring_constant: Parameter = assign(default=2)
     damp_rate: Parameter = assign(default=0.3)
     T: Parameter = assign(default=0.5)
-    force: Parameter = assign(default=0.2 * scalar.sin(2 * np.pi / T * t))
+    force: Parameter = assign(default=0.2 * real.sin(2 * np.pi / T * t))
 
     # Apply the models to the external systems variables
     oscillator = vx.derive() << -spring_constant * x + force + 0.2

@@ -25,7 +25,7 @@ dependencies = [
   "pint",
   "pint-pandas",
   "scipy",
-  "symbolite >= 0.6.0, < 0.7",
+  "symbolite", # >= 0.6.0, < 0.7",
   "tabulate",
   "typing_extensions",
   "scipy-events >= 0.3.1",
@@ -85,7 +85,7 @@ pint-pandas = "*"
 scipy = "*"
 tabulate = "*"
 typing_extensions = "*"
-symbolite = ">=0.6.0,<0.7"
+symbolite = ">=0.8"
 scipy-events = ">=0.3.1"
 pytest = ">=8.4.0,<9"
 
@@ -112,14 +112,17 @@ _publish = "uv publish"
 pytest = "*"
 cloudpickle = "<3.1.0"
 matplotlib = "*"
-# jax = "*"
 numba = "*"
 ipywidgets = "*"
 ipykernel = "*"
 sympy = "*"
 
+[tool.pixi.feature.test.target.unix.dependencies]
+jax = "*"
+
 [tool.pixi.feature.test.pypi-dependencies]
 poincare = { path = ".", editable = true }
+symbolite = { path = "../symbolite", editable = true }
 
 [tool.pixi.feature.test.tasks]
 test = "pytest --doctest-modules"

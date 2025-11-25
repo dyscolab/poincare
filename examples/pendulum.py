@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from symbolite import scalar
+from symbolite import real
 
 from poincare import Derivative, Parameter, Simulator, System, Variable, assign, initial
 
@@ -12,7 +12,7 @@ class Pendulum(System):
     pendulum_length: Parameter = assign(default=1)
     gravity: Parameter = assign(default=9.8)
 
-    spring = angular_velocity.derive() << -gravity / pendulum_length * scalar.sin(angle)
+    spring = angular_velocity.derive() << -gravity / pendulum_length * real.sin(angle)
 
 
 if __name__ == "__main__":

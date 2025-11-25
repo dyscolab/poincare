@@ -186,13 +186,13 @@ time
 
 #### Functions
 
-Symbolite functions are accessible from the `symbolite.scalar` module:
+Symbolite functions are accessible from the `symbolite.real` module:
 
 ```python
->>> from symbolite import scalar
+>>> from symbolite import real
 >>> class Model(System):
 ...     x: Variable = initial(default=1)
-...     eq = x.derive() << scalar.sin(x)
+...     eq = x.derive() << real.sin(x)
 ...
 >>> Simulator(Model).solve(save_at=range(3))
              x

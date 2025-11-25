@@ -1,8 +1,9 @@
 import numpy as np
 from pint import DimensionalityError, get_application_registry
 from pytest import mark, raises
-from symbolite import scalar
+from symbolite import real
 from symbolite.impl import libstd
+from symbolite.ops import translate
 
 from poincare import (
     Constant,
@@ -33,11 +34,12 @@ def test_symbol_and_quantity(value):
 
     left = value + q
     right = q + value
-    assert left.eval(libstd) == right.eval(libstd)
+    assert translate(left, libstd) == translate(right, libstd)
 
+    # TODO: what is the purpose of this test?
     left = left + q
     right = q + right
-    assert left.eval(libstd) == right.eval(libstd)
+    assert translate(left, libstd) == translate(right, libstd)
 
 
 def test_single_constant():
@@ -183,11 +185,11 @@ def test_function():
 
         class WrongUnits(System):
             time = Independent(default=0 * u.s)
-            p: Parameter = assign(default=scalar.cos(time))
+            p: Parameter = assign(default=real.cos(time))
 
     class Model(System):
         time = Independent(default=0 * u.s)
-        p: Parameter = assign(default=scalar.cos(time * u.Hz))
+        p: Parameter = assign(default=real.cos(time * u.Hz))
 
 
 def test_problem_units():
@@ -281,3 +283,11 @@ def test_zero_initial_with_unit():
     times = np.linspace(0, 1, 10)
     sim = Simulator(Model)
     sim.solve(save_at=times)
+
+
+def test_v_derive():
+    class Model(System):
+        x: Variable = initial(default=1 * u.m)
+        v: Derivative = x.derive(initial=0 * u.m/u.s)
+        w: Parameter = assign(default=1 * u.Hz)
+        eq = v.derive() << -w**2 * x

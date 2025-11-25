@@ -32,9 +32,6 @@ class Node:
     name: str = ""
     parent: Node | None = None
 
-    def eval(self, libsl=None):
-        return self
-
     def _copy_from(self, parent: Node) -> Self:
         raise NotImplementedError
 

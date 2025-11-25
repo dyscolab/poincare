@@ -1,32 +1,33 @@
 import pytest
-from symbolite import scalar
+from symbolite import real
+from symbolite.ops import get_name
 from symbolite.impl import libstd
 
 from .._utils import eval_content
 
 
-class SimpleVariable(scalar.Scalar):
-    """Special type of Scalar that is evaluated to itself."""
+class SimpleVariable(real.Real):
+    """Special type of Real that is evaluated to itself."""
 
     def __repr__(self):
-        return self.name
+        return get_name(self, qualified=False)
 
     def eval(self, libsl=None):
         return self
 
 
-class SimpleParameter(scalar.Scalar):
-    """Special type of Scalar that is evaluated to itself."""
+class SimpleParameter(real.Real):
+    """Special type of Real that is evaluated to itself."""
 
     def __repr__(self):
-        return self.name
+        return get_name(self)
 
     def eval(self, libsl=None):
         return self
 
 
 def is_root(x):
-    return isinstance(x, scalar.NumberT)
+    return isinstance(x, real.NumberT)
 
 
 def is_dependency(x):

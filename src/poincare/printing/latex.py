@@ -2,13 +2,12 @@ from dataclasses import dataclass, field
 from io import StringIO, TextIOWrapper
 from typing import Callable, Iterable, Iterator
 
-from symbolite.core import substitute
-from symbolite import Scalar
+from symbolite.ops import substitute, yield_named, translate
+from symbolite import Real
 
 from ..compile import build_equation_maps
 from ..types import (
     Node,
-    Symbol,
     System,
     Parameter,
     Constant,
@@ -22,15 +21,15 @@ from io import StringIO, TextIOWrapper
 type Latex = str
 
 
-def default_name(name: Symbol) -> Latex:
+def default_name(name: Real) -> Latex:
     return f"\\text{{{name}}}".replace("_", "\\_")
 
 
-def escape_underscores(name: Symbol) -> Latex:
+def escape_underscores(name: Real) -> Latex:
     return str(name).replace("_", "\\_")
 
 
-def math_normalize(name: Symbol) -> Latex:
+def math_normalize(name: Real) -> Latex:
     string = str(name).replace("_", "_{")
     if str(name) != string:
         return string + "}"
@@ -41,14 +40,14 @@ def math_normalize(name: Symbol) -> Latex:
 @dataclass
 class ToLatex:
     system: System | type[System]
-    normalize_name: Callable[[Symbol], Latex] = default_name
-    transform: dict[Symbol, str] = field(default_factory=dict)
+    normalize_name: Callable[[Real], Latex] = default_name
+    transform: dict[Real, str] = field(default_factory=dict)
 
     def __post_init__(self):
         self.equations = build_equation_maps(self.system)
 
     def yield_variables(
-        self, descriptions: dict[Symbol, str] | None = None
+        self, descriptions: dict[Real, str] | None = None
     ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex, Latex, Latex]]:
         for x in self.equations.variables:
             name = normalize_eq(x, transform=self.transform)
@@ -122,8 +121,8 @@ class Normalizer(dict):
         return key
 
 
-def normalize(expr, transform: dict[Symbol, str]) -> Latex:
-    if isinstance(expr, Symbol):
+def normalize(expr, transform: dict[Real, str]) -> Latex:
+    if isinstance(expr, Real):
         return normalize_eq(expr, transform)
     else:
         return str(expr)
@@ -131,20 +130,20 @@ def normalize(expr, transform: dict[Symbol, str]) -> Latex:
 
 def normalize_eq(eq, transform) -> Latex:
     reps = {}
-    for named in eq.yield_named():
+    for named in yield_named(eq):
         if isinstance(
             named, Independent | Constant | Parameter | Variable | Derivative
         ):
-            reps[named] = Scalar(named.name)
-    eq = eq.subs(reps)
+            reps[named] = Real(named.name)
+    eq = substitute(eq, reps)
     try:
         import sympy as smp
         from symbolite.impl import libsympy
         from sympy import latex
 
-        smp_exp = eq.eval(libsl=libsympy)
+        smp_exp = translate(eq, libsl=libsympy)
         for symb, trans in transform.items():
-            smp_exp = smp_exp.subs(smp.Symbol(str(symb)), smp.Symbol(trans))
+            smp_exp = substitute(smp_exp, {smp.Symbol(str(symb)): smp.Symbol(trans)})
         return latex(smp.simplify(smp_exp))
     except ImportError:
         raise Exception("This function requires Sympy")

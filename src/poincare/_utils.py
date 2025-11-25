@@ -13,8 +13,8 @@ from typing import (
     overload,
 )
 
-from symbolite import scalar
-from symbolite.core import evaluate, inspect, substitute
+from symbolite import real
+from symbolite.ops import translate, count_named, substitute
 
 S = TypeVar("S")
 P = ParamSpec("P")
@@ -83,21 +83,21 @@ def eval_content(
     libsl: ModuleType,
     is_root: Callable[[Any], bool],
     is_dependency: Callable[[Any], bool],
-) -> dict[TH, scalar.NumberT]:
-    out: dict[TH, scalar.NumberT] = {}
+) -> dict[TH, real.NumberT]:
+    out: dict[TH, real.NumberT] = {}
 
     dependencies = defaultdict(set)
     for k, v in content.items():
         if is_root(v):
             out[k] = v
         else:
-            for el in filter(is_dependency, inspect(v).keys()):
+            for el in filter(is_dependency, count_named(v).keys()):
                 dependencies[k].add(el)
 
     layers = solve_dependencies(dependencies)
 
     for layer in layers:
         for item in layer:
-            out[item] = evaluate(substitute(content[item], out), libsl)
+            out[item] = translate(substitute(content[item], out), libsl)
 
     return out

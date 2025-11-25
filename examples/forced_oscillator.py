@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from symbolite import scalar
+from symbolite import real
 
 from poincare import (
     Derivative,
@@ -19,7 +19,7 @@ class Oscillator(System):
     x: Variable = initial(default=1)
     vx: Derivative = x.derive(initial=0)
     phase: Parameter = assign(default=0)
-    F: Parameter = assign(default=scalar.cos(t + phase))
+    F: Parameter = assign(default=real.cos(t + phase))
     spring = vx.derive() << -x + F
 
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     result["x"].rename("cos(t-1.3)").plot()
 
     # To change functional form, must be recompiled
-    sim = Simulator(Oscillator(F=scalar.sin(Oscillator.t)))
+    sim = Simulator(Oscillator(F=real.sin(Oscillator.t)))
     result = sim.solve(save_at=np.linspace(0, 50, 1000))
     result["x"].rename("sin(t)").plot()
 

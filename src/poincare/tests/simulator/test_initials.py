@@ -1,5 +1,5 @@
 from pytest import raises
-from symbolite import Symbol
+from symbolite import Real
 
 from ...simulator import Simulator
 from ...types import (
@@ -26,7 +26,7 @@ class Model(System):
 
 def assert_initials(
     system: System | type[System],
-    values: dict[Constant | Parameter | Variable | Derivative, Number | Symbol],
+    values: dict[Constant | Parameter | Variable | Derivative, Number | Real],
     *,
     expected_parameters: dict[Parameter, float],
     expected_variables: dict[Variable, float],

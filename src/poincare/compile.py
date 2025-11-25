@@ -18,10 +18,25 @@ from typing import (
 
 import pint
 import symbolite.abstract as libabstract
-from symbolite import Symbol, scalar, vector
-from symbolite.core import compile as symbolite_compile
-from symbolite.core import substitute
+from symbolite import real, vector
+from symbolite.ops import substitute, yield_named, translate
+from symbolite.impl import libpythoncode
 from typing_extensions import Never
+
+_symbolite_compile: (
+    Callable[[str, ModuleType], Mapping[str, Callable[..., Any]]] | None
+) = None
+
+
+def symbolite_compile(
+    source: str, libsl: ModuleType
+) -> Mapping[str, Callable[..., Any]]:
+    global _symbolite_compile
+    if _symbolite_compile is None:
+        from symbolite.impl._lang_value_utils import compile as _compile
+
+        _symbolite_compile = _compile
+    return _symbolite_compile(source, libsl)
 
 from ._node import Node
 from ._utils import eval_content
@@ -40,7 +55,7 @@ from .types import (
 
 V = TypeVar("V")
 F = TypeVar("F")
-ExprRHS: TypeAlias = Initial | Symbol
+ExprRHS: TypeAlias = Initial | real.Real
 Array: TypeAlias = Sequence[float]
 MutableArray: TypeAlias = MutableSequence[float]
 
@@ -57,8 +72,8 @@ class Transform(Protocol):
 class Compiled(Generic[V, F]):
     independent: Sequence[Independent]
     variables: Sequence[V]
-    parameters: Sequence[Symbol]
-    mapper: dict[Symbol, Any]
+    parameters: Sequence[real.Real]
+    mapper: dict[real.Real, Any]
     func: F
     output: dict[str, ExprRHS]
     libsl: ModuleType | None = None
@@ -89,7 +104,7 @@ def get_libsl(backend: Backend) -> ModuleType:
             assert_never(backend, message="Unknown backend {}")
 
 
-def eqsum(eqs: list[ExprRHS]) -> scalar.NumberT | Symbol:
+def eqsum(eqs: list[ExprRHS]) -> real.NumberT | real.Real:
     if len(eqs) == 0:
         return 0
     elif len(eqs) == 1:
@@ -99,17 +114,17 @@ def eqsum(eqs: list[ExprRHS]) -> scalar.NumberT | Symbol:
 
 
 def vector_mapping(
-    time: scalar.Scalar,
+    time: real.Real,
     variables: Sequence[Variable | Derivative],
     parameters: Sequence[Parameter],
     time_varname: str = "t",
     state_varname: str = "y",
     param_varname: str = "p",
-) -> dict[scalar.Scalar | Variable | Derivative | Parameter, Symbol]:
-    t = scalar.Scalar(time_varname)
+) -> dict[real.Real | Variable | Derivative | Parameter, real.Real]:
+    t = real.Real(time_varname)
     y = vector.Vector(state_varname)
     p = vector.Vector(param_varname)
-    mapping: dict[scalar.Scalar | Parameter | Variable | Derivative, Symbol] = {
+    mapping: dict[real.Real | Parameter | Variable | Derivative, real.Real] = {
         time: t,
     }
     for i, v in enumerate(variables):
@@ -137,10 +152,10 @@ def get_equations(system: System | type[System]) -> dict[Derivative, list[ExprRH
 
 
 def depends_on_at_least_one_variable_or_time(value: Any) -> bool:
-    if not isinstance(value, Symbol):
+    if not isinstance(value, real.Real):
         return False
 
-    for named in value.yield_named():
+    for named in yield_named(value):
         if isinstance(named, Independent):
             return True
         elif isinstance(named, Variable | Derivative):
@@ -186,26 +201,26 @@ def build_equation_maps(
     parameters: set[Parameter] = set()
     variables: set[Variable] = set()
 
-    def add_to_initials(name: Symbol, value):
+    def add_to_initials(name: real.Real, value):
         if value is None:
             raise TypeError(
                 f"Missing initial value for {name}. System must be instantiated."
             )
         initials[name] = value
-        if not isinstance(value, Symbol):
+        if not isinstance(value, real.Real):
             return
 
-        for named in value.yield_named():
+        for named in yield_named(value):
             if isinstance(named, Independent):
                 independent.add(named)
             elif isinstance(named, Parameter | Constant):
                 add_to_initials(named, named.default)
 
     def process_symbol(symbol, *, equation: bool):
-        if not isinstance(symbol, Symbol):
+        if not isinstance(symbol, real.Real):
             return
 
-        for named in symbol.yield_named():
+        for named in yield_named(symbol):
             if isinstance(named, Independent):
                 independent.add(named)
             elif isinstance(named, Variable):
@@ -361,7 +376,7 @@ def build_first_order_vectorized_body(
         [
             "def ode_step(t, y, p, ydot):",
             *(
-                assignment_func("ydot", to_index(k), str(eq))
+                assignment_func("ydot", to_index(k), translate(eq, libpythoncode))
                 for k, eq in diff_eqs.items()
             ),
             "return ydot",
@@ -433,8 +448,11 @@ def identity_transform(t: float, y: Array, p: Array, out: MutableArray) -> Array
 def compile_transform(
     system: System | type[System],
     compiled: Compiled,
-    expresions: Mapping[str, Symbol] | None = None,
+    expresions: Mapping[str, real.Real] | None = None,
 ) -> Compiled[Variable | Derivative, Transform]:
+
+    assert compiled.libsl is not None
+
     if expresions is None:
         return Compiled(
             func=identity_transform,
@@ -499,7 +517,7 @@ def compile_transform(
     ode_step_def = "\n    ".join(
         [
             "def transform(t, y, p, out):",
-            *(assignment("out", str(i), str(eq)) for i, eq in enumerate(deqs.values())),
+            *(assignment("out", str(i), translate(eq, libpythoncode)) for i, eq in enumerate(deqs.values())),
             "return out",
         ]
     )

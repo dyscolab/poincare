@@ -12,7 +12,7 @@ def assert_names(
 ):
     sim = Simulator(system)
     df = sim.solve(save_at=range(1))
-
+    print(sim.compiled)
     assert set(map(str, sim.compiled.variables)) == variables
     assert set(map(str, sim.compiled.parameters)) == parameters
     assert set(df.columns) == variables
