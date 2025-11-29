@@ -1,7 +1,7 @@
 import pytest
 from symbolite import real
-from symbolite.ops import get_name
 from symbolite.impl import libstd
+from symbolite.ops import get_name
 
 from .._utils import eval_content
 

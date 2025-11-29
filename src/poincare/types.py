@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
-from typing import Any, ClassVar, Iterator, Literal, Sequence, TypeVar, overload
-from typing import get_type_hints as get_annotations
 from types import ModuleType
+from typing import Any, ClassVar, Literal, Self, TypeVar, dataclass_transform, overload
+from typing import get_type_hints as get_annotations
+
 import pandas as pd
 import pint
 from symbolite import Real
-from symbolite.core import Value
 from symbolite import abstract as libabstract
-from symbolite.ops import translate, substitute
-from typing_extensions import Self, dataclass_transform
+from symbolite.core import Value
+from symbolite.ops import substitute, translate
 
 from . import units
 from ._node import Node, NodeMapper
@@ -454,7 +455,6 @@ def translate_independent(obj: Independent, libsl: ModuleType) -> Any:
         raise units.EvalUnitError
     else:
         return translate(obj.default, libsl)
-
 
 
 class OwnedNamerDict(dict):

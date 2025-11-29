@@ -1,19 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 import pint
 from pint.compat import fully_qualified_name, upcast_type_map
-from symbolite.ops import translate
 from symbolite.impl import libstd
+from symbolite.ops import translate
 
 if TYPE_CHECKING:
     from .types import Derivative
 
-T = TypeVar("T", bound=type)
-
-
-def register_with_pint(cls: T) -> T:
+def register_with_pint[T](cls: T) -> T:
     """Register type with Pint to  to return NotImplemented
     on methods that can be reflected, such as __add__,
     by adding the type to pint's upcast map.

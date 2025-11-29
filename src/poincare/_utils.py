@@ -1,27 +1,18 @@
 from collections import defaultdict
+from collections.abc import Callable, Hashable, Iterator, Mapping
 from types import MethodType, ModuleType
 from typing import (
     Any,
-    Callable,
     Concatenate,
-    Generic,
-    Hashable,
-    Iterator,
-    Mapping,
-    ParamSpec,
     TypeVar,
     overload,
 )
 
 from symbolite import real
-from symbolite.ops import translate, count_named, substitute
-
-S = TypeVar("S")
-P = ParamSpec("P")
-R = TypeVar("R")
+from symbolite.ops import count_named, substitute, translate
 
 
-class class_and_instance_method(Generic[S, P, R]):
+class class_and_instance_method[S, **P, R]:
     def __init__(self, func: Callable[Concatenate[S, P], R]):
         self.func = func
 
@@ -78,7 +69,7 @@ def solve_dependencies(dependencies: Mapping[TH, set[TH]]) -> Iterator[set[TH]]:
         yield t
 
 
-def eval_content(
+def eval_content[TH: Hashable](
     content: Mapping[TH, Any],
     libsl: ModuleType,
     is_root: Callable[[Any], bool],

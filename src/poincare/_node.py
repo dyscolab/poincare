@@ -1,16 +1,15 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from types import UnionType
-from typing import Iterator, TypeAlias, TypeVar
-
-from typing_extensions import Self
+from typing import Self, TypeVar
 
 from ._utils import class_and_instance_method
 
 T = TypeVar("T")
 
 
-_ClassInfo: TypeAlias = type | UnionType | tuple["_ClassInfo", ...]
+type _ClassInfo = type | UnionType | tuple["_ClassInfo", ...]
 
 
 class Node:

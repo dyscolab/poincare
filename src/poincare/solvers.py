@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import weakref
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, Literal, Protocol, Sequence
+from typing import TYPE_CHECKING, Literal, Protocol, assert_never
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy import integrate
 from scipy_events import Events, solve_ivp
-from typing_extensions import assert_never
 
 if TYPE_CHECKING:
     from .simulator import Problem

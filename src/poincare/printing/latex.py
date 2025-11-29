@@ -1,22 +1,20 @@
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 from io import StringIO, TextIOWrapper
-from typing import Callable, Iterable, Iterator
 
-from symbolite.ops import substitute, yield_named, translate
 from symbolite import Real
+from symbolite.ops import substitute, translate, yield_named
 
 from ..compile import build_equation_maps
 from ..types import (
-    Node,
-    System,
-    Parameter,
     Constant,
-    Variable,
-    Independent,
     Derivative,
+    Independent,
+    Node,
+    Parameter,
+    System,
+    Variable,
 )
-from ..printing.table import Table
-from io import StringIO, TextIOWrapper
 
 type Latex = str
 

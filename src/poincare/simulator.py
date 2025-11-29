@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import numbers
 from collections import ChainMap
+from collections.abc import Callable, Hashable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Hashable, Iterable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any
 from warnings import warn
 
 import numpy as np

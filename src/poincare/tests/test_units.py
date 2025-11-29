@@ -288,6 +288,6 @@ def test_zero_initial_with_unit():
 def test_v_derive():
     class Model(System):
         x: Variable = initial(default=1 * u.m)
-        v: Derivative = x.derive(initial=0 * u.m/u.s)
+        v: Derivative = x.derive(initial=0 * u.m / u.s)
         w: Parameter = assign(default=1 * u.Hz)
-        eq = v.derive() << -w**2 * x
+        eq = v.derive() << -(w**2) * x

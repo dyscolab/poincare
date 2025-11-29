@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -54,7 +54,7 @@ def number_peaks(data: np.ndarray, n: int) -> int:
     """
     x_reduced = data[n:-n]
 
-    res: Optional[np.ndarray] = None
+    res: np.ndarray | None = None
     for i in range(1, n + 1):
         result_first = x_reduced > _roll(data, i)[n:-n]
 
@@ -109,7 +109,7 @@ def autoperiod(
     use_number_peaks_fallback: bool = False,
     number_peaks_n: int = 100,
     acf_hill_steepness: float = 0.0,
-) -> Tuple[int, bool]:
+) -> tuple[int, bool]:
     """AUTOPERIOD method calculates the period in a two-step process. First, it
     extracts candidate periods from the periodogram (using an automatically
     determined power threshold, see ``pt_n_iter`` parameter). Then, it uses the circular
@@ -249,14 +249,14 @@ class Autoperiod:
         self._detrend = detrend
         self._use_np_fb = use_number_peaks_fallback
         self._np_n = number_peaks_n
-        self._trend: Optional[np.ndarray] = None
-        self._orig_data: Optional[np.ndarray] = None
+        self._trend: np.ndarray | None = None
+        self._orig_data: np.ndarray | None = None
         self._return_multi = return_multi
         self._acf_hill_steepness = acf_hill_steepness
 
     def __call__(
         self, data: np.ndarray
-    ) -> Union[Tuple[List[int], bool], Tuple[int, bool]]:
+    ) -> tuple[list[int], bool] | tuple[int, bool]:
         """Estimate the period length of a time series.
 
         Parameters
@@ -345,7 +345,7 @@ class Autoperiod:
 
     def _candidate_periods(
         self, data: np.ndarray, p_threshold: float
-    ) -> List[Tuple[int, float, float]]:
+    ) -> list[tuple[int, float, float]]:
         N = data.shape[0]
         f, p_den = periodogram(data)
         # f = fftfreq(len(data))
@@ -360,7 +360,7 @@ class Autoperiod:
             f"inspecting periodogram between 2 and {N // 2} (frequencies 0 and 0.5)",
             level=2,
         )
-        period_candidates: Dict[int, Tuple[int, float, float]] = {}
+        period_candidates: dict[int, tuple[int, float, float]] = {}
         removed_hints = 0
         for i in np.arange(2, N // 2):
             if p_den[i] > p_threshold:
@@ -408,8 +408,8 @@ class Autoperiod:
         return period_hints
 
     def _verify(
-        self, data: np.ndarray, period_hints: List[Tuple[int, float, float]]
-    ) -> Tuple[List[int], bool]:
+        self, data: np.ndarray, period_hints: list[tuple[int, float, float]]
+    ) -> tuple[list[int], bool]:
         # produces wrong acf:
         # acf = fftconvolve(data, data[::-1], 'full')[data.shape[0]:]
         # acf = acf / np.max(acf)
@@ -445,7 +445,7 @@ class Autoperiod:
             )
             slopes = {}
 
-            def two_segment(t: float, args: List[np.ndarray]) -> float:
+            def two_segment(t: float, args: list[np.ndarray]) -> float:
                 x, y = args
                 t = int(np.round(t))
                 slope1 = linregress(x[:t], y[:t])

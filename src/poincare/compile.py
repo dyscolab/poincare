@@ -1,42 +1,22 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Callable, Iterator, Mapping, MutableSequence, Sequence
 from dataclasses import dataclass
 from types import ModuleType
 from typing import (
     Any,
-    Callable,
-    Generic,
-    Iterator,
     Literal,
-    Mapping,
+    Never,
     Protocol,
-    TypeAlias,
     TypeVar,
 )
 
 import pint
 import symbolite.abstract as libabstract
 from symbolite import real, vector
-from symbolite.ops import substitute, yield_named, translate
 from symbolite.impl import libpythoncode
-from typing_extensions import Never
-
-_symbolite_compile: (
-    Callable[[str, ModuleType], Mapping[str, Callable[..., Any]]] | None
-) = None
-
-
-def symbolite_compile(
-    source: str, libsl: ModuleType
-) -> Mapping[str, Callable[..., Any]]:
-    global _symbolite_compile
-    if _symbolite_compile is None:
-        from symbolite.impl._lang_value_utils import compile as _compile
-
-        _symbolite_compile = _compile
-    return _symbolite_compile(source, libsl)
+from symbolite.ops import substitute, translate, yield_named
 
 from ._node import Node
 from ._utils import eval_content
@@ -53,11 +33,27 @@ from .types import (
     Variable,
 )
 
+_symbolite_compile: (
+    Callable[[str, ModuleType], Mapping[str, Callable[..., Any]]] | None
+) = None
+
+
+def symbolite_compile(
+    source: str, libsl: ModuleType
+) -> Mapping[str, Callable[..., Any]]:
+    global _symbolite_compile
+    if _symbolite_compile is None:
+        from symbolite.impl._lang_value_utils import compile as _compile
+
+        _symbolite_compile = _compile
+    return _symbolite_compile(source, libsl)
+
+
 V = TypeVar("V")
 F = TypeVar("F")
-ExprRHS: TypeAlias = Initial | real.Real
-Array: TypeAlias = Sequence[float]
-MutableArray: TypeAlias = MutableSequence[float]
+type ExprRHS = Initial | real.Real
+type Array = Sequence[float]
+type MutableArray = MutableSequence[float]
 
 
 class RHS(Protocol):
@@ -69,7 +65,7 @@ class Transform(Protocol):
 
 
 @dataclass(frozen=True, kw_only=True)
-class Compiled(Generic[V, F]):
+class Compiled[V, F]:
     independent: Sequence[Independent]
     variables: Sequence[V]
     parameters: Sequence[real.Real]
@@ -450,7 +446,6 @@ def compile_transform(
     compiled: Compiled,
     expresions: Mapping[str, real.Real] | None = None,
 ) -> Compiled[Variable | Derivative, Transform]:
-
     assert compiled.libsl is not None
 
     if expresions is None:
@@ -517,7 +512,10 @@ def compile_transform(
     ode_step_def = "\n    ".join(
         [
             "def transform(t, y, p, out):",
-            *(assignment("out", str(i), translate(eq, libpythoncode)) for i, eq in enumerate(deqs.values())),
+            *(
+                assignment("out", str(i), translate(eq, libpythoncode))
+                for i, eq in enumerate(deqs.values())
+            ),
             "return out",
         ]
     )
