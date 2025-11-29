@@ -113,7 +113,7 @@ class Normalizer(dict):
     def __init__(self, func):
         self.func = func
 
-    def get(self, key, default):
+    def get(self, key, default=None):
         if isinstance(key, Node):
             return self.func(key)
         return key
@@ -192,14 +192,14 @@ def parameter_table(
     return make_latex_table(rows=parameters, headers=headers)
 
 
-def varaible_table(
+def variable_table(
     model: type[System], transform: dict | None = None, descriptions: dict | None = None
 ) -> Latex:
     transform = transform if transform is not None else {}
     latex = ToLatex(model, transform=transform)
     variables = latex.yield_variables(descriptions=descriptions)
 
-    if descriptions is None:
+    if descriptions is not None:
         headers = ["Variable", "Default", "Derivative", "Description"]
     else:
         headers = ["Variable", "Default", "Derivative"]
@@ -304,7 +304,7 @@ def make_model_report(
      """)
 
     report.write(
-        varaible_table(model=model, transform=transform, descriptions=descriptions)
+        variable_table(model=model, transform=transform, descriptions=descriptions)
     )
     report.write(
         """
