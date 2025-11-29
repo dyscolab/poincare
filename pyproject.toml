@@ -25,7 +25,7 @@ dependencies = [
   "pint",
   "pint-pandas",
   "scipy",
-  "symbolite", # >= 0.6.0, < 0.7",
+  "symbolite>=0.8",
   "tabulate",
   "typing_extensions",
   "scipy-events >= 0.3.1",
@@ -45,8 +45,11 @@ requires = ["uv_build>=0.9,<0.10"]
 build-backend = "uv_build"
 
 [tool.pytest.ini_options]
-addopts = "--import-mode=importlib"
+addopts = "--import-mode=importlib --doctest-modules"
 pythonpath = "."
+testpaths = ["src/poincare/tests"]
+doctest_optionflags = "NUMBER"
+filterwarnings = "ignore:No libsl provided, defaulting to Python standard library."
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -76,6 +79,8 @@ lint = { features = ["lint"], no-default-feature = true }
 build = { features = ["build"], no-default-feature = true }
 test-py312 = ["test", "py312"]
 test-py313 = ["test", "py313"]
+# test-py314 = ["test", "py314"]
+
 
 [tool.pixi.dependencies]
 numpy = "*"
@@ -122,7 +127,6 @@ jax = "*"
 
 [tool.pixi.feature.test.pypi-dependencies]
 poincare = { path = ".", editable = true }
-symbolite = { path = "../symbolite", editable = true }
 
 [tool.pixi.feature.test.tasks]
 test = "pytest --doctest-modules"
@@ -130,3 +134,4 @@ test = "pytest --doctest-modules"
 [tool.pixi.feature]
 py312.dependencies = { python = "3.12.*" }
 py313.dependencies = { python = "3.13.*" }
+# py314.dependencies = { python = "3.14.*" }
