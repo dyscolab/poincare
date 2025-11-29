@@ -254,9 +254,7 @@ class Autoperiod:
         self._return_multi = return_multi
         self._acf_hill_steepness = acf_hill_steepness
 
-    def __call__(
-        self, data: np.ndarray
-    ) -> tuple[list[int], bool] | tuple[int, bool]:
+    def __call__(self, data: np.ndarray) -> tuple[list[int], bool] | tuple[int, bool]:
         """Estimate the period length of a time series.
 
         Parameters

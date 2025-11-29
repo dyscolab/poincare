@@ -10,6 +10,7 @@ from symbolite.ops import translate
 if TYPE_CHECKING:
     from .types import Derivative
 
+
 def register_with_pint[T](cls: T) -> T:
     """Register type with Pint to  to return NotImplemented
     on methods that can be reflected, such as __add__,
