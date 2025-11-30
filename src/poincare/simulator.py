@@ -29,6 +29,7 @@ from .compile import (
 )
 from .period_methods import autoperiod, fft_peak
 from .types import (
+    Array1d,
     Constant,
     Derivative,
     Initial,
@@ -48,13 +49,13 @@ Components = Constant | Parameter | Variable | Derivative
 class Problem:
     rhs: RHS
     t: tuple[float, float]
-    y: Sequence[Number]
-    p: Sequence[Number]
+    y: Array1d
+    p: Array1d
     transform: Transform
-    scale: Sequence[Number | pint.Quantity]
+    scale: Sequence[Number | pint.Quantity[Any]]
 
 
-def rescale(q: Number | pint.Quantity) -> Number:
+def rescale(q: Number | pint.Quantity[Any]) -> Number:
     if isinstance(q, pint.Quantity):
         return q.to_base_units().magnitude
     else:
@@ -356,9 +357,11 @@ class SteadyState:
         factor: float = 1,
     ):
         if atol is None:
-            atol = factor * self.solver.atol
+            # TODO: what if atol is an array. Using min or max?
+            atol: float = factor * self.solver.atol
         if rtol is None:
-            rtol = factor * self.solver.rtol
+            # TODO: what if rtol is an array. Using min or max?
+            rtol: float = factor * self.solver.rtol
 
         up, down = "up", "down"
         df = self.sweep_up_and_down(
@@ -414,6 +417,9 @@ class Oscillations:
             for var in used_vars
         ]
         output = [x for t in output_tuples for x in t]
+
+        # TODO: what are these two outputs? Are we sure that len() == 2
+
         return output
 
     def sweep(
@@ -437,7 +443,7 @@ class Oscillations:
         if variables is None:
             used_vars = list(sim.model.variables.index)
         elif isinstance(variables, Iterable):
-            used_vars = variables
+            used_vars = list(variables)
         else:
             used_vars = [variables]
         if len(used_vars) > 1:
@@ -490,6 +496,7 @@ class Oscillations:
         except KeyError:
             raise KeyError(f"{method} is  not a valid method")
         # fft of result normalized by its mean
+        series = np.asarray(series)
         data = (series - np.mean(series))[int(np.ceil(T_r / timestep)) :]
         T, verified = period_finder(data, timestep)
         if not verified:
@@ -522,4 +529,4 @@ class Oscillations:
 
 
 def mean_quad_dif(series1: Iterable[float], series2: Iterable[float]) -> float:
-    return np.sqrt(np.mean((series1 - series2) ** 2))
+    return np.sqrt(np.mean((np.asarray(series1) - np.asarray(series2)) ** 2))

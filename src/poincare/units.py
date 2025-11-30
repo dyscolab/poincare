@@ -54,7 +54,7 @@ def check_equations_units(lhs: Derivative, rhs):
     else:
         return
 
-    value / time ** (lhs.order - order) - rhs  # check units
+    _ = value / time ** (lhs.order - order) - rhs  # check units
     return
 
 
@@ -63,7 +63,7 @@ def check_units(var, value):
     rhs = try_eval_units(value)
 
     if lhs is not None and rhs is not None:
-        lhs - rhs  # must have same units
+        _ = lhs - rhs  # must have same units
         return
 
 

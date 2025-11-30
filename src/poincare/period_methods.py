@@ -2,19 +2,29 @@ from __future__ import annotations
 
 import sys
 import warnings
-from typing import Any
+from typing import Any, Protocol
 
 import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.tsa.stattools
 from matplotlib.patches import Rectangle
 from scipy.fft import fft, fftfreq
-from scipy.optimize import minimize_scalar
+from scipy.optimize import OptimizeResult, minimize_scalar
 from scipy.signal import periodogram
 from scipy.stats import linregress
 
+from .types import Array1d
 
-def number_peaks(data: np.ndarray, n: int) -> int:
+
+class LinregressResult(Protocol):
+    slope: float
+    intercept: float
+
+
+# TODO: create a folder to store all analysis methods (periods, steady state, scannin parameters, et)
+
+
+def number_peaks(data: Array1d, n: int) -> int:
     """Determines the period size based on the number of peaks. This method is based on
     tsfresh's implementation of the same name:
     :func:`~tsfresh.feature_extraction.feature_calculators.number_peaks`.
@@ -70,7 +80,7 @@ def number_peaks(data: np.ndarray, n: int) -> int:
     return data.shape[0] // n_peaks
 
 
-def _roll(a: np.ndarray, shift: int) -> np.ndarray:
+def _roll(a: Array1d, shift: int) -> Array1d:
     """Exact copy of tsfresh's ``_roll``-implementation:
     https://github.com/blue-yonder/tsfresh/blob/611e04fb6f7b24f745b4421bbfb7e986b1ec0ba1/tsfresh/feature_extraction/feature_calculators.py#L49  # noqa: E501
 
@@ -100,7 +110,7 @@ def _roll(a: np.ndarray, shift: int) -> np.ndarray:
 
 
 def autoperiod(
-    data: np.ndarray,
+    data: Array1d,
     timestep: float,
     *,
     pt_n_iter: int = 100,
@@ -164,7 +174,7 @@ def autoperiod(
     --------
     `<https://epubs.siam.org/doi/epdf/10.1137/1.9781611972757.40>`_ : Paper reference
     """
-    result, verified = Autoperiod(  # type: ignore
+    result, verified = Autoperiod(
         pt_n_iter=pt_n_iter,
         random_state=random_state,
         detrend=detrend,
@@ -176,7 +186,8 @@ def autoperiod(
         return_multi=1,
     )(data)
 
-    return result * timestep if result > 0 else -1, verified
+    # TODO: there is something wrong here. What does it mean the result return and int?
+    return (result * timestep if result > 0 else -1, verified)
 
 
 class Autoperiod:
@@ -249,12 +260,12 @@ class Autoperiod:
         self._detrend = detrend
         self._use_np_fb = use_number_peaks_fallback
         self._np_n = number_peaks_n
-        self._trend: np.ndarray | None = None
-        self._orig_data: np.ndarray | None = None
+        self._trend: Array1d | None = None
+        self._orig_data: Array1d | None = None
         self._return_multi = return_multi
         self._acf_hill_steepness = acf_hill_steepness
 
-    def __call__(self, data: np.ndarray) -> tuple[list[int], bool] | tuple[int, bool]:
+    def __call__(self, data: Array1d) -> tuple[list[int], bool] | tuple[int, bool]:
         """Estimate the period length of a time series.
 
         Parameters
@@ -271,7 +282,7 @@ class Autoperiod:
         if self._detrend:
             self._print("Detrending")
             index = np.arange(data.shape[0])
-            trend_fit = linregress(index, data)
+            trend_fit: LinregressResult = linregress(index, data)  # type: ignore
             if trend_fit.slope > 1e-4:
                 trend = trend_fit.intercept + index * trend_fit.slope
                 if self._plot:
@@ -319,10 +330,11 @@ class Autoperiod:
             return int(periods[0]), verified
 
     def _print(self, msg: str, level: int = 1) -> None:
+        # TODO: Do not use print, use warning and or logging
         if self._verbosity >= level:
             print("  " * (level - 1) + msg, file=sys.stderr)
 
-    def _power_threshold(self, data: np.ndarray) -> float:
+    def _power_threshold(self, data: Array1d) -> float:
         n_iter = self._pt_n_iter
         percentile = 1 - 1 / n_iter
         self._print(
@@ -342,7 +354,7 @@ class Autoperiod:
         return max_powers[-1]
 
     def _candidate_periods(
-        self, data: np.ndarray, p_threshold: float
+        self, data: Array1d, p_threshold: float
     ) -> list[tuple[int, float, float]]:
         N = data.shape[0]
         f, p_den = periodogram(data)
@@ -406,14 +418,16 @@ class Autoperiod:
         return period_hints
 
     def _verify(
-        self, data: np.ndarray, period_hints: list[tuple[int, float, float]]
+        self, data: Array1d, period_hints: list[tuple[int, float, float]]
     ) -> tuple[list[int], bool]:
         # produces wrong acf:
         # acf = fftconvolve(data, data[::-1], 'full')[data.shape[0]:]
         # acf = acf / np.max(acf)
 
+        # TODO: can we remove the statsmodels dependency by using the acf from numpy or scipy?
         acf = statsmodels.tsa.stattools.acf(data, fft=True, nlags=data.shape[0])
 
+        assert isinstance(acf, np.ndarray)
         index = np.arange(acf.shape[0])
         N = data.shape[0]
         ranges = []
@@ -446,8 +460,10 @@ class Autoperiod:
             def two_segment(t: float, args: list[np.ndarray]) -> float:
                 x, y = args
                 t = int(np.round(t))
-                slope1 = linregress(x[:t], y[:t])
-                slope2 = linregress(x[t:], y[t:])
+                # TODO: rename slope1 and slope2 for something less confusing
+                # TODO: remove type ignore when linregress returns the right type
+                slope1: LinregressResult = linregress(x[:t], y[:t])  # type: ignore
+                slope2: LinregressResult = linregress(x[t:], y[t:])  # type: ignore
                 slopes[t] = (slope1, slope2)
                 error = np.sum(
                     np.abs(y[:t] - (slope1.intercept + slope1.slope * x[:t]))
@@ -468,6 +484,8 @@ class Autoperiod:
                     "maxiter": 500,
                 },
             )
+
+            assert isinstance(res, OptimizeResult)
             if not res.success:
                 # self._print(f"curve fitting failed ({res.message}) --> INVALID", l=3)
                 # continue
@@ -579,7 +597,8 @@ class Autoperiod:
             return [-1], verified
 
 
-def fft_peak(data, timestep):
+# TODO: What is the purpose of the boolean output.
+def fft_peak(data: Array1d, timestep: float) -> tuple[Any, bool]:
     amplitudes = np.abs(fft(data))
     freqs = fftfreq(len(data), d=timestep)
     return 1 / freqs[np.argmax(amplitudes)], False

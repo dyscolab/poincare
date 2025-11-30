@@ -7,6 +7,7 @@ from types import ModuleType
 from typing import Any, ClassVar, Literal, Self, TypeVar, dataclass_transform, overload
 from typing import get_type_hints as get_annotations
 
+import numpy as np
 import pandas as pd
 import pint
 from symbolite import Real
@@ -31,7 +32,7 @@ class Constant(Node, Real):
         self.default = default
         units.check_units(self, default)
 
-    def _copy_from(self, parent: System):
+    def _copy_from(self, parent: Node):
         return self.__class__(default=substitute(self.default, NodeMapper(parent)))
 
     def __eq__(self, other: Any):
@@ -57,6 +58,7 @@ class Constant(Node, Real):
 
 Number = int | float | complex
 Initial = Number | Constant | pint.Quantity
+Array1d = np.ndarray[tuple[int], np.dtype[np.floating]]
 
 
 def _assign_equation_order(
@@ -87,7 +89,7 @@ class Parameter(Node, Real):
         self.default = default
         units.check_units(self, default)
 
-    def _copy_from(self, parent: System):
+    def _copy_from(self, parent: Node):
         return self.__class__(default=substitute(self.default, NodeMapper(parent)))
 
     def __set__(self, obj, value: Initial | Value):
@@ -140,7 +142,7 @@ class Variable(Node, Real):
     def derive(self, *, initial: Initial | None = None) -> Derivative:
         return Derivative(self, initial=initial, order=1)
 
-    def _copy_from(self, parent: System):
+    def _copy_from(self, parent: Node):
         mapper = NodeMapper(parent)
         copy = self.__class__(initial=substitute(self.initial, mapper))
         for order, der in self.derivatives.items():
@@ -340,7 +342,7 @@ class Equation(Node):
         super().__set_name__(cls, name)
         _assign_equation_order(variable=self.lhs.variable, order=self.lhs.order)
 
-    def _copy_from(self, parent: System):
+    def _copy_from(self, parent: Node):
         mapper = NodeMapper(parent)
         variable = mapper.get(self.lhs.variable)
         lhs = Derivative(variable, order=self.lhs.order)
@@ -366,7 +368,7 @@ class EquationGroup(Node):
         for eq in self.equations:
             _assign_equation_order(variable=eq.lhs.variable, order=eq.lhs.order)
 
-    def _copy_from(self, parent: System):
+    def _copy_from(self, parent: Node):
         return self.__class__(*(eq._copy_from(parent) for eq in self.equations))
 
     def __hash__(self) -> int:
@@ -409,7 +411,7 @@ class Independent(Node, Real):
         self.default = default
         units.check_units(self, default)
 
-    def _copy_from(self, parent: System):
+    def _copy_from(self, parent: Node):
         return self.__class__(default=substitute(self.default, NodeMapper(parent)))
 
     def __get__(self, obj: System | None, cls):
@@ -622,7 +624,7 @@ class System(Node, metaclass=EagerNamer):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-    def _copy_from(self, parent: System):
+    def _copy_from(self, parent: Node):
         # Create a new instance by replacing previous arguments,
         # which were saved in self._kwargs,
         # with the ones from the corresponding instance

@@ -100,7 +100,7 @@ def get_libsl(backend: Backend) -> ModuleType:
             assert_never(backend, message="Unknown backend {}")
 
 
-def eqsum(eqs: list[ExprRHS]) -> real.NumberT | real.Real:
+def eqsum(eqs: list[ExprRHS]) -> real.NumberT | real.Real | ExprRHS:
     if len(eqs) == 0:
         return 0
     elif len(eqs) == 1:
@@ -216,12 +216,14 @@ def build_equation_maps(
         if not isinstance(symbol, real.Real):
             return
 
+        # TODO: it would be good to document this in a highlevel manner
         for named in yield_named(symbol):
             if isinstance(named, Independent):
                 independent.add(named)
             elif isinstance(named, Variable):
                 if named.equation_order is None:
                     if equation:
+                        # TODO: Why is this here Would it make sense to cast it to parameter?
                         parameters.add(named)
                     add_to_initials(named, named.initial)
                 else:
@@ -237,6 +239,7 @@ def build_equation_maps(
                 process_symbol(named.default, equation=equation)
                 add_to_initials(named, named.default)
             elif isinstance(named, Constant | Parameter):
+                # TODO: Why is this here Would it make sense to cast it to parameter?
                 if equation:
                     parameters.add(named)
                 add_to_initials(named, named.default)
@@ -257,7 +260,8 @@ def build_equation_maps(
 
     root = {time, *variables, *parameters}
     for v in variables:
-        root.update(v.derivatives[order] for order in range(1, v.equation_order))
+        if v.equation_order is not None:
+            root.update(v.derivatives[order] for order in range(1, v.equation_order))
 
     def is_root(x):
         if isinstance(x, Number | pint.Quantity):
@@ -487,7 +491,7 @@ def compile_transform(
         is_root=is_root,
         is_dependency=lambda x: isinstance(x, Node),
     )
-    expresions = {k: content[k] for k in expresions}
+    content_in_expresions = {k: content[k] for k in expresions}
 
     mapping: Mapping = vector_mapping(
         compiled.independent[0],
@@ -508,7 +512,7 @@ def compile_transform(
 
         raise ValueError(k)
 
-    deqs = {k: substitute(v, mapping) for k, v in expresions.items()}
+    deqs = {k: substitute(v, mapping) for k, v in content_in_expresions.items()}
     ode_step_def = "\n    ".join(
         [
             "def transform(t, y, p, out):",
@@ -522,7 +526,7 @@ def compile_transform(
     lm = symbolite_compile(ode_step_def, compiled.libsl)
     return Compiled(
         func=lm["transform"],
-        output=expresions,
+        output=content_in_expresions,
         independent=compiled.independent,
         variables=compiled.variables,
         parameters=compiled.parameters,

@@ -10,6 +10,8 @@ from numpy.typing import NDArray
 from scipy import integrate
 from scipy_events import Events, solve_ivp
 
+from .types import Array1d
+
 if TYPE_CHECKING:
     from .simulator import Problem
 
@@ -27,21 +29,27 @@ _cache = weakref.WeakKeyDictionary()
 
 
 class Solver(Protocol):
+    @property
+    def atol(self) -> float | Array1d: ...
+
+    @property
+    def rtol(self) -> float | Array1d: ...
+
     def __call__(
         self,
         problem: Problem,
         *,
-        save_at: NDArray | None = None,
+        save_at: Array1d | None = None,
         events: Sequence[Events] = (),
     ) -> Solution: ...
 
 
 @dataclass
 class Solution:
-    t: NDArray
-    y: NDArray
-    t_events: Sequence[NDArray] = ()
-    y_events: Sequence[NDArray] = ()
+    t: Array1d
+    y: Array1d
+    t_events: Sequence[Array1d] = ()
+    y_events: Sequence[Array1d] = ()
 
 
 def _solve_ivp_scipy(

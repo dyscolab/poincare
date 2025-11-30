@@ -2,12 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from types import UnionType
-from typing import Self, TypeVar
+from typing import Self
 
 from ._utils import class_and_instance_method
-
-T = TypeVar("T")
-
 
 type _ClassInfo = type | UnionType | tuple["_ClassInfo", ...]
 
@@ -81,7 +78,7 @@ class Node:
         return str(self) == str(other)
 
     @class_and_instance_method
-    def _yield(
+    def _yield[T](
         self,
         type: type[T],
         /,
@@ -108,7 +105,7 @@ class NodeMapper:
         self.obj = obj
         self.cls = obj.__class__
 
-    def get(self, item: T, default: T | None = None) -> T:
+    def get[T](self, item: T, default: T | None = None) -> T:
         if not isinstance(item, Node):
             return item
 
