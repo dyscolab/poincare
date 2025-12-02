@@ -13,15 +13,13 @@ from scipy.optimize import OptimizeResult, minimize_scalar
 from scipy.signal import periodogram
 from scipy.stats import linregress
 
-from .types import Array1d
+from ..types import Array1d
+from .._utils import logger
 
 
 class LinregressResult(Protocol):
     slope: float
     intercept: float
-
-
-# TODO: create a folder to store all analysis methods (periods, steady state, scannin parameters, et)
 
 
 def number_peaks(data: Array1d, n: int) -> int:
@@ -119,7 +117,7 @@ def autoperiod(
     use_number_peaks_fallback: bool = False,
     number_peaks_n: int = 100,
     acf_hill_steepness: float = 0.0,
-) -> tuple[int, bool]:
+) -> tuple[float, bool]:
     """AUTOPERIOD method calculates the period in a two-step process. First, it
     extracts candidate periods from the periodogram (using an automatically
     determined power threshold, see ``pt_n_iter`` parameter). Then, it uses the circular
@@ -186,7 +184,6 @@ def autoperiod(
         return_multi=1,
     )(data)
 
-    # TODO: there is something wrong here. What does it mean the result return and int?
     return (result * timestep if result > 0 else -1, verified)
 
 
@@ -265,7 +262,7 @@ class Autoperiod:
         self._return_multi = return_multi
         self._acf_hill_steepness = acf_hill_steepness
 
-    def __call__(self, data: Array1d) -> tuple[list[int], bool] | tuple[int, bool]:
+    def __call__(self, data: Array1d) -> tuple[int, bool]:
         """Estimate the period length of a time series.
 
         Parameters
@@ -280,7 +277,7 @@ class Autoperiod:
             only the most dominant period is returned.
         """
         if self._detrend:
-            self._print("Detrending")
+            logger.debug("Detrending")
             index = np.arange(data.shape[0])
             trend_fit: LinregressResult = linregress(index, data)  # type: ignore
             if trend_fit.slope > 1e-4:
@@ -289,58 +286,54 @@ class Autoperiod:
                     self._trend = trend
                     self._orig_data = data
                 data = data - trend
-                self._print(
+                logger.debug(
                     f"removed trend with slope {trend_fit.slope:.6f} "
                     f"and intercept {trend_fit.intercept:.4f}",
-                    level=2,
                 )
             else:
-                self._print(
+                logger.debug(
                     f"skipping detrending because slope ({trend_fit.slope:.6f}) "
                     f"is too shallow (< 1e-4)",
-                    level=2,
                 )
-                self._print(f"removing remaining mean ({data.mean():.4f})", level=2)
+                logger.debug(f"removing remaining mean ({data.mean():.4f})")
                 data = data - data.mean()
 
         if self._verbosity > 1:
-            self._print("Determining power threshold")
+            logger.debug("Determining power threshold")
         p_threshold = self._power_threshold(data)
-        self._print(f"Power threshold: {p_threshold:.6f}")
+        logger.debug(f"Power threshold: {p_threshold:.6f}")
 
         if self._verbosity > 1:
-            self._print("\nDiscovering candidate periods (hints) from periodogram")
+            logger.debug("\nDiscovering candidate periods (hints) from periodogram")
         period_hints = self._candidate_periods(data, p_threshold)
-        self._print(f"{len(period_hints)} candidate periods (hints)")
+        logger.debug(f"{len(period_hints)} candidate periods (hints)")
 
         if self._verbosity > 1:
-            self._print("\nVerifying hints using ACF")
+            logger.debug("\nVerifying hints using ACF")
         periods, verified = self._verify(data, period_hints)
 
         if len(periods) < 1 or periods[0] <= 1 and self._use_np_fb:
-            self._print(
+            logger.debug(
                 f"\nDetected invalid period ({periods}), "
                 f"falling back to number_peaks method"
             )
             periods = [number_peaks(data, n=self._np_n)]
-        self._print(f"Periods are {periods}")
+        logger.debug(f"Periods are {periods}")
         if self._return_multi > 1:
             return periods[: self._return_multi], verified
         else:
             return int(periods[0]), verified
 
     def _print(self, msg: str, level: int = 1) -> None:
-        # TODO: Do not use print, use warning and or logging
         if self._verbosity >= level:
             print("  " * (level - 1) + msg, file=sys.stderr)
 
     def _power_threshold(self, data: Array1d) -> float:
         n_iter = self._pt_n_iter
         percentile = 1 - 1 / n_iter
-        self._print(
+        logger.debug(
             f"determined confidence interval as {percentile} "
-            f"(using {n_iter} iterations)",
-            level=2,
+            f"(using {n_iter} iterations)"
         )
         max_powers = []
         values = data.copy()
@@ -366,9 +359,8 @@ class Autoperiod:
         # print("frequency:", f)  # between 0 and 0.5
         # print("period:", N/k)
 
-        self._print(
-            f"inspecting periodogram between 2 and {N // 2} (frequencies 0 and 0.5)",
-            level=2,
+        logger.debug(
+            f"inspecting periodogram between 2 and {N // 2} (frequencies 0 and 0.5)"
         )
         period_candidates: dict[int, tuple[int, float, float]] = {}
         removed_hints = 0
@@ -377,23 +369,21 @@ class Autoperiod:
                 period = N // k[i]
                 if period not in period_candidates:
                     period_candidates[period] = (k[i], f[i], p_den[i])
-                    self._print(
+                    logger.debug(
                         f"detected hint at bin k={k[i]} (f={f[i]:.4f}, "
-                        f"power={p_den[i]:.2f})",
-                        level=3,
+                        f"power={p_den[i]:.2f})"
                     )
                 else:
                     removed_hints += 1
-                    self._print(
+                    logger.debug(
                         f"detected hint at bin k={k[i]} (f={f[i]:.4f}, "
                         f"power={p_den[i]:.2f}) - skipped due to duplicated "
-                        f"period ({period})",
-                        level=3,
+                        f"period ({period})"
                     )
         period_hints = list(period_candidates.values())
 
         # start with the highest power frequency:
-        self._print("sorting hints by highest power first", level=2)
+        logger.debug("sorting hints by highest power first")
         period_hints = sorted(period_hints, key=lambda x: x[-1], reverse=True)
 
         if self._plot:
@@ -424,7 +414,8 @@ class Autoperiod:
         # acf = fftconvolve(data, data[::-1], 'full')[data.shape[0]:]
         # acf = acf / np.max(acf)
 
-        # TODO: can we remove the statsmodels dependency by using the acf from numpy or scipy?
+        # Using statsmodels because circular autocorrelation function is needed,
+        # scipy's and numpy's were tested and didn't work as well.
         acf = statsmodels.tsa.stattools.acf(data, fft=True, nlags=data.shape[0])
 
         assert isinstance(acf, np.ndarray)
@@ -439,8 +430,8 @@ class Autoperiod:
         )
         for k, f, power in period_hints:
             if k < 2:
-                self._print(f"processing hint at {N // k}: k={k}, f={f}", level=2)
-                self._print("k < 2 --> INVALID", level=3)
+                logger.debug(f"processing hint at {N // k}: k={k}, f={f}")
+                logger.debug("k < 2 --> INVALID")
                 continue
 
             # determine search interval
@@ -451,23 +442,25 @@ class Autoperiod:
                     begin -= 1
                 if end < N - 1:
                     end += 1
-            self._print(
-                f"processing hint at {N // k}, k={k}: begin={begin}, end={end + 1}",
-                level=2,
+            logger.debug(
+                f"processing hint at {N // k}, k={k}: begin={begin}, end={end + 1}"
             )
             slopes = {}
 
+            # Compute error of approximating acf in vicinity of period hints by two segments
+            # to be determined by linear regression
             def two_segment(t: float, args: list[np.ndarray]) -> float:
                 x, y = args
                 t = int(np.round(t))
-                # TODO: rename slope1 and slope2 for something less confusing
                 # TODO: remove type ignore when linregress returns the right type
-                slope1: LinregressResult = linregress(x[:t], y[:t])  # type: ignore
-                slope2: LinregressResult = linregress(x[t:], y[t:])  # type: ignore
-                slopes[t] = (slope1, slope2)
+                left_slope: LinregressResult = linregress(x[:t], y[:t])  # type: ignore
+                right_slope: LinregressResult = linregress(x[t:], y[t:])  # type: ignore
+                slopes[t] = (left_slope, right_slope)
                 error = np.sum(
-                    np.abs(y[:t] - (slope1.intercept + slope1.slope * x[:t]))
-                ) + np.sum(np.abs(y[t:] - (slope2.intercept + slope2.slope * x[t:])))
+                    np.abs(y[:t] - (left_slope.intercept + left_slope.slope * x[:t]))
+                ) + np.sum(
+                    np.abs(y[t:] - (right_slope.intercept + right_slope.slope * x[t:]))
+                )
                 return error
 
             # print("outer indices", begin, end+1)
@@ -487,7 +480,7 @@ class Autoperiod:
 
             assert isinstance(res, OptimizeResult)
             if not res.success:
-                # self._print(f"curve fitting failed ({res.message}) --> INVALID", l=3)
+                # logger.debug(f"curve fitting failed ({res.message}) --> INVALID")
                 # continue
                 raise ValueError(
                     "Failed to find optimal midway-point for slope-fitting "
@@ -497,7 +490,7 @@ class Autoperiod:
             t = int(np.round(res.x))
             optimal_t = begin + t
             slope = slopes[t]
-            self._print(f"found optimal t: {optimal_t} (t={t})", level=3)
+            logger.debug(f"found optimal t: {optimal_t} (t={t})")
 
             # change from paper: we require a certain hill size to prevent noise
             # influencing our results:
@@ -505,27 +498,24 @@ class Autoperiod:
             rslope = slope[1].slope
             steepness = np.abs(lslope) + np.abs(rslope)
             if lslope < 0 < rslope:
-                self._print("valley detected --> INVALID", level=3)
+                logger.debug("valley detected --> INVALID")
 
             elif steepness < self._acf_hill_steepness:
-                self._print(
+                logger.debug(
                     f"insufficient steepness ({np.abs(slope[0].slope):.4f} and "
-                    f"{np.abs(slope[1].slope):.4f}) --> INVALID",
-                    level=3,
+                    f"{np.abs(slope[1].slope):.4f}) --> INVALID"
                 )
 
             elif lslope > 0 > rslope:
-                self._print(
-                    f"hill detected (steepness={steepness:.4f}) --> VALID", level=3
-                )
+                logger.debug(f"hill detected (steepness={steepness:.4f}) --> VALID")
                 period = begin + np.argmax(acf[begin : end + 1])
-                self._print(f"corrected period (from {N // k}): {period}", level=3)
+                logger.debug(f"corrected period (from {N // k}): {period}")
                 ranges.append((begin, end, optimal_t, period, slope))
                 if self._return_multi <= 1:
                     break
 
             else:
-                self._print("not a hill, but also not a valley --> INVALID", level=3)
+                logger.debug("not a hill, but also not a valley --> INVALID")
 
         warnings.filterwarnings(
             action="default",
@@ -597,8 +587,11 @@ class Autoperiod:
             return [-1], verified
 
 
-# TODO: What is the purpose of the boolean output.
+# Function mainly for debugging purposes, simplest possible period finder
+# to test if problem is with caller ot with method
 def fft_peak(data: Array1d, timestep: float) -> tuple[Any, bool]:
     amplitudes = np.abs(fft(data))
     freqs = fftfreq(len(data), d=timestep)
+
+    # Boolean indicates if the period is verified, expected by caller
     return 1 / freqs[np.argmax(amplitudes)], False

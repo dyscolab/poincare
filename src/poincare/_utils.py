@@ -7,9 +7,14 @@ from typing import (
     TypeVar,
     overload,
 )
+import logging
 
 from symbolite import real
 from symbolite.ops import count_named, substitute, translate
+
+
+# TODO: add logger config
+logger = logging.getLogger("poincare")
 
 
 class class_and_instance_method[S, **P, R]:
