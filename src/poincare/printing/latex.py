@@ -234,51 +234,6 @@ def make_model_report(
     descriptions: dict | None = None,
     standalone=True,
 ):
-    # if standalone:
-    #     report.write("""\\documentclass{article}
-
-    #     \\usepackage{amsmath}
-    #     \\usepackage{float}
-
-    #     \\setcounter{secnumdepth}{0}
-
-    #     \\begin{document}
-    #     """)
-
-    # report.write("""
-    # \\subsection{Equations}
-
-    # """)
-    # report.write("\\[ " + latex_equations(model=model, transform=transform) + " \\]")
-
-    # report.write("""
-
-    # \\subsection{Variables}
-
-    # \\begin{table}[H]
-    # """)
-    # report.write(
-    #     varaible_table(model=model, transform=transform, descriptions=descriptions)
-    # )
-    # report.write("""
-    # \\end{table}
-
-    # """)
-
-    # report.write("""
-    # \\subsection{Parameters}
-
-    # \\begin{table}[H]
-    # """)
-
-    # report.write(
-    #     parameter_table(model=model, transform=transform, descriptions=descriptions)
-    # )
-    # report.write("""
-    # \\end{table}
-
-    # """)
-
     if standalone:
         report.write("""\\documentclass{article}
 

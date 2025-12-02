@@ -472,7 +472,9 @@ class EagerNamer(type):
     _abstract: bool
 
     @classmethod
-    def __prepare__(cls, name, bases: tuple[type, ...], *, abstract: bool = False):
+    def __prepare__(
+        cls, name, bases: tuple[type, ...], *, abstract: bool = False, **kwargs
+    ):
         def is_abstract(x):
             return isinstance(x, cls) and not x._abstract
 
@@ -484,7 +486,7 @@ class EagerNamer(type):
 
         return OwnedNamerDict()
 
-    def __init__(self, name, bases, namespace, *, abstract: bool = False):
+    def __init__(self, name, bases, namespace, *, abstract: bool = False, **kwargs):
         super().__init__(name, bases, namespace)
         self._abstract = abstract
 
