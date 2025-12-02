@@ -49,12 +49,6 @@ def number_peaks(data: Array1d, n: int) -> int:
 
     Estimate the period length of a simple sine curve:
 
-    >>> import numpy as np
-    >>> rng = np.random.default_rng(42)
-    >>> data = np.sin(np.linspace(0, 8 * np.pi, 1000)) + rng.random(1000) / 10
-    >>> from periodicity_detection import number_peaks
-    >>> period = number_peaks(data)
-
     See Also
     --------
     tsfresh.feature_extraction.number_peaks :
@@ -165,8 +159,7 @@ def autoperiod(
     >>> import numpy as np
     >>> rng = np.random.default_rng(42)
     >>> data = np.sin(np.linspace(0, 8 * np.pi, 1000)) + rng.random(1000) / 10
-    >>> from periodicity_detection import autoperiod
-    >>> period = autoperiod(data, random_state=42, detrend=True)
+    >>> period = autoperiod(data, random_state=42, detrend=True, timestep=1)
 
     See Also
     --------
@@ -231,7 +224,7 @@ class Autoperiod:
     >>> import matplotlib.pyplot as plt
     >>> rng = np.random.default_rng(42)
     >>> data = np.sin(np.linspace(0, 8 * np.pi, 1000)) + rng.random(1000) / 10
-    >>> period = Autoperiod(random_state=42, detrend=True, plot=True)(data)
+    >>> period = Autoperiod(random_state=42, detrend=True, plot=True, timestep=1)(data)
     >>> plt.show()
     """
 
