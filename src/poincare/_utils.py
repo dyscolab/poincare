@@ -14,7 +14,7 @@ from symbolite.ops import count_named, substitute, translate
 
 logger = logging.getLogger("poincare")
 
-logging.basicConfig(level="Info")
+logging.basicConfig(level=logging.INFO)
 
 
 class class_and_instance_method[S, **P, R]:
