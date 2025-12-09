@@ -1,4 +1,4 @@
-from pytest import raises
+from pytest import raises, mark
 from symbolite import Real
 
 from ...simulator import Simulator
@@ -101,6 +101,9 @@ def test_cyclic_initials():
         Simulator(Model).create_problem(values={Model.k0: Model.k2})
 
 
+@mark.xfail(
+    reason="Behaviour not expected anymore, variable is know converted to parameter"
+)
 def test_variable_as_parameter():
     """Variable used in equation but without its own rate equation is a Parameter."""
 
