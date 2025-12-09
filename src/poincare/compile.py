@@ -17,6 +17,7 @@ import symbolite.abstract as libabstract
 from symbolite import real, vector
 from symbolite.impl import libpythoncode
 from symbolite.ops import substitute, translate, yield_named
+from symbolite.abstract.lang import Block, Assign
 
 from ._node import Node
 from ._utils import eval_content
@@ -71,7 +72,7 @@ class Compiled[V, F]:
     parameters: Sequence[real.Real]
     mapper: dict[real.Real, Any]
     func: F
-    output: dict[str, ExprRHS]
+    output: dict[str, ExprRHS] | Sequence[Variable]
     libsl: ModuleType | None = None
 
 
@@ -112,17 +113,17 @@ def eqsum(eqs: list[ExprRHS]) -> real.NumberT | real.Real | ExprRHS:
 def vector_mapping(
     time: real.Real,
     variables: Sequence[Variable | Derivative],
-    parameters: Sequence[Parameter],
+    parameters: Sequence[Parameter] | Sequence[real.Real],
     time_varname: str = "t",
     state_varname: str = "y",
     param_varname: str = "p",
-) -> dict[real.Real | Variable | Derivative | Parameter, real.Real]:
+) -> dict[real.Real | Variable | Derivative | Parameter | str, real.Real]:
     t = real.Real(time_varname)
     y = vector.Vector(state_varname)
     p = vector.Vector(param_varname)
-    mapping: dict[real.Real | Parameter | Variable | Derivative, real.Real] = {
-        time: t,
-    }
+    mapping: dict[
+        real.Real | Parameter | Variable | Derivative | str, real.Real | vector.Vector
+    ] = {time: t, "y": y, "p": p, "t": t}
     for i, v in enumerate(variables):
         mapping[v] = y[i]
     for i, v in enumerate(parameters):
@@ -172,9 +173,17 @@ def get_derivative(variable: Variable, order: int) -> Variable | Derivative:
         return Derivative(variable, order=order)
 
 
+def assignment(name: str, index: str, value: str) -> str:
+    return f"{name}[{index}] = {value}"
+
+
+def jax_assignment(name: str, index: str, value: str) -> str:
+    return f"{name} = {name}.at[{index}].set({value})"
+
+
 def build_equation_maps(
     system: System | type[System],
-) -> Compiled[Variable, dict[Derivative, ExprRHS]]:
+) -> Compiled[Variable, tuple[dict[Derivative, ExprRHS], dict[Parameter, ExprRHS]]]:
     """Compiles equations into dicts of equations.
 
     - variables: Variable | Derivative
@@ -268,9 +277,29 @@ def build_equation_maps(
             time = independent.pop()
         case _:
             raise TypeError(f"more than one independent variable found: {independent}")
+    sorted_variables = sorted(variables, key=str)
 
-    root = {time, *variables, *parameters}
-    for v in variables:
+    return Compiled(
+        independent=(time,),
+        variables=sorted_variables,
+        parameters=sorted(parameters, key=str),
+        mapper=initials,
+        func=(equations, algebraic),
+        output=sorted_variables,
+    )
+
+
+def replace_algebraic_equations(
+    maps: Compiled[
+        Variable, tuple[dict[Derivative, ExprRHS], dict[Parameter, ExprRHS]]
+    ],
+) -> Compiled[Variable, dict[Derivative, ExprRHS]]:
+    root = {
+        maps.independent[0],
+        *maps.variables,
+        *maps.parameters,
+    }
+    for v in maps.variables:
         if v.equation_order is not None:
             root.update(v.derivatives[order] for order in range(1, v.equation_order))
 
@@ -283,9 +312,9 @@ def build_equation_maps(
             return False
 
     content = {
-        **initials,
-        **equations,
-        **algebraic,
+        **maps.mapper,
+        **maps.func[0],
+        **maps.func[1],
         **{x: x for x in root},
     }
 
@@ -296,23 +325,20 @@ def build_equation_maps(
         is_dependency=lambda x: isinstance(x, Node),
     )
 
-    equations = {k: content[k] for k in equations.keys()}
-    sorted_variables = sorted(variables, key=str)
+    equations = {k: content[k] for k in maps.func[0].keys()}
     return Compiled(
-        independent=(time,),
-        variables=sorted_variables,
-        parameters=sorted(parameters, key=str),
-        mapper=initials,
+        independent=maps.independent,
+        variables=maps.variables,
+        parameters=maps.parameters,
+        mapper=maps.mapper,
         func=equations,
-        output=sorted_variables,
+        output=maps.output,
     )
 
 
 def build_first_order_symbolic_ode(
-    system: System | type[System],
+    maps: Compiled[Variable, dict[Derivative, ExprRHS]],
 ) -> Compiled[Variable | Derivative, dict[Variable | Derivative, ExprRHS]]:
-    maps = build_equation_maps(system)
-
     # Differential equations
     # Map variable to be derived 1 time to equation.
     # (unlike 'equations' that maps derived variable to equation)
@@ -348,20 +374,9 @@ def build_first_order_symbolic_ode(
     )
 
 
-def assignment(name: str, index: str, value: str) -> str:
-    return f"{name}[{index}] = {value}"
-
-
-def jax_assignment(name: str, index: str, value: str) -> str:
-    return f"{name} = {name}.at[{index}].set({value})"
-
-
 def build_first_order_vectorized_body(
-    system: System | type[System],
-    *,
-    assignment_func: Callable[[str, str, str], str] = assignment,
-) -> Compiled[Variable | Derivative, str]:
-    symbolic = build_first_order_symbolic_ode(system)
+    symbolic: Compiled[Variable | Derivative, dict[Variable | Derivative, ExprRHS]],
+) -> Compiled[Variable | Derivative, Block]:
     mapping: Mapping = vector_mapping(
         symbolic.independent[0],
         symbolic.variables,
@@ -369,29 +384,11 @@ def build_first_order_vectorized_body(
     )
 
     diff_eqs = {k: substitute(v, mapping) for k, v in symbolic.func.items()}
-
-    def to_index(k: str) -> str:
-        try:
-            return str(symbolic.variables.index(k))
-        except ValueError:
-            pass
-
-        try:
-            return str(symbolic.parameters.index(k))
-        except ValueError:
-            pass
-
-        raise ValueError(k)
-
-    ode_step_def = "\n    ".join(
-        [
-            "def ode_step(t, y, p, ydot):",
-            *(
-                assignment_func("ydot", to_index(k), translate(eq, libpythoncode))
-                for k, eq in diff_eqs.items()
-            ),
-            "return ydot",
-        ]
+    dy = vector.Vector("dy")
+    ode_step_block = Block(
+        inputs=(mapping["t"], mapping["y"], mapping["p"], dy),
+        lines=tuple(Assign(dy[i], expr) for i, expr in enumerate(diff_eqs.values())),
+        outputs=(dy,),
     )
 
     return Compiled(
@@ -399,52 +396,36 @@ def build_first_order_vectorized_body(
         variables=symbolic.variables,
         parameters=symbolic.parameters,
         mapper=symbolic.mapper,
-        func=ode_step_def,
+        func=ode_step_block,
         output=symbolic.output,
     )
 
 
-def build_first_order_functions(
-    system: System | type[System],
-    libsl: ModuleType,
-    optimizer: Callable[[RHS], RHS] = identity,
-    assignment_func: Callable[[str, str, str], str] = assignment,
+def compile_diffeq(
+    vectorized: Compiled[Variable | Derivative, Block],
+    backend: Backend,
 ) -> Compiled[Variable | Derivative, RHS]:
-    vectorized = build_first_order_vectorized_body(
-        system, assignment_func=assignment_func
-    )
-    lm = symbolite_compile(vectorized.func, libsl)
+    libsl = get_libsl(backend)
+    func = translate(vectorized.func, libsl=libsl)
     return Compiled(
         independent=vectorized.independent,
         variables=vectorized.variables,
         parameters=vectorized.parameters,
         mapper=vectorized.mapper,
-        func=optimizer(lm["ode_step"]),
+        func=func,
         output=vectorized.output,
         libsl=libsl,
     )
 
 
-def compile_diffeq(
-    system: System | type[System],
-    backend: Backend,
-) -> Compiled[Variable | Derivative, RHS]:
-    libsl = get_libsl(backend)
-
-    optimizer_fun = identity
-    assignment_fun = assignment
-    match backend:
-        case "numba":
-            import numba
-
-            optimizer_fun = numba.njit
-        case "jax":
-            import jax
-
-            optimizer_fun = jax.jit
-            assignment_fun = jax_assignment
-
-    return build_first_order_functions(system, libsl, optimizer_fun, assignment_fun)
+class SystemCompiler:
+    def __init__(self, system: System | type[System], backend: Backend):
+        self.system = system
+        self.equation_maps = build_equation_maps(system=self.system)
+        self.no_algebraics = replace_algebraic_equations(maps=self.equation_maps)
+        self.symbolic = build_first_order_symbolic_ode(maps=self.no_algebraics)
+        self.vectorized = build_first_order_vectorized_body(symbolic=self.symbolic)
+        self.compiled = compile_diffeq(vectorized=self.vectorized, backend=backend)
 
 
 def assert_never(arg: Never, *, message: str) -> Never:
@@ -510,33 +491,17 @@ def compile_transform(
         compiled.parameters,
     )
 
-    def to_index(k: str) -> str:
-        try:
-            return str(compiled.variables.index(k))
-        except ValueError:
-            pass
-
-        try:
-            return str(compiled.parameters.index(k))
-        except ValueError:
-            pass
-
-        raise ValueError(k)
-
     deqs = {k: substitute(v, mapping) for k, v in content_in_expresions.items()}
-    ode_step_def = "\n    ".join(
-        [
-            "def transform(t, y, p, out):",
-            *(
-                assignment("out", str(i), translate(eq, libpythoncode))
-                for i, eq in enumerate(deqs.values())
-            ),
-            "return out",
-        ]
+    out = vector.Vector("out")
+    print(deqs)
+    transform_block = Block(
+        inputs=(mapping["t"], mapping["y"], mapping["p"], out),
+        lines=tuple(Assign(out[i], expr) for i, expr in enumerate(deqs.values())),
+        outputs=(out,),
     )
-    lm = symbolite_compile(ode_step_def, compiled.libsl)
+    func = translate(transform_block, compiled.libsl)
     return Compiled(
-        func=lm["transform"],
+        func=func,
         output=content_in_expresions,
         independent=compiled.independent,
         variables=compiled.variables,

@@ -21,9 +21,9 @@ from .compile import (
     RHS,
     Backend,
     Transform,
-    compile_diffeq,
-    compile_transform,
     depends_on_at_least_one_variable_or_time,
+    SystemCompiler,
+    compile_transform,
 )
 from .types import (
     Array1d,
@@ -78,7 +78,8 @@ class Simulator:
         transform: Sequence[Value] | Mapping[Hashable, Value] | None = None,
     ):
         self.model = system
-        self.compiled = compile_diffeq(system, backend)
+        compiler = SystemCompiler(self.model, backend=backend)
+        self.compiled = compiler.compiled
         self.transform = self._compile_transform(transform)
 
     def _compile_transform(

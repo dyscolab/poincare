@@ -3,8 +3,6 @@ environments:
   build:
     channels:
     - url: https://prefix.dev/conda-forge/
-    options:
-      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -25,8 +23,6 @@ environments:
   default:
     channels:
     - url: https://prefix.dev/conda-forge/
-    options:
-      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -535,8 +531,6 @@ environments:
   lint:
     channels:
     - url: https://prefix.dev/conda-forge/
-    options:
-      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -677,8 +671,6 @@ environments:
   test-py312:
     channels:
     - url: https://prefix.dev/conda-forge/
-    options:
-      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -1187,8 +1179,6 @@ environments:
   test-py313:
     channels:
     - url: https://prefix.dev/conda-forge/
-    options:
-      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -6635,8 +6625,6 @@ packages:
   version: 0.6.3
   build: pyh4616a5c_0
   subdir: noarch
-  variants:
-    target_platform: noarch
   depends:
   - numpy
   - pandas
