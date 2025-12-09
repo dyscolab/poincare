@@ -224,7 +224,7 @@ class Autoperiod:
     >>> import matplotlib.pyplot as plt
     >>> rng = np.random.default_rng(42)
     >>> data = np.sin(np.linspace(0, 8 * np.pi, 1000)) + rng.random(1000) / 10
-    >>> period = Autoperiod(random_state=42, detrend=True, plot=True, timestep=1)(data)
+    >>> period = Autoperiod(random_state=42, detrend=True, plot=True)(data)
     >>> plt.show()
     """
 
@@ -445,7 +445,6 @@ class Autoperiod:
             def two_segment(t: float, args: list[np.ndarray]) -> float:
                 x, y = args
                 t = int(np.round(t))
-                # TODO: remove type ignore when linregress returns the right type
                 left_slope: LinregressResult = linregress(x[:t], y[:t])  # type: ignore
                 right_slope: LinregressResult = linregress(x[t:], y[t:])  # type: ignore
                 slopes[t] = (left_slope, right_slope)

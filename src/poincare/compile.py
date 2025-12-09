@@ -213,19 +213,25 @@ def build_equation_maps(
                 add_to_initials(named, named.default)
 
     def process_symbol(symbol, *, equation: bool):
+        """
+        Extracts components from equations, adds them to sets for each type (Independent, Parameter, Variable)
+        and adds their default initials to initials. Components not in equations are just added to initials.
+        """
         if not isinstance(symbol, real.Real):
             return
 
-        # TODO: it would be good to document this in a highlevel manner
         for named in yield_named(symbol):
             if isinstance(named, Independent):
                 independent.add(named)
             elif isinstance(named, Variable):
                 if named.equation_order is None:
                     if equation:
-                        # TODO: Why is this here Would it make sense to cast it to parameter?
-                        parameters.add(named)
-                    add_to_initials(named, named.initial)
+                        new_parameter = Parameter(default=named.initial)
+                        new_parameter.__set_name__(named.parent, named.name)
+                        parameters.add(new_parameter)
+                        add_to_initials(new_parameter, named.initial)
+                    else:
+                        add_to_initials(named, named.initial)
                 else:
                     if equation:
                         variables.add(named)
@@ -239,9 +245,14 @@ def build_equation_maps(
                 process_symbol(named.default, equation=equation)
                 add_to_initials(named, named.default)
             elif isinstance(named, Constant | Parameter):
-                # TODO: Why is this here Would it make sense to cast it to parameter?
                 if equation:
-                    parameters.add(named)
+                    if isinstance(named, Constant):
+                        new_parameter = Parameter(default=named.default)
+                        new_parameter.__set_name__(named.parent, named.name)
+                        parameters.add(new_parameter)
+                        add_to_initials(new_parameter, named.default)
+                    else:
+                        parameters.add(named)
                 add_to_initials(named, named.default)
 
     for derivative, eq in equations.items():
