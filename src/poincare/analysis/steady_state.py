@@ -5,13 +5,12 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
-
-from numpy.typing import ArrayLike, NDArray
-from scipy_events import Event, Events, SmallDerivatives
+from numpy.typing import NDArray
+from scipy_events import Event, SmallDerivatives
 from scipy_events.typing import Condition
 
-from ..simulator import Simulator, Components
 from .. import solvers
+from ..simulator import Components, Simulator
 from ..types import (
     Initial,
 )

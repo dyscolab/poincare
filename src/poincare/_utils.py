@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from collections.abc import Callable, Hashable, Iterator, Mapping
 from types import MethodType, ModuleType
@@ -7,11 +8,9 @@ from typing import (
     TypeVar,
     overload,
 )
-import logging
 
 from symbolite import real
 from symbolite.ops import count_named, substitute, translate
-
 
 logger = logging.getLogger("poincare")
 

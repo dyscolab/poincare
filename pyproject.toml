@@ -74,17 +74,15 @@ python = ".pixi/envs/default"
 [tool.pixi.workspace]
 channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64", "osx-arm64", "win-64"]
+preview = ["pixi-build"]
 
-[tool.pixi.environments]
-default = ["test", "py312"]
-lint = { features = ["lint"], no-default-feature = true }
-build = { features = ["build"], no-default-feature = true }
-test-py312 = ["test", "py312"]
-test-py313 = ["test", "py313"]
-# test-py314 = ["test", "py314"]
+[tool.pixi.package.build]
+backend = { name = "pixi-build-python", version = "0.4.*" }
 
+[tool.pixi.package.host-dependencies]
+uv = "*"
 
-[tool.pixi.dependencies]
+[tool.pixi.package.run-dependencies]
 numpy = "*"
 pandas = "*"
 pint = "*"
@@ -95,6 +93,19 @@ typing_extensions = "*"
 symbolite = ">=0.8"
 scipy-events = ">=0.3.1"
 pytest = ">=8.4.0,<9"
+statsmodels = "*"
+matplotlib = "*"
+
+[tool.pixi.environments]
+default = ["test", "py312"]
+lint = { features = ["lint"], no-default-feature = true }
+build = { features = ["build"], no-default-feature = true }
+test-py312 = ["test", "py312"]
+test-py313 = ["test", "py313"]
+# test-py314 = ["test", "py314"]
+
+[tool.pixi.dependencies]
+poincare = { path = "." }
 
 [tool.pixi.feature.lint.dependencies]
 pre-commit = "*"
@@ -126,9 +137,6 @@ sympy = "*"
 
 [tool.pixi.feature.test.target.unix.dependencies]
 jax = "*"
-
-[tool.pixi.feature.test.pypi-dependencies]
-poincare = { path = ".", editable = true }
 
 [tool.pixi.feature.test.tasks]
 test = "pytest --doctest-modules"

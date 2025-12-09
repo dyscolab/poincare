@@ -2,19 +2,16 @@ from __future__ import annotations
 
 import numbers
 from collections import ChainMap
-from collections.abc import Callable, Hashable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Hashable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
-from warnings import warn
-from itertools import chain
 
 import numpy as np
 import pandas as pd
 import pint
 import pint_pandas
-from numpy.typing import ArrayLike, NDArray
-from scipy_events import Event, Events, SmallDerivatives
-from scipy_events.typing import Condition
+from numpy.typing import ArrayLike
+from scipy_events import Events
 from symbolite.core.value import Value
 
 from . import solvers
@@ -28,7 +25,6 @@ from .compile import (
     compile_transform,
     depends_on_at_least_one_variable_or_time,
 )
-from .analysis.period_methods import autoperiod, fft_peak
 from .types import (
     Array1d,
     Constant,

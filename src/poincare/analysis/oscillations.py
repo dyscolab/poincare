@@ -1,22 +1,16 @@
 from __future__ import annotations
 
-
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from warnings import warn
 from itertools import chain
+from warnings import warn
 
 import numpy as np
 import pandas as pd
 
-from numpy.typing import ArrayLike, NDArray
-from scipy_events import Event, Events, SmallDerivatives
-from scipy_events.typing import Condition
-from symbolite.core.value import Value
-
-from ..simulator import Simulator, Components
 from .. import solvers
 from ..analysis.period_methods import autoperiod, fft_peak
+from ..simulator import Components, Simulator
 from ..types import (
     Initial,
 )

@@ -13,8 +13,8 @@ from scipy.optimize import OptimizeResult, minimize_scalar
 from scipy.signal import periodogram
 from scipy.stats import linregress
 
-from ..types import Array1d
 from .._utils import logger
+from ..types import Array1d
 
 
 class LinregressResult(Protocol):
