@@ -6642,7 +6642,7 @@ packages:
   - python *
   license: MIT
   input:
-    hash: 4c8d67304af18b5f6a9b7b1bad0a282fd4648576a41b6f837c38d4244043a33d
+    hash: 7263f3640083174532a9a6ab0af859dfbc14ef946185ac74a1cf097c7350c701
     globs:
     - pyproject.toml
 - conda: https://prefix.dev/conda-forge/noarch/pre-commit-4.5.0-pyha770c72_0.conda

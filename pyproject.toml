@@ -49,7 +49,12 @@ build-backend = "uv_build"
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib --doctest-modules"
 pythonpath = "."
-testpaths = ["src/poincare/tests"]
+testpaths = [
+  "src/poincare/tests",
+  "src/poincare/analysis/tests",
+  "src/poincare/printing/tests",
+  "src/poincare/reactions/tests",
+]
 doctest_optionflags = "NUMBER"
 filterwarnings = "ignore:No libsl provided, defaulting to Python standard library."
 
