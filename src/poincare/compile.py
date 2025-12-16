@@ -76,6 +76,17 @@ class Compiled[V, F]:
     libsl: ModuleType | None = None
 
 
+@dataclass(frozen=True, kw_only=True)
+class PreCompiled[V, F]:
+    independent: Sequence[Independent]
+    variables: set[V]
+    parameters: set[real.Real]
+    mapper: dict[real.Real, Any]
+    func: F
+    output: dict[str, ExprRHS] | set[Variable]
+    libsl: ModuleType | None = None
+
+
 def identity(x):
     return x
 
@@ -183,7 +194,7 @@ def jax_assignment(name: str, index: str, value: str) -> str:
 
 def build_equation_maps(
     system: System | type[System],
-) -> Compiled[Variable, tuple[dict[Derivative, ExprRHS], dict[Parameter, ExprRHS]]]:
+) -> PreCompiled[Variable, tuple[dict[Derivative, ExprRHS], dict[Parameter, ExprRHS]]]:
     """Compiles equations into dicts of equations.
 
     - variables: Variable | Derivative
@@ -234,13 +245,16 @@ def build_equation_maps(
                 independent.add(named)
             elif isinstance(named, Variable):
                 if named.equation_order is None:
+                    # if equation:
+                    #     new_parameter = Parameter(default=named.initial)
+                    #     new_parameter.__set_name__(named.parent, named.name)
+                    #     parameters.add(new_parameter)
+                    #     add_to_initials(new_parameter, named.initial)
+                    # else:
+                    #     add_to_initials(named, named.initial)
+                    add_to_initials(named, named.initial)
                     if equation:
-                        new_parameter = Parameter(default=named.initial)
-                        new_parameter.__set_name__(named.parent, named.name)
-                        parameters.add(new_parameter)
-                        add_to_initials(new_parameter, named.initial)
-                    else:
-                        add_to_initials(named, named.initial)
+                        variables.add(named)
                 else:
                     if equation:
                         variables.add(named)
@@ -277,14 +291,63 @@ def build_equation_maps(
             time = independent.pop()
         case _:
             raise TypeError(f"more than one independent variable found: {independent}")
-    sorted_variables = sorted(variables, key=str)
 
-    return Compiled(
+    return PreCompiled(
         independent=(time,),
-        variables=sorted_variables,
-        parameters=sorted(parameters, key=str),
+        variables=variables,
+        parameters=parameters,
         mapper=initials,
         func=(equations, algebraic),
+        output=variables,
+    )
+
+    # sorted_variables = sorted(variables, key=str)
+
+    # return Compiled(
+    #     independent=(time,),
+    #     variables=sorted_variables,
+    #     parameters=sorted(parameters, key=str),
+    #     mapper=initials,
+    #     func=(equations, algebraic),
+    #     output=sorted_variables,
+    # )
+
+
+def remove_variables_without_lhs(
+    maps: PreCompiled[
+        Variable, tuple[dict[Derivative, ExprRHS], dict[Parameter, ExprRHS]]
+    ],
+) -> Compiled[Variable, tuple[dict[Derivative, ExprRHS], dict[Parameter, ExprRHS]]]:
+    mapper_remove = set()
+    mapper_add = {}
+    variables_remove = set()
+    for named in maps.mapper.keys():
+        if isinstance(named, Variable):
+            if named.equation_order is None:
+                new_parameter = Parameter(default=named.initial)
+                new_parameter.__set_name__(named.parent, named.name)
+                if named in maps.variables:
+                    maps.parameters.add(new_parameter)
+                mapper_remove.add(named)
+                mapper_add[new_parameter] = named.initial
+                if named in maps.variables:
+                    variables_remove.add(named)
+                    maps.parameters.add(named)
+    for named in mapper_remove:
+        maps.mapper.pop(named)
+    for var in variables_remove:
+        maps.variables.remove(var)
+    for named, value in mapper_add.items():
+        maps.mapper[named] = value
+
+    sorted_variables = sorted(maps.variables, key=str)
+
+    return Compiled(
+        independent=maps.independent,
+        variables=sorted_variables,
+        parameters=sorted(maps.parameters, key=str),
+        mapper=maps.mapper,
+        func=maps.func,
         output=sorted_variables,
     )
 
@@ -422,7 +485,8 @@ class SystemCompiler:
     def __init__(self, system: System | type[System], backend: Backend):
         self.system = system
         self.equation_maps = build_equation_maps(system=self.system)
-        self.no_algebraics = replace_algebraic_equations(maps=self.equation_maps)
+        self.no_vars_without_lhs = remove_variables_without_lhs(maps=self.equation_maps)
+        self.no_algebraics = replace_algebraic_equations(maps=self.no_vars_without_lhs)
         self.symbolic = build_first_order_symbolic_ode(maps=self.no_algebraics)
         self.vectorized = build_first_order_vectorized_body(symbolic=self.symbolic)
         self.compiled = compile_diffeq(vectorized=self.vectorized, backend=backend)
