@@ -150,18 +150,6 @@ def autoperiod(
         value, the steeper the hill must be. A value of ``0`` means that any hill is
         considered valid. The threshold is applied to the sum of the absolute slopes of
         the two fitted lines left and right of the candidate period.
-
-    Examples
-    --------
-
-    Estimate the period length of a simple sine curve:
-
-    >>> import numpy as np
-    >>> rng = np.random.default_rng(42)
-    >>> data = np.sin(np.linspace(0, 8 * np.pi, 1000)) + rng.random(1000) / 10
-    >>> period = autoperiod(data, random_state=42, detrend=True, timestep=1)
-
-    See Also
     --------
     `<https://epubs.siam.org/doi/epdf/10.1137/1.9781611972757.40>`_ : Paper reference
     """
@@ -215,17 +203,6 @@ class Autoperiod:
         value, the steeper the hill must be. A value of ``0`` means that any hill is
         considered valid. The threshold is applied to the sum of the absolute slopes of
         the two fitted lines left and right of the candidate period.
-
-    Examples
-    --------
-    Plot the periodogram and ACF while computing the period size:
-
-    >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng(42)
-    >>> data = np.sin(np.linspace(0, 8 * np.pi, 1000)) + rng.random(1000) / 10
-    >>> period = Autoperiod(random_state=42, detrend=True, plot=True)(data)
-    >>> plt.show()
     """
 
     # potential improvement:
@@ -580,7 +557,7 @@ class Autoperiod:
 
 
 # Function mainly for debugging purposes, simplest possible period finder
-# to test if problem is with caller ot with method
+# to test if problem is with caller or with method
 def fft_peak(data: Array1d, timestep: float) -> tuple[Any, bool]:
     amplitudes = np.abs(fft(data))
     freqs = fftfreq(len(data), d=timestep)
