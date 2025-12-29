@@ -194,7 +194,7 @@ def jax_assignment(name: str, index: str, value: str) -> str:
 
 def build_equation_maps(
     system: System | type[System],
-) -> PreCompiled[Variable, tuple[dict[Derivative, ExprRHS], dict[Parameter, ExprRHS]]]:
+) -> Compiled[Variable, tuple[dict[Derivative, ExprRHS], dict[Parameter, ExprRHS]]]:
     """Compiles equations into dicts of equations.
 
     - variables: Variable | Derivative
@@ -245,16 +245,12 @@ def build_equation_maps(
                 independent.add(named)
             elif isinstance(named, Variable):
                 if named.equation_order is None:
-                    # if equation:
-                    #     new_parameter = Parameter(default=named.initial)
-                    #     new_parameter.__set_name__(named.parent, named.name)
-                    #     parameters.add(new_parameter)
-                    #     add_to_initials(new_parameter, named.initial)
-                    # else:
-                    #     add_to_initials(named, named.initial)
                     add_to_initials(named, named.initial)
                     if equation:
                         variables.add(named)
+                        # named.derivatives[1] = named.derive()
+                        # named.equation_order = 1
+                        # add_to_equations[named.derive()] = 0
                 else:
                     if equation:
                         variables.add(named)
@@ -278,11 +274,13 @@ def build_equation_maps(
                         parameters.add(named)
                 add_to_initials(named, named.default)
 
+    add_to_equations = {}
     for derivative, eq in equations.items():
         process_symbol(derivative.variable, equation=True)
         process_symbol(eq, equation=True)
     for symbol in system._yield(Independent | Constant | Parameter | Variable):
         process_symbol(symbol, equation=False)
+    equations |= add_to_equations
 
     match len(independent):
         case 0:
@@ -292,62 +290,14 @@ def build_equation_maps(
         case _:
             raise TypeError(f"more than one independent variable found: {independent}")
 
-    return PreCompiled(
-        independent=(time,),
-        variables=variables,
-        parameters=parameters,
-        mapper=initials,
-        func=(equations, algebraic),
-        output=variables,
-    )
-
-    # sorted_variables = sorted(variables, key=str)
-
-    # return Compiled(
-    #     independent=(time,),
-    #     variables=sorted_variables,
-    #     parameters=sorted(parameters, key=str),
-    #     mapper=initials,
-    #     func=(equations, algebraic),
-    #     output=sorted_variables,
-    # )
-
-
-def remove_variables_without_lhs(
-    maps: PreCompiled[
-        Variable, tuple[dict[Derivative, ExprRHS], dict[Parameter, ExprRHS]]
-    ],
-) -> Compiled[Variable, tuple[dict[Derivative, ExprRHS], dict[Parameter, ExprRHS]]]:
-    mapper_remove = set()
-    mapper_add = {}
-    variables_remove = set()
-    for named in maps.mapper.keys():
-        if isinstance(named, Variable):
-            if named.equation_order is None:
-                new_parameter = Parameter(default=named.initial)
-                new_parameter.__set_name__(named.parent, named.name)
-                if named in maps.variables:
-                    maps.parameters.add(new_parameter)
-                mapper_remove.add(named)
-                mapper_add[new_parameter] = named.initial
-                if named in maps.variables:
-                    variables_remove.add(named)
-                    maps.parameters.add(named)
-    for named in mapper_remove:
-        maps.mapper.pop(named)
-    for var in variables_remove:
-        maps.variables.remove(var)
-    for named, value in mapper_add.items():
-        maps.mapper[named] = value
-
-    sorted_variables = sorted(maps.variables, key=str)
+    sorted_variables = sorted(variables, key=str)
 
     return Compiled(
-        independent=maps.independent,
+        independent=(time,),
         variables=sorted_variables,
-        parameters=sorted(maps.parameters, key=str),
-        mapper=maps.mapper,
-        func=maps.func,
+        parameters=sorted(parameters, key=str),
+        mapper=initials,
+        func=(equations, algebraic),
         output=sorted_variables,
     )
 
@@ -412,20 +362,23 @@ def build_first_order_symbolic_ode(
         # For each variable
         # - create first order differential equations except for var.equation_order
         # - for the var.equation_order use the defined equation
+
         if var.equation_order is None:
-            raise TypeError
+            diff_eqs[var] = 0
+            variables.append(var)
 
-        for order in range(var.equation_order - 1):
-            lhs = get_derivative(var, order)
-            rhs = get_derivative(var, order + 1)
-            diff_eqs[lhs] = rhs
+        else:
+            for order in range(var.equation_order - 1):
+                lhs = get_derivative(var, order)
+                rhs = get_derivative(var, order + 1)
+                diff_eqs[lhs] = rhs
+                variables.append(lhs)
+
+            order = var.equation_order
+            lhs = get_derivative(var, order - 1)
+            rhs = get_derivative(var, order)
+            diff_eqs[lhs] = maps.func[rhs]
             variables.append(lhs)
-
-        order = var.equation_order
-        lhs = get_derivative(var, order - 1)
-        rhs = get_derivative(var, order)
-        diff_eqs[lhs] = maps.func[rhs]
-        variables.append(lhs)
 
     return Compiled(
         independent=maps.independent,
@@ -485,8 +438,7 @@ class SystemCompiler:
     def __init__(self, system: System | type[System], backend: Backend):
         self.system = system
         self.equation_maps = build_equation_maps(system=self.system)
-        self.no_vars_without_lhs = remove_variables_without_lhs(maps=self.equation_maps)
-        self.no_algebraics = replace_algebraic_equations(maps=self.no_vars_without_lhs)
+        self.no_algebraics = replace_algebraic_equations(maps=self.equation_maps)
         self.symbolic = build_first_order_symbolic_ode(maps=self.no_algebraics)
         self.vectorized = build_first_order_vectorized_body(symbolic=self.symbolic)
         self.compiled = compile_diffeq(vectorized=self.vectorized, backend=backend)
