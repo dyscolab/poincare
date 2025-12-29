@@ -51,3 +51,22 @@ def test_sweep():
         rtol * (np.abs(periods) + np.max(T_values)) / 2, atol
     )
     assert np.all(comparison)
+
+
+def test_instanced_system():
+    sim = Simulator(ForcedDampedOscillator())
+    osc = Oscillations()
+    T_values = np.arange(1, 10, 10)
+    result = osc.sweep(
+        sim,
+        T_min=0.5,
+        T_max=15,
+        T_r=50,
+        parameter=ForcedDampedOscillator.T,
+        values=T_values,
+    )
+    periods = result["period"].to_numpy()
+    comparison = np.abs(periods - T_values) < np.minimum(
+        rtol * (np.abs(periods) + np.max(T_values)) / 2, atol
+    )
+    assert np.all(comparison)

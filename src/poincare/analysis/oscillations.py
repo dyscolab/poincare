@@ -80,7 +80,10 @@ class Oscillations:
         t_end = T_r + T_after_rel * T_max
         save_at = np.arange(0, t_end + (T_after_rel + 0.5) * timestep, timestep)
         if variables is None:
-            used_vars = list(sim.model.variables.index)
+            try:
+                used_vars = list(sim.model.variables.index)
+            except AttributeError:
+                used_vars = list(type(sim.model).variables.index)
         elif isinstance(variables, Iterable):
             used_vars = list(variables)
         else:
