@@ -364,9 +364,9 @@ class EquationGroup(Node):
         self.equations = equations
 
     def __set_name__(self, cls: Node, name: str):
-        super().__set_name__(cls, name)
-        for eq in self.equations:
+        for eq in getattr(self, "equations", []):
             _assign_equation_order(variable=eq.lhs.variable, order=eq.lhs.order)
+        super().__set_name__(cls, name)
 
     def _copy_from(self, parent: Node):
         return self.__class__(*(eq._copy_from(parent) for eq in self.equations))

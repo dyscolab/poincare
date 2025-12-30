@@ -1,15 +1,43 @@
-from typing import Sequence, Self, Iterator
+from typing import Sequence, Self, Iterator, Protocol, runtime_checkable
 from dataclasses import dataclass
 from collections import defaultdict
+from functools import singledispatch
 
 from symbolite import Real
 from symbolite.core.call import Call, CallInfo
 from symbolite.core.value import ValueInfo
 from symbolite.abstract import real
 from symbolite.ops import substitute
+import pint
+from pint.util import UnitsContainer
 
-from ..types import System, Variable, Equation, EquationGroup, Initial, initial
+from ..types import (
+    System,
+    Variable,
+    Parameter,
+    Equation,
+    EquationGroup,
+    Initial,
+    initial,
+)
 from .._node import Node, NodeMapper
+
+
+@singledispatch
+def compensate_volume(v: Variable, rhs: Real | Initial) -> Real | Initial:
+    return rhs
+
+
+@singledispatch
+def make_concentration(v: Variable) -> Real:
+    return v
+
+
+def as_real(value) -> Real:
+    if isinstance(value, Real):
+        return value
+    else:
+        return Real(value)
 
 
 class ReactionVariable(Node, Real):
@@ -85,7 +113,6 @@ class ReactionVariable(Node, Real):
                 return ReactionVariable(var, 1)
             case ReactionVariable(variable=var, stoichiometry=st):
                 return ReactionVariable(var, st)
-
             case Real(
                 __symbolite_info__=ValueInfo(
                     value=Call(
@@ -151,8 +178,11 @@ class RateLaw(EquationGroup):
     ):
         self.reactants = tuple(map(ReactionVariable.from_mul, reactants))
         self.products = tuple(map(ReactionVariable.from_mul, products))
-        self.rate_law = rate_law
-        self.equations = tuple(self._yield_equations())
+        self.rate_law = (
+            Parameter(default=rate_law)
+            if isinstance(rate_law, (pint.Quantity, pint.Unit))
+            else rate_law
+        )  # Symbolite can't compile equations if they have explicit units, so if it has units rate_law must be extracted as a Parameter
 
     def _copy_from(self, parent: System):
         mapper = NodeMapper(parent)
@@ -176,7 +206,19 @@ class RateLaw(EquationGroup):
             species_stoich[p.variable] += p.stoichiometry
 
         for s, st in species_stoich.items():
-            yield s.derive() << st * self.rate_law
+            yield (s.derive() << compensate_volume(s, st * self.rate_law))
+
+    def __set_name__(self, cls: Node, name: str):
+        if cls is not None:
+            if isinstance(self.rate_law, Parameter):
+                try:
+                    if issubclass(cls, System):
+                        setattr(cls, f"_{name}_rate_law", self.rate_law)
+                except TypeError:
+                    pass
+                self.rate_law.__set_name__(cls=cls, name=f"_{name}_rate_law")
+            self.equations = tuple(self._yield_equations())
+        super().__set_name__(cls, name)
 
 
 class MassAction(RateLaw):
@@ -207,14 +249,17 @@ class MassAction(RateLaw):
         self.reactants = tuple(map(ReactionVariable.from_mul, reactants))
         self.products = tuple(map(ReactionVariable.from_mul, products))
         self.rate = rate
-        self.equations = tuple(self._yield_equations())
 
     @property
     def rate_law(self):
         rate = self.rate
         for r in self.reactants:
-            rate *= r.variable**r.stoichiometry
-        return rate
+            rate *= make_concentration(r.variable) ** r.stoichiometry
+        return (
+            Parameter(default=rate)
+            if isinstance(rate, (pint.Quantity, pint.Unit))
+            else rate
+        )
 
     def _copy_from(self, parent: System):
         mapper = NodeMapper(parent)
