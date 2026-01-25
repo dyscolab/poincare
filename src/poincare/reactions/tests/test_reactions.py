@@ -1,11 +1,10 @@
-from ..reactions import RateLaw, ReactionVariable, MassAction
-
-from ...types import System, Variable, Constant, Parameter, initial, assign
-from ...simulator import Simulator
-
-from pytest import mark
 import numpy as np
 import pint
+from pytest import mark
+
+from ...simulator import Simulator
+from ...types import Constant, System, Variable, assign, initial
+from ..reactions import MassAction, RateLaw, ReactionVariable, reaction_initial
 
 ureg = pint.UnitRegistry()
 
@@ -85,7 +84,7 @@ def test_mass_action_in_simulator(f):
         eq3 = MassAction(reactants=[2 * x], products=[3 * x], rate=c)
 
     model: Model = f(Model)
-    sim = Simulator(Model)
+    sim = Simulator(model)
     result = sim.solve(save_at=np.linspace(0, 1, 5))
     assert result.columns.tolist() == ["x"]
     assert sim.compiled.func(0, [2], [0], [0]) == np.array([6.0])
@@ -139,3 +138,74 @@ def test_units_in_mass_action():
     sim_2 = Simulator(Model)
     result_2 = np.asarray(sim_2.solve(save_at=np.linspace(0, 10, 10)).pint.dequantify())
     assert np.all(result_1 == result_2)
+
+
+def test_reaction_variable():
+    class Model(System):
+        A: ReactionVariable = reaction_initial(default=1)
+        B: ReactionVariable = reaction_initial(default=1)
+        AB: ReactionVariable = reaction_initial(default=0)
+
+        eq = MassAction(reactants=[A, 2 * B], products=[AB], rate=A.variable ** (1 / 2))
+
+    assert set(Model._yield(Variable)) == set(
+        [Model.A.variable, Model.B.variable, Model.AB.variable]
+    )
+    dnsim = Simulator(Model)
+    assert set(dnsim.compiled.variables) == set(
+        [Model.A.variable, Model.B.variable, Model.AB.variable]
+    )
+    assert np.all(
+        dnsim.compiled.func(0, [4, 0, 2], [], [0, 0, 0]) == np.array([-32, 32, -64])
+    )
+    dnsim.solve(save_at=np.linspace(0, 10, 10))
+
+
+def test_nested_reaction_variable():
+    class DoubleNested(System):
+        A: ReactionVariable = reaction_initial(default=1)
+        B: ReactionVariable = reaction_initial(default=1)
+        AB: ReactionVariable = reaction_initial(default=0)
+
+        eq = MassAction(reactants=[A, 2 * B], products=[AB], rate=A.variable ** (1 / 2))
+
+    class Nested(System):
+        A: ReactionVariable = reaction_initial(default=3)
+        B: ReactionVariable = reaction_initial(default=0)
+
+        dnested = DoubleNested(A=2)
+        eq = RateLaw(reactants=[A], products=[B], rate_law=0.1)
+
+    class Model(System):
+        A: ReactionVariable = reaction_initial(default=1)
+        B: ReactionVariable = reaction_initial(default=2)
+
+        nested = Nested(A=3 * A)
+        eq = MassAction(reactants=[A], products=[B], rate=0.2)
+
+    assert set(Model._yield(Variable)) == set(
+        [
+            Model.A.variable,
+            Model.B.variable,
+            Model.nested.B.variable,
+            Model.nested.dnested.A.variable,
+            Model.nested.dnested.B.variable,
+            Model.nested.dnested.AB.variable,
+        ]
+    )
+    assert Model.nested.A.stoichiometry == 3
+
+    sim = Simulator(Model)
+
+    assert set(sim.compiled.variables) == set(
+        [
+            Model.A.variable,
+            Model.B.variable,
+            Model.nested.B.variable,
+            Model.nested.dnested.A.variable,
+            Model.nested.dnested.B.variable,
+            Model.nested.dnested.AB.variable,
+        ]
+    )
+
+    sim.solve(save_at=np.linspace(0, 10, 10))

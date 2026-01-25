@@ -1,26 +1,26 @@
-from typing import Sequence, Self, Iterator, Protocol, runtime_checkable
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
 from functools import singledispatch
+from types import ModuleType
+from typing import Any, Iterator, Self, Sequence
 
+import pint
 from symbolite import Real
+from symbolite.abstract import real
 from symbolite.core.call import Call, CallInfo
 from symbolite.core.value import ValueInfo
-from symbolite.abstract import real
-from symbolite.ops import substitute
-import pint
-from pint.util import UnitsContainer
+from symbolite.ops import substitute, translate
 
+from .._node import Node, NodeMapper, _ClassInfo
+from .._utils import class_and_instance_method
 from ..types import (
-    System,
-    Variable,
-    Parameter,
     Equation,
     EquationGroup,
     Initial,
-    initial,
+    Parameter,
+    System,
+    Variable,
 )
-from .._node import Node, NodeMapper
 
 
 @singledispatch
@@ -46,39 +46,23 @@ class ReactionVariable(Node, Real):
         variable: Variable | Initial,
         stoichiometry: float = 1,
     ):
+        super().__init__()
         if not isinstance(variable, Variable):
             variable = Variable(initial=variable)
-        self.variable = variable
+        self.variable = variable  # TODO: define interface for accessing variable
         self.stoichiometry = stoichiometry
 
     def __set_name__(self, cls: Node, name: str):
-        return self.variable.__set_name__(cls, name)
-
-    @property
-    def name(self):
-        return self.variable.name
-
-    @property
-    def parent(self):
-        return self.variable.parent
+        super().__set_name__(cls, name)
+        self.variable.__set_name__(self, name)
 
     def _copy_from(self, parent: Node) -> Self:
         variable = self.variable._copy_from(parent)
         return ReactionVariable(variable, self.stoichiometry)
 
-    def __get__(self, parent, cls):
-        if parent is None:
-            return self
-
-        reaction_variable = super().__get__(parent, cls)
-        return ReactionVariable(
-            reaction_variable.variable,
-            self.stoichiometry * reaction_variable.stoichiometry,
-        )
-
     def __set__(self, obj, value: Initial | Self):
         if isinstance(value, Initial):
-            reaction_variable = initial(default=value)
+            reaction_variable = reaction_initial(default=value)
         else:
             try:
                 reaction_variable = ReactionVariable.from_mul(value)
@@ -86,14 +70,8 @@ class ReactionVariable(Node, Real):
                 raise TypeError(f"unexpected type {type(value)} for {self.name}")
             else:
                 reaction_variable.stoichiometry *= self.stoichiometry
-
+        self.variable.__set__(reaction_variable, reaction_variable.variable)
         super().__set__(obj, reaction_variable)
-
-    def __repr__(self):
-        return f"{self.stoichiometry} * {self.variable}"
-
-    def __str__(self):
-        return str(self.variable)
 
     def __hash__(self):
         return hash((self.variable, self.stoichiometry))
@@ -106,13 +84,33 @@ class ReactionVariable(Node, Real):
             other.stoichiometry,
         )
 
+    @class_and_instance_method
+    def _yield[T](
+        self,
+        type: type[T],
+        /,
+        *,
+        exclude: _ClassInfo = (),
+        recursive: bool = True,
+    ) -> Iterator[T]:
+        try:
+            if issubclass(type, Variable) and not isinstance(self.variable, exclude):
+                yield self.variable
+        except TypeError:
+            pass
+        super()._yield(type, exclude=exclude, recursive=recursive)
+
     @classmethod
-    def from_mul(cls, expr: Real):
+    def from_mul(cls, expr: Real, parent: Node | None = None):
         match expr:
             case Variable() as var:
-                return ReactionVariable(var, 1)
-            case ReactionVariable(variable=var, stoichiometry=st):
-                return ReactionVariable(var, st)
+                new = ReactionVariable(var, 1)
+                if parent is not None:
+                    new.__class__.__base__.__set_name__(new, parent, var.name)
+                return new
+            case ReactionVariable() as rvar:
+                return rvar
+
             case Real(
                 __symbolite_info__=ValueInfo(
                     value=Call(
@@ -120,17 +118,18 @@ class ReactionVariable(Node, Real):
                             func=real.mul,
                             args=(
                                 int(st2) | float(st2),
-                                ReactionVariable(variable=var, stoichiometry=st),
+                                ReactionVariable() as rvar,
                             )
                             | (
-                                ReactionVariable(variable=var, stoichiometry=st),
+                                ReactionVariable() as rvar,
                                 int(st2) | float(st2),
                             ),
                         )
                     )
                 )
             ):
-                return ReactionVariable(var, st * st2)
+                rvar.stoichiometry *= st2
+                return rvar
 
             case Real(
                 __symbolite_info__=ValueInfo(
@@ -146,10 +145,25 @@ class ReactionVariable(Node, Real):
                     )
                 )
             ):
-                return ReactionVariable(var, st)
+                new = ReactionVariable(var, st)
+                if parent is not None:
+                    new.__class__.__base__.__set_name__(new, parent, var.name)
+                return new
 
             case _:
                 raise TypeError
+
+
+def reaction_initial(
+    *, default: Initial | None = None, stoichiometry: int = 1, init: bool = True
+) -> ReactionVariable:
+    """Creates an ReactionVariable with a default initial condition."""
+    return ReactionVariable(variable=default, stoichiometry=stoichiometry)
+
+
+@translate.register
+def translate_reaction_variable(obj: ReactionVariable, libsl: ModuleType) -> Any:
+    return translate(obj.variable, libsl)
 
 
 @dataclass
@@ -176,8 +190,12 @@ class RateLaw(EquationGroup):
         products: Sequence[Real],
         rate_law: float | Real,
     ):
-        self.reactants = tuple(map(ReactionVariable.from_mul, reactants))
-        self.products = tuple(map(ReactionVariable.from_mul, products))
+        self.reactants = tuple(
+            map(lambda x: ReactionVariable.from_mul(x, parent=self), reactants)
+        )
+        self.products = tuple(
+            map(lambda x: ReactionVariable.from_mul(x, parent=self), products)
+        )
         self.rate_law = (
             Parameter(default=rate_law)
             if isinstance(rate_law, (pint.Quantity, pint.Unit))
@@ -197,6 +215,11 @@ class RateLaw(EquationGroup):
             ],
             rate_law=substitute(self.rate_law, mapper),
         )
+        # return self.__class__(
+        #     reactants=[substitute(v, mapper) for v in self.reactants],
+        #     products=[substitute(v, mapper) for v in self.products],
+        #     rate_law=substitute(self.rate_law, mapper),
+        # )
 
     def _yield_equations(self) -> Iterator[Equation]:
         species_stoich: dict[Variable, float] = defaultdict(float)
@@ -210,7 +233,9 @@ class RateLaw(EquationGroup):
 
     def __set_name__(self, cls: Node, name: str):
         if cls is not None:
-            if isinstance(self.rate_law, Parameter):
+            if isinstance(
+                self.rate_law, Parameter
+            ):  # and getattr(self, "name", "") == ""
                 try:
                     if issubclass(cls, System):
                         setattr(cls, f"_{name}_rate_law", self.rate_law)
@@ -246,8 +271,12 @@ class MassAction(RateLaw):
         products: Sequence[Real],
         rate: float | Real,
     ):
-        self.reactants = tuple(map(ReactionVariable.from_mul, reactants))
-        self.products = tuple(map(ReactionVariable.from_mul, products))
+        self.reactants = tuple(
+            map(lambda x: ReactionVariable.from_mul(x, parent=self), reactants)
+        )
+        self.products = tuple(
+            map(lambda x: ReactionVariable.from_mul(x, parent=self), products)
+        )
         self.rate = rate
 
     @property
