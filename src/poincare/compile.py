@@ -15,9 +15,8 @@ from typing import (
 import pint
 import symbolite.abstract as libabstract
 from symbolite import real, vector
-from symbolite.impl import libpythoncode
+from symbolite.abstract.lang import Assign, Block
 from symbolite.ops import substitute, translate, yield_named
-from symbolite.abstract.lang import Block, Assign
 
 from ._node import Node
 from ._utils import eval_content
@@ -509,7 +508,6 @@ def compile_transform(
 
     deqs = {k: substitute(v, mapping) for k, v in content_in_expresions.items()}
     out = vector.Vector("out")
-    print(deqs)
     transform_block = Block(
         inputs=(mapping["t"], mapping["y"], mapping["p"], out),
         lines=tuple(Assign(out[i], expr) for i, expr in enumerate(deqs.values())),
