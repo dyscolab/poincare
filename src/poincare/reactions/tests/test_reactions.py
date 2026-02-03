@@ -4,7 +4,7 @@ from pytest import mark
 
 from ...simulator import Simulator
 from ...types import Constant, System, Variable, assign, initial
-from ..reactions import MassAction, RateLaw, ReactionVariable, reaction_initial
+from ..reactions import MassAction, RateLaw, Reactant, reaction_initial
 
 ureg = pint.UnitRegistry()
 
@@ -140,11 +140,11 @@ def test_units_in_mass_action():
     assert np.all(result_1 == result_2)
 
 
-def test_reaction_variable():
+def test_reactant():
     class Model(System):
-        A: ReactionVariable = reaction_initial(default=1)
-        B: ReactionVariable = reaction_initial(default=1)
-        AB: ReactionVariable = reaction_initial(default=0)
+        A: Reactant = reaction_initial(default=1)
+        B: Reactant = reaction_initial(default=1)
+        AB: Reactant = reaction_initial(default=0)
 
         eq = MassAction(reactants=[A, 2 * B], products=[AB], rate=A.variable ** (1 / 2))
 
@@ -161,24 +161,24 @@ def test_reaction_variable():
     dnsim.solve(save_at=np.linspace(0, 10, 10))
 
 
-def test_nested_reaction_variable():
+def test_nested_reactant():
     class DoubleNested(System):
-        A: ReactionVariable = reaction_initial(default=1)
-        B: ReactionVariable = reaction_initial(default=1)
-        AB: ReactionVariable = reaction_initial(default=0)
+        A: Reactant = reaction_initial(default=1)
+        B: Reactant = reaction_initial(default=1)
+        AB: Reactant = reaction_initial(default=0)
 
         eq = MassAction(reactants=[A, 2 * B], products=[AB], rate=A.variable ** (1 / 2))
 
     class Nested(System):
-        A: ReactionVariable = reaction_initial(default=3)
-        B: ReactionVariable = reaction_initial(default=0)
+        A: Reactant = reaction_initial(default=3)
+        B: Reactant = reaction_initial(default=0)
 
         dnested = DoubleNested(A=2)
         eq = RateLaw(reactants=[A], products=[B], rate_law=0.1)
 
     class Model(System):
-        A: ReactionVariable = reaction_initial(default=1)
-        B: ReactionVariable = reaction_initial(default=2)
+        A: Reactant = reaction_initial(default=1)
+        B: Reactant = reaction_initial(default=2)
 
         nested = Nested(A=3 * A)
         eq = MassAction(reactants=[A], products=[B], rate=0.2)

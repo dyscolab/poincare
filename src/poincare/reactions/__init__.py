@@ -1,3 +1,3 @@
-from .reactions import RateLaw, MassAction, ReactionVariable
+from .reactions import MassAction, RateLaw, Reactant
 
-all = ["RateLaw", "MassAction", "ReactionVariable"]
+__all__ = ["RateLaw", "MassAction", "Reactant"]
