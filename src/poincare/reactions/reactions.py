@@ -20,6 +20,7 @@ from ..types import (
     Parameter,
     System,
     Variable,
+    get_default,
 )
 
 
@@ -166,6 +167,11 @@ def translate_reaction_variable(obj: Reactant, libsl: ModuleType) -> Any:
     return translate(obj.variable, libsl)
 
 
+@get_default.register
+def get_default_reactant(node: Reactant) -> Initial | None:
+    return node.variable.initial
+
+
 @dataclass
 class RateLaw(EquationGroup):
     """A RateLaw reaction contains a set of equations transforming
@@ -241,7 +247,8 @@ class RateLaw(EquationGroup):
                         setattr(cls, f"_{name}_rate_law", self.rate_law)
                 except TypeError:
                     pass
-                self.rate_law.__set_name__(cls=cls, name=f"_{name}_rate_law")
+                if self.rate_law.name == "":
+                    self.rate_law.__set_name__(cls=cls, name=f"_{name}_rate_law")
             self.equations = tuple(self._yield_equations())
         super().__set_name__(cls, name)
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
+from functools import singledispatch
 from types import ModuleType
 from typing import Any, ClassVar, Literal, Self, TypeVar, dataclass_transform, overload
 from typing import get_type_hints as get_annotations
@@ -551,6 +552,21 @@ def _sequence_to_str(seq: Iterator, /, *, sep: str, max_size: int | None) -> str
         assign,
     ),
 )
+@singledispatch
+def get_default(node: Node) -> Node | Initial | None:
+    return node
+
+
+@get_default.register
+def get_default_variable(node: Variable) -> Initial | None:
+    return node.initial
+
+
+@get_default.register
+def get_default_parameter(node: Parameter | Constant) -> Initial | None:
+    return node.default
+
+
 class System(Node, metaclass=EagerNamer):
     parent: System
     _kwargs: dict
@@ -572,12 +588,7 @@ class System(Node, metaclass=EagerNamer):
             if not isinstance(v, annotation):
                 mismatched_types.append((k, annotation, type(v)))
 
-            if isinstance(v, Variable):
-                default = v.initial
-            elif isinstance(v, Parameter | Constant):
-                default = v.default
-            else:
-                default = v
+            default = get_default(v)
 
             if default is None:
                 cls._required.add(k)
