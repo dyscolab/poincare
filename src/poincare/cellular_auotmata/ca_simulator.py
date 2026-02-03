@@ -1,21 +1,28 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence, Mapping, Hashable
-from itertools import product
+from typing import Any, Hashable, Mapping, Sequence
 
 import numpy as np
 from numpy import ndarray
-import pandas as pd
-
 from symbolite import Symbol, real
 
-from .ca_types import Automata, SquareAutomata, CellType, ArbitraryInitial
-from ..types import System
-from ..compile import Backend, build_first_order_symbolic_ode, Array, MutableArray
-from ..simulator import Simulator, Problem, Components
+from ..compile import Array, MutableArray
+from ..simulator import Components, Problem
 from ..solvers import LSODA
-from ..types import Variable, Derivative, Parameter, Constant, Literal, Number, Initial
+from ..types import (
+    Constant,
+    Literal,
+    Number,
+    Parameter,
+    Variable,
+)
+from .ca_types import (
+    ArbitraryInitial,
+    Automata,
+    CellType,
+    Location,
+)
 
 
 @dataclass
@@ -28,63 +35,107 @@ class CASimulator:
         self.geometry = self.model.geometry(self.shape)
         self.func = self.create_func()
 
+    def calculate_slice(
+        self, location: Location, item: Literal["variable", "parameter"]
+    ) -> slice:
+        index, cell, cell_category_index = self.geometry.get(location)
+        item_num = self.model.compiled_cells[cell][index].symbolic.__getattribute__(
+            item
+        )
+        cell_counts = self.geometry.cell_counts
+        indices_up_to_cell_type = 0
+        cells_up_to_cell_type = 0
+        break_outer = False
+
+        for cell_category, cell_compilers in self.model.compiled_cells.items():
+            for i, compiler in enumerate(cell_compilers):
+                if cell_category == cell and i == index:
+                    break_outer = True
+                    break
+                cells_up_to_cell_type += cell_counts[cell_category][i]
+                indices_up_to_cell_type += cell_counts[cell_category][
+                    i
+                ] * compiler.symbolic.__getattribute__(item)
+            if break_outer:
+                break
+
+        cell_start = (cell_category_index - cells_up_to_cell_type) * item_num
+        return slice(cell_start, cell_start + item_num)
+
     def create_func(self):
         def func(t: float, y: Array, p: Array, dy: MutableArray):
             for location, cell_category, index in self.geometry.yield_locations():
-                var_num = len(self.model.symbolic_cells[cell_category][index].variables)
-                param_num = len(
-                    self.model.symbolic_cells[cell_category][index].parameters
+                variable_slice = self.calculate_slice(
+                    location=location, item="variable"
                 )
-                one_d_index = self.geometry.get(location)
-                one_d_slice = slice(var_num * one_d_index, var_num * (one_d_index + 1))
-                parameter_slice = slice(
-                    param_num * one_d_index, param_num * (one_d_index + 1)
+                var_num = variable_slice.stop - variable_slice.start
+                parameter_slice = self.calculate_slice(
+                    location=location, item="parameter"
                 )
-                dy[one_d_slice] = self.cell_sim.compiled.func(
-                    t, y[one_d_slice], p[parameter_slice], dy[one_d_slice]
+
+                dy[variable_slice] = self.model.compiled_cells[cell_category][
+                    index
+                ].compiled.func(
+                    t, y[variable_slice], p[parameter_slice], dy[variable_slice]
                 )
-                neighbors = self.geometry.iter_neighbors(index)
-                for neighbor, interaction in neighbors:
-                    if interaction == "cell_interaction":
-                        neighbor_one_d_index = self.geometry.get(neighbor)
-                        neighbor_one_d_slice = slice(
-                            var_num * neighbor_one_d_index,
-                            var_num * (neighbor_one_d_index + 1),
-                        )
-                        neighbor_parameter_slice = slice(
-                            param_num * neighbor_one_d_index,
-                            param_num * (neighbor_one_d_index + 1),
-                        )
-                        dy[one_d_slice] += self.interact_sim.compiled.func(
+
+                for (
+                    neighbor_location,
+                    interaction,
+                    interaction_index,
+                ) in self.geometry.yield_neighbors(location):
+                    if neighbor_location is None:
+                        dy[variable_slice] += self.model.compiled_interactions[
+                            interaction
+                        ][interaction_index].compiled.func(
                             t,
-                            np.concatenate((y[one_d_slice], y[neighbor_one_d_slice])),
-                            np.concatenate(
-                                (p[parameter_slice], p[neighbor_parameter_slice])
-                            ),
-                            np.zeros(2 * var_num, dtype=float),
-                        )[:var_num]
-                    if interaction == "boundary":
-                        dy[one_d_slice] += self.boundary_sim.compiled.func(
-                            t,
-                            y[one_d_slice],
+                            y[variable_slice],
                             p[parameter_slice],
                             np.zeros(var_num, dtype=float),
                         )
+                    else:
+                        neighbor_variable_slice = self.calculate_slice(
+                            location=neighbor_location, item="variable"
+                        )
+                        neighbor_parameter_slice = self.calculate_slice(
+                            location=neighbor_location, item="parameter"
+                        )
+                        dy[variable_slice] += self.model.compiled_interactions[
+                            interaction
+                        ][index].compiled.func(
+                            t,
+                            np.concatenate(
+                                (y[variable_slice], y[neighbor_variable_slice])
+                            ),
+                            np.concatenate(
+                                (p[parameter_slice], p[neighbor_parameter_slice])
+                            ),
+                            np.zeros(
+                                var_num
+                                + (
+                                    neighbor_variable_slice.stop
+                                    - neighbor_variable_slice.start
+                                ),
+                                dtype=float,
+                            ),
+                        )[:var_num]
             return dy
 
         return func
 
     def create_problem(
-        self, values: Mapping[Variable | Parameter | Constant, ndarray], t_span
+        self,
+        values: Mapping[
+            CellType, Sequence[Mapping[Components | real.Real, ArbitraryInitial[Array]]]
+        ],
+        t_span,
     ):
         y = self.geometry.create_initials(
-            symbolic_cells=self.model.symbolic_cells,
-            cell_sims=self.model.cell_sims,
+            compiled_cells=self.model.compiled_cells,
             values=values,
         )
         p = self.geometry.create_parameters(
-            symbolic_cells=self.model.symbolic_cells,
-            cell_sims=self.model.cell_sims,
+            compiled_cells=self.model.compiled_cells,
             values=values,
         )
         return Problem(
@@ -101,42 +152,88 @@ class CASimulator:
         *,
         save_at: Sequence[Number],
         values: Mapping[
-            CellType, Sequence[Mapping[Components | real.Real, ArbitraryInitial]]
+            CellType,
+            Mapping[Components | real.Real, ArbitraryInitial]
+            | Sequence[Mapping[Components | real.Real, ArbitraryInitial]],
         ]
+        | Sequence[Mapping[Components | real.Real, ArbitraryInitial]]
+        | Mapping[Components | real.Real, ArbitraryInitial]
         | None = None,
         solver=LSODA(),
         format: Literal["dataframe", "array"] = "dataframe",
     ):
-        # TODO: fix creation of default values to fit format required by create_initials()
-        values = values if values is not None else {}
+        if values is None:
+            values = {
+                cell_category: [{} for x in range(len(system_list))]
+                for cell_category, system_list in self.model.cell_systems.items()
+            }
+        elif isinstance(values, Mapping[Components | real.Real, Any]):
+            if (
+                len(self.model.cell_systems.keys()) == 1
+                and len(list(self.model.cell_systems.values())[0]) == 1
+            ):
+                values = {
+                    list(self.model.cell_systems.keys())[0]: [
+                        values,
+                    ]
+                }
+            else:
+                raise TypeError(
+                    "Must explicit cell_category of initial for automata with more than one cell category, use format values = {cell_category: [initials_for_cell_type]}"
+                )
+        elif isinstance(values, Sequence[Mapping[Components | real.Real, Any]]):
+            if len(self.model.cell_systems.keys()) == 1:
+                if len(list(self.model.cell_systems.values())[0]) == len(values):
+                    values = {list(self.model.cell_systems.keys())[0]: values}
+                else:
+                    raise TypeError(
+                        "Cell category has more cell_types than elements in values, try padding values with (possibly empty) dictionaries."
+                    )
+            else:
+                raise TypeError(
+                    "Must explicit cell_category of initial for automata with more than one cell category, use format values = {cell_category: [initials_for_cell_type]}"
+                )
+        elif isinstance(
+            values,
+            Mapping[
+                CellType,
+                Mapping[Components | real.Real, Any]
+                | Sequence[Mapping[Components | real.Real, Any]],
+            ],
+        ):
+            values = {
+                cell_category: values.get(cell_category, [{} for i in len(system_list)])
+                for cell_category, system_list in self.model.cell_systems.items()
+            }
+        # TODO: if values is not detected as valid format fail? Or try passing it anyways?
         t_span = (save_at[0], save_at[-1])
         problem = self.create_problem(values=values, t_span=t_span)
         solution = solver(problem, save_at=np.asarray(save_at))
+        return self.geometry.format_outupt(solution, format)
         # TODO: fix output formatting
-        output = solution.y.reshape(
-            np.concatenate(
-                [[len(save_at)], self.shape, [len(self.symbolic_cell.variables)]]
-            )
-        )
-        if format == "dataframe":
-            cols = pd.MultiIndex.from_product(
-                [range(s) for s in self.shape]
-                + [[str(var) for var in self.symbolic_cell.variables]]
-            )
-            return pd.DataFrame(
-                output.reshape(
-                    len(save_at),
-                    np.prod(self.shape) * len(self.symbolic_cell.variables),
-                ),
-                columns=cols,
-            )
-        if format == "array":
-            output = solution.y.reshape(
-                np.concatenate(
-                    [[len(save_at)], self.shape, [len(self.symbolic_cell.variables)]]
-                )
-            )
-            return output
+        # output = solution.y.reshape(
+        #     np.concatenate(
+        #         [[len(save_at)], self.shape, [len(self.symbolic_cell.variables)]]
+        #     )
+        # )
+        # if format == "dataframe":
+        #     cols = pd.MultiIndex.from_product(
+        #         [range(s) for s in self.shape]
+        #         + [[str(var) for var in self.symbolic_cell.variables]]
+        #     )
+        #     return pd.DataFrame(
+        #         output.reshape(
+        #             len(save_at),
+        #             np.prod(self.shape) * len(self.symbolic_cell.variables),
+        #         ),
+        #         columns=cols,
+        #     )
+        # if format == "array":
+        #     output = solution.y.reshape(
+        #         np.concatenate(
+        #             [[len(save_at)], self.shape, [len(self.symbolic_cell.variables)]]
+        #         )
+        #     )
 
     def solve_and_animate(
         self,
@@ -172,8 +269,8 @@ def animate_array(frames, interval=100, **kwargs):
     frames: numpy array of shape (n_frames, H, W)
     interval: delay between frames in ms
     """
-    from matplotlib.animation import FuncAnimation
     import matplotlib.pyplot as plt
+    from matplotlib.animation import FuncAnimation
 
     fig, ax = plt.subplots()
     im = ax.imshow(frames[0], animated=True, **kwargs)
