@@ -96,7 +96,7 @@ def test_mass_action_in_simulator(f):
 def test_units_in_rate_law():
     class Model(System):
         x: Variable = initial(default=0)
-        c: Constant = assign(default=0, constant=True)
+        c: Constant = assign(default=1, constant=True)
         eq1 = RateLaw(reactants=[x], products=[], rate_law=c)
         eq2 = RateLaw(reactants=[], products=[x], rate_law=c)
         eq3 = RateLaw(reactants=[2 * x], products=[3 * x], rate_law=c)
@@ -115,8 +115,10 @@ def test_units_in_rate_law():
     sim_1 = Simulator(Model)
     result_1 = np.asarray(sim_1.solve(save_at=np.linspace(0, 10, 10)).to_array())
 
-    sim_2 = Simulator(Model)
-    result_2 = np.asarray(sim_2.solve(save_at=np.linspace(0, 10, 10)).to_array())
+    sim_2 = Simulator(UnitModel)
+    result_2 = np.asarray(
+        sim_2.solve(save_at=np.linspace(0, 10, 10)).pint.dequantify().to_array()
+    )
 
     assert np.all(result_1 == result_2)
 
@@ -124,7 +126,7 @@ def test_units_in_rate_law():
 def test_units_in_mass_action():
     class Model(System):
         x: Variable = initial(default=0)
-        c: Constant = assign(default=0, constant=True)
+        c: Constant = assign(default=1, constant=True)
         eq1 = MassAction(reactants=[x], products=[], rate=c)
         eq2 = MassAction(reactants=[], products=[x], rate=c)
         eq3 = MassAction(reactants=[2 * x], products=[3 * x], rate=c)
@@ -143,8 +145,10 @@ def test_units_in_mass_action():
     sim_1 = Simulator(Model)
     result_1 = np.asarray(sim_1.solve(save_at=np.linspace(0, 10, 10)).to_array())
 
-    sim_2 = Simulator(Model)
-    result_2 = np.asarray(sim_2.solve(save_at=np.linspace(0, 10, 10)).to_array())
+    sim_2 = Simulator(UnitModel)
+    result_2 = np.asarray(
+        sim_2.solve(save_at=np.linspace(0, 10, 10)).pint.dequantify().to_array()
+    )
 
     assert np.all(result_1 == result_2)
 

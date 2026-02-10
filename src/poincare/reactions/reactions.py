@@ -25,7 +25,9 @@ from ..types import (
 
 
 @singledispatch
-def compensate_volume(v: Variable, rhs: Real | Initial) -> Real | Initial:
+def compensate_volume(
+    v: Variable, rhs: Real | Initial, reaction_is_concentration: bool
+) -> Real | Initial:
     return rhs
 
 
@@ -195,6 +197,7 @@ class RateLaw(EquationGroup):
         reactants: Sequence[Real],
         products: Sequence[Real],
         rate_law: float | Real,
+        concentration: bool = True,
     ):
         self.reactants = tuple(
             map(lambda x: Reactant.from_mul(x, parent=self), reactants)
@@ -207,6 +210,7 @@ class RateLaw(EquationGroup):
             if isinstance(rate_law, (pint.Quantity, pint.Unit))
             else rate_law
         )  # Symbolite can't compile equations if they have explicit units, so if it has units rate_law must be extracted as a Parameter
+        self.concentration = concentration
 
     def _copy_from(self, parent: System):
         mapper = NodeMapper(parent)
@@ -235,22 +239,43 @@ class RateLaw(EquationGroup):
             species_stoich[p.variable] += p.stoichiometry
 
         for s, st in species_stoich.items():
-            yield (s.derive() << compensate_volume(s, st * self.rate_law))
+            yield (
+                s.derive()
+                << compensate_volume(
+                    s, st * self.rate_law, reaction_is_concentration=self.concentration
+                )
+            )
 
     def __set_name__(self, cls: Node, name: str):
         if cls is not None:
-            if isinstance(
-                self.rate_law, Parameter
-            ):  # and getattr(self, "name", "") == ""
+            if (
+                isinstance(self.rate_law, Parameter)
+                and getattr(self.rate_law, "name", "") == ""
+            ):
                 try:
                     if issubclass(cls, System):
                         setattr(cls, f"_{name}_rate_law", self.rate_law)
                 except TypeError:
                     pass
-                if self.rate_law.name == "":
-                    self.rate_law.__set_name__(cls=cls, name=f"_{name}_rate_law")
+                self.rate_law.__set_name__(cls=cls, name=f"_{name}_rate_law")
             self.equations = tuple(self._yield_equations())
         super().__set_name__(cls, name)
+
+
+class AbsoluteRateLaw(RateLaw):
+    def __init__(
+        self,
+        *,
+        reactants: Sequence[Real],
+        products: Sequence[Real],
+        rate_law: float | Real,
+    ):
+        super().__init__(
+            reactants=reactants,
+            products=products,
+            rate_law=rate_law,
+            concentration=False,
+        )
 
 
 class MassAction(RateLaw):
@@ -285,6 +310,7 @@ class MassAction(RateLaw):
             map(lambda x: Reactant.from_mul(x, parent=self), products)
         )
         self.rate = rate
+        self.concentration = True
 
     @property
     def rate_law(self):
