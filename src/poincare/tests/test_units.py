@@ -1,6 +1,6 @@
 import numpy as np
-from pint import DimensionalityError, get_application_registry
 import pint
+from pint import DimensionalityError
 from pytest import mark, raises
 from symbolite import real
 from symbolite.impl import libstd

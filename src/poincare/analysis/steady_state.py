@@ -4,7 +4,6 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 from numpy.typing import NDArray
 from scipy_events import Event, SmallDerivatives

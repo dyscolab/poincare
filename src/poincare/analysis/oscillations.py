@@ -2,17 +2,15 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from itertools import chain
 from warnings import warn
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 
 from .. import solvers
 from ..analysis.period_methods import autoperiod, fft_peak
 from ..simulator import Components, Simulator
-from ..types import Initial, Variable
+from ..types import Initial
 
 
 @dataclass(kw_only=True, frozen=True)

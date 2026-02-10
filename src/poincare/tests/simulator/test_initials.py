@@ -1,4 +1,4 @@
-from pytest import raises, mark
+from pytest import mark, raises
 from symbolite import Real
 
 from ...simulator import Simulator
