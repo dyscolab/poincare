@@ -31,7 +31,6 @@ import sys
 import warnings
 from typing import Any, Protocol
 
-import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.tsa.stattools
 from matplotlib.patches import Rectangle
@@ -384,6 +383,8 @@ class Autoperiod:
         period_hints = sorted(period_hints, key=lambda x: x[-1], reverse=True)
 
         if self._plot:
+            import matplotlib.pyplot as plt
+
             plt.figure()
             plt.title("Periodogram")
             plt.semilogy(f, p_den, color="blue", label="PSD")
@@ -520,6 +521,8 @@ class Autoperiod:
         )
 
         if self._plot:
+            import matplotlib.pyplot as plt
+
             n_plots = 3 if self._detrend and self._trend is not None else 2
             fig, axs = plt.subplots(n_plots, 1, sharex="col")
             axs[0].set_title("Original time series")
