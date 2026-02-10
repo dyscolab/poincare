@@ -1,7 +1,7 @@
 [project]
 name = "poincare"
 description = "Simulation of dynamical systems."
-version = "1.0.0b0"
+version = "1.0.0b1"
 authors = [
   { name = "Hernán E. Grecco", email = "hernan.grecco@gmail.com" },
   { name = "Mauro Silberberg", email = "maurosilber@gmail.com" },
