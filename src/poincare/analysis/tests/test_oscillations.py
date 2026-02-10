@@ -42,7 +42,7 @@ def test_sweep():
         sim,
         T_min=0.5,
         T_max=15,
-        T_r=50,
+        rel_time=50,
         parameter=ForcedDampedOscillator.T,
         values=T_values,
     )
@@ -61,7 +61,7 @@ def test_instanced_system():
         sim,
         T_min=0.5,
         T_max=15,
-        T_r=50,
+        rel_time=50,
         parameter=ForcedDampedOscillator.T,
         values=T_values,
     )

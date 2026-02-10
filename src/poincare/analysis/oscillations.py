@@ -64,16 +64,16 @@ class Oscillations:
         *,
         T_min: float,
         T_max: float,
-        T_r: float,
+        rel_time: float,
         variables: Components | Iterable[Components] | None = None,
         values: Iterable[Initial],
         parameter: Components,
         method: str = "autoperiod",
         T_after_rel: int = 10,  # periods simulated after relaxation
-        Dt_in_T: int = 10,  # number of timesteps in min period
+        timesteps_in_T: int = 10,  # number of timesteps in min period
     ) -> xr.Dataset:
-        timestep = T_min / Dt_in_T
-        t_end = T_r + T_after_rel * T_max
+        timestep = T_min / timesteps_in_T
+        t_end = rel_time + T_after_rel * T_max
         save_at = np.arange(0, t_end + (T_after_rel + 0.5) * timestep, timestep)
         if variables is None:
             try:
@@ -91,7 +91,7 @@ class Oscillations:
                 save_at=save_at,
                 used_vars=used_vars,
                 parameter=parameter,
-                T_r=T_r,
+                T_r=rel_time,
                 timestep=timestep,
                 method=method,
                 T_after_rel=T_after_rel,

@@ -25,5 +25,5 @@ __all__ = [
     "Simulator",
     "SteadyState",
     "Oscillations",
-    "model_report",
+    # "model_report",
 ]
