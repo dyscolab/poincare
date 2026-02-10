@@ -6662,7 +6662,7 @@ packages:
   timestamp: 1747339794916
 - conda: .
   name: poincare
-  version: 1.0.0b1
+  version: 1.0.0b2
   build: pyh4616a5c_0
   subdir: noarch
   depends:
@@ -6681,7 +6681,7 @@ packages:
   - python *
   license: MIT
   input:
-    hash: a126a9eed0cc1bfd390671e625da3f3a8d1976bb2add327508d9532f6773f9f3
+    hash: 96f402f17d68573bfdfbede581575f90f051ac2ccdbafbb07cb4feb57619df5e
     globs:
     - pyproject.toml
 - conda: https://prefix.dev/conda-forge/noarch/pre-commit-4.5.0-pyha770c72_0.conda

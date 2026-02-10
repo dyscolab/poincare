@@ -33,7 +33,6 @@ from typing import Any, Protocol
 
 import numpy as np
 import statsmodels.tsa.stattools
-from matplotlib.patches import Rectangle
 from scipy.fft import fft, fftfreq
 from scipy.optimize import OptimizeResult, minimize_scalar
 from scipy.signal import periodogram
@@ -522,6 +521,7 @@ class Autoperiod:
 
         if self._plot:
             import matplotlib.pyplot as plt
+            from matplotlib.patches import Rectangle
 
             n_plots = 3 if self._detrend and self._trend is not None else 2
             fig, axs = plt.subplots(n_plots, 1, sharex="col")
