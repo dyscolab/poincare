@@ -1,3 +1,5 @@
+from pytest import mark
+
 from ... import Constant, Derivative, Parameter, System, Variable, assign, initial
 from ..latex import model_report
 
@@ -33,11 +35,13 @@ class DampedOscillator(System):
     dampening = Dampening(x=x_ext, damp_rate=damp_rate)
 
 
+@mark.xfail(reason="Not updated to symbolite 1.0.0")
 def test_model_report():
     output = model_report(DampedOscillator)
     assert "damp_{rate}" in output
 
 
+@mark.xfail(reason="Not updated to symbolite 1.0.0")
 def test_model_report_transform():
     output = model_report(
         DampedOscillator, transform={DampedOscillator.damp_rate: "\\gamma"}

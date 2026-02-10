@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from collections import defaultdict
 from collections.abc import Callable, Iterator, Mapping, MutableSequence, Sequence
 from dataclasses import dataclass
@@ -90,7 +91,11 @@ def identity(x):
     return x
 
 
-Backend = Literal["numpy", "numba", "jax"]
+Backend = (
+    Literal["numpy", "numba"]
+    if sys.platform == "win32"
+    else Literal["numpy", "numba", "jax"]
+)
 
 
 def get_libsl(backend: Backend) -> ModuleType:
