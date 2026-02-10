@@ -24,6 +24,8 @@ requires-python = ">=3.12"
 dependencies = [
   "numpy",
   "pandas",
+  "xarray",
+  "pint-xarray",
   "pint",
   "pint-pandas",
   "scipy",
@@ -90,6 +92,7 @@ uv = "*"
 [tool.pixi.package.run-dependencies]
 numpy = "*"
 pandas = "*"
+xarray = "*"
 pint = "*"
 pint-pandas = "*"
 scipy = "*"

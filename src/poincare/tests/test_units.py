@@ -1,5 +1,6 @@
 import numpy as np
 from pint import DimensionalityError, get_application_registry
+import pint
 from pytest import mark, raises
 from symbolite import real
 from symbolite.impl import libstd
@@ -17,7 +18,7 @@ from poincare import (
     initial,
 )
 
-u = get_application_registry()
+u = pint.UnitRegistry()
 
 
 @mark.parametrize(
@@ -257,11 +258,11 @@ def test_normalization():
 
     t = np.linspace(0, 1, 10)
     sim = Simulator(Model)
-    df = sim.solve(save_at=t)
-    df_cm = sim.solve(values={Model.y: 100 * u.cm}, save_at=t)
-    assert np.allclose((df - df_cm).pint.dequantify().values, 0)
-    assert df["y"].pint.units == u.m
-    assert df_cm["y"].pint.units == u.cm
+    ds = sim.solve(save_at=t)
+    ds_cm = sim.solve(values={Model.y: 100 * u.cm}, save_at=t)
+    assert np.allclose((ds - ds_cm).pint.dequantify().to_dataarray(), 0)
+    assert ds["y"].pint.units == u.m
+    assert ds_cm["y"].pint.units == u.cm
 
 
 @mark.xfail(reason="Not yet implemented")

@@ -502,11 +502,19 @@ class EagerNamer(type):
 
     @property
     def variables(self):
-        return pd.Series({str(x): x.initial for x in self._yield(Variable)})
+        return (
+            pd.Series({str(x): x.initial for x in self._yield(Variable)})
+            .to_xarray()
+            .rename({"index": "variable"})
+        )
 
     @property
     def parameters(self):
-        return pd.Series({str(x): x.default for x in self._yield(Parameter | Constant)})
+        return (
+            pd.Series({str(x): x.default for x in self._yield(Parameter | Constant)})
+            .to_xarray()
+            .rename({"index": "variable"})
+        )
 
 
 def _as_table(self: type[System], *, max_width: int | None) -> Table:

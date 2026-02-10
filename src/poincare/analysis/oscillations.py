@@ -7,13 +7,12 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 from .. import solvers
 from ..analysis.period_methods import autoperiod, fft_peak
 from ..simulator import Components, Simulator
-from ..types import (
-    Initial,
-)
+from ..types import Initial, Variable
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -35,14 +34,14 @@ class Oscillations:
         T_after_rel: int,
         T_min: float,
         T_max: float,
-    ) -> tuple[float, float]:
+    ) -> Mapping[Components, tuple[float, float, float]]:
         result = sim.solve(
             values=values,
             solver=self.solver,
             save_at=save_at,
         )
-        output_tuples = [
-            self.process_result(
+        output = {
+            var: self.process_result(
                 series=np.array(result[str(var)].values),
                 variable=var,
                 values=values,
@@ -55,11 +54,8 @@ class Oscillations:
                 T_max=T_max,
             )
             for var in used_vars
-        ]
-
-        # Unpack tuples for each variable into single list
-
-        return list(chain.from_iterable(output_tuples))
+        }
+        return output
 
     def sweep(
         self,
@@ -75,48 +71,47 @@ class Oscillations:
         method: str = "autoperiod",
         T_after_rel: int = 10,  # periods simulated after relaxation
         Dt_in_T: int = 10,  # number of timesteps in min period
-    ) -> pd.DataFrame:
+    ) -> xr.Dataset:
         timestep = T_min / Dt_in_T
         t_end = T_r + T_after_rel * T_max
         save_at = np.arange(0, t_end + (T_after_rel + 0.5) * timestep, timestep)
         if variables is None:
             try:
-                used_vars = list(sim.model.variables.index)
+                used_vars = list(sim.compiled.variables)
             except AttributeError:
                 used_vars = list(type(sim.model).variables.index)
         elif isinstance(variables, Iterable):
             used_vars = list(variables)
         else:
             used_vars = [variables]
-        if len(used_vars) > 1:
-            cols = pd.MultiIndex.from_product(
-                [
-                    [str(var) for var in used_vars],
-                    ["period", "amplitude", "difference_rms"],
-                ],
-                names=["variable", "quantity"],
+        results = [
+            self.find_period(
+                sim,
+                values={parameter: v},
+                save_at=save_at,
+                used_vars=used_vars,
+                parameter=parameter,
+                T_r=T_r,
+                timestep=timestep,
+                method=method,
+                T_after_rel=T_after_rel,
+                T_min=T_min,
+                T_max=T_max,
             )
-        else:
-            cols = ["period", "amplitude", "difference_rms"]
-        return pd.DataFrame(
-            data=[
-                self.find_period(
-                    sim,
-                    values={parameter: v},
-                    save_at=save_at,
-                    used_vars=used_vars,
-                    parameter=parameter,
-                    T_r=T_r,
-                    timestep=timestep,
-                    method=method,
-                    T_after_rel=T_after_rel,
-                    T_min=T_min,
-                    T_max=T_max,
+            for v in values
+        ]
+        return xr.Dataset(
+            {
+                str(var): xr.DataArray(
+                    data=np.array([results[i][var] for i, v in enumerate(values)]),
+                    dims=[str(parameter), "quantity"],
+                    coords={
+                        str(parameter): values,
+                        "quantity": ["period", "amplitude", "difference_rms"],
+                    },
                 )
-                for v in values
-            ],
-            index=pd.Series(values, name=parameter),
-            columns=cols,
+                for var in used_vars
+            }
         )
 
     def process_result(

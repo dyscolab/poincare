@@ -11,11 +11,11 @@ def assert_names(
     parameters: set[str],
 ):
     sim = Simulator(system)
-    df = sim.solve(save_at=range(1))
+    ds = sim.solve(save_at=range(1))
     print(sim.compiled)
     assert set(map(str, sim.compiled.variables)) == variables
     assert set(map(str, sim.compiled.parameters)) == parameters
-    assert set(df.columns) == variables
+    assert set(ds.data_vars) == variables
 
 
 def test_no_equation():

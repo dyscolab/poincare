@@ -56,7 +56,7 @@ def test_sweep_up_down():
         values=r_values,
     )
     result = simulation["x"].to_numpy()
-    doub_rev_r = np.concat((r_values, np.flip(r_values)))
+    doub_rev_r = np.array([r_values, np.flip(r_values)]).T
     comparison = (
         np.minimum.reduce(
             np.array(

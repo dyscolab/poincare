@@ -50,7 +50,8 @@ def test_reaction_simulation(f):
 
     sim = Simulator(Model)
     result = sim.solve(save_at=np.linspace(0, 1, 5))
-    assert result.columns.tolist() == ["x"]
+
+    assert list(result.data_vars) == ["x"]
     assert sim.compiled.func(0, [2], [0], [0]) == np.array([1.0])
 
 
@@ -86,7 +87,9 @@ def test_mass_action_in_simulator(f):
     model: Model = f(Model)
     sim = Simulator(model)
     result = sim.solve(save_at=np.linspace(0, 1, 5))
-    assert result.columns.tolist() == ["x"]
+
+    assert list(result.data_vars) == ["x"]
+
     assert sim.compiled.func(0, [2], [0], [0]) == np.array([6.0])
 
 
@@ -108,10 +111,13 @@ def test_units_in_rate_law():
         )
 
     assert UnitModel._eq1_rate_law.default == 1 * ureg.mol / ureg.s
+
     sim_1 = Simulator(Model)
-    result_1 = np.asarray(sim_1.solve(save_at=np.linspace(0, 10, 10)))
+    result_1 = np.asarray(sim_1.solve(save_at=np.linspace(0, 10, 10)).to_array())
+
     sim_2 = Simulator(Model)
-    result_2 = np.asarray(sim_2.solve(save_at=np.linspace(0, 10, 10)).pint.dequantify())
+    result_2 = np.asarray(sim_2.solve(save_at=np.linspace(0, 10, 10)).to_array())
+
     assert np.all(result_1 == result_2)
 
 
@@ -133,10 +139,13 @@ def test_units_in_mass_action():
         )
 
     assert UnitModel._eq2_rate_law.default == 1 * ureg.mol / ureg.s
+
     sim_1 = Simulator(Model)
-    result_1 = np.asarray(sim_1.solve(save_at=np.linspace(0, 10, 10)))
+    result_1 = np.asarray(sim_1.solve(save_at=np.linspace(0, 10, 10)).to_array())
+
     sim_2 = Simulator(Model)
-    result_2 = np.asarray(sim_2.solve(save_at=np.linspace(0, 10, 10)).pint.dequantify())
+    result_2 = np.asarray(sim_2.solve(save_at=np.linspace(0, 10, 10)).to_array())
+
     assert np.all(result_1 == result_2)
 
 
@@ -146,18 +155,26 @@ def test_reactant():
         B: Reactant = reaction_initial(default=1)
         AB: Reactant = reaction_initial(default=0)
 
-        eq = MassAction(reactants=[A, 2 * B], products=[AB], rate=A.variable ** (1 / 2))
+        eq = MassAction(
+            reactants=[A, 2 * B],
+            products=[AB],
+            rate=A.variable ** (1 / 2),
+        )
 
     assert set(Model._yield(Variable)) == set(
         [Model.A.variable, Model.B.variable, Model.AB.variable]
     )
+
     dnsim = Simulator(Model)
+
     assert set(dnsim.compiled.variables) == set(
         [Model.A.variable, Model.B.variable, Model.AB.variable]
     )
+
     assert np.all(
         dnsim.compiled.func(0, [4, 0, 2], [], [0, 0, 0]) == np.array([-32, 32, -64])
     )
+
     dnsim.solve(save_at=np.linspace(0, 10, 10))
 
 
@@ -167,7 +184,11 @@ def test_nested_reactant():
         B: Reactant = reaction_initial(default=1)
         AB: Reactant = reaction_initial(default=0)
 
-        eq = MassAction(reactants=[A, 2 * B], products=[AB], rate=A.variable ** (1 / 2))
+        eq = MassAction(
+            reactants=[A, 2 * B],
+            products=[AB],
+            rate=A.variable ** (1 / 2),
+        )
 
     class Nested(System):
         A: Reactant = reaction_initial(default=3)
@@ -193,6 +214,7 @@ def test_nested_reactant():
             Model.nested.dnested.AB.variable,
         ]
     )
+
     assert Model.nested.A.stoichiometry == 3
 
     sim = Simulator(Model)

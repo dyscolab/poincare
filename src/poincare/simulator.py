@@ -8,8 +8,9 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 import pint
-import pint_pandas
+import pint_xarray
 from numpy.typing import ArrayLike
 from scipy_events import Events
 from symbolite.core.value import Value
@@ -177,26 +178,32 @@ class Simulator:
         solution = solver(problem, save_at=save_at, events=events)
 
         def _convert(t, y):
-            return pd.DataFrame(
+            ds = xr.Dataset(
                 {
-                    k: pint_pandas.PintArray(
-                        x * s.magnitude, pint_pandas.PintType(s.units)
+                    k: xr.DataArray(
+                        data=x * s.magnitude, dims="time", coords={"time": t}
+                    ).pint.quantify(
+                        s.units, pint_xarray.setup_registry(s.units._REGISTRY)
                     )
                     if isinstance(s, pint.Quantity)
-                    else x * s
+                    else xr.DataArray(data=x * s, dims="time", coords={"time": t})
                     for k, s, x in zip(self.transform.output.keys(), problem.scale, y.T)
-                },
-                index=pd.Series(t, name="time"),
+                }
             )
+            for s in problem.scale:
+                if isinstance(s, pint.Quantity):
+                    s.units._REGISTRY.force_ndarray_like = False
+            return ds
 
-        df = _convert(solution.t, solution.y)
+        ds = _convert(solution.t, solution.y)
+
         if len(events) > 0:
-            df_events = (
+            ds_events = (
                 _convert(t, y).assign(event=i)
                 for i, (t, y) in enumerate(zip(solution.t_events, solution.y_events))
             )
-            df = pd.concat([df.assign(event=pd.NA), *df_events])
-        return df
+            ds = xr.concat([ds.assign(event=np.nan), *ds_events], "time")
+        return ds
 
     def interact(
         self,

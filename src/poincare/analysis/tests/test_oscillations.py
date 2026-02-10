@@ -46,7 +46,7 @@ def test_sweep():
         parameter=ForcedDampedOscillator.T,
         values=T_values,
     )
-    periods = result["period"].to_numpy()
+    periods = result.sel(quantity="period").to_array().values
     comparison = np.abs(periods - T_values) < np.minimum(
         rtol * (np.abs(periods) + np.max(T_values)) / 2, atol
     )
@@ -65,7 +65,7 @@ def test_instanced_system():
         parameter=ForcedDampedOscillator.T,
         values=T_values,
     )
-    periods = result["period"].to_numpy()
+    periods = result.sel(quantity="period").to_array().values
     comparison = np.abs(periods - T_values) < np.minimum(
         rtol * (np.abs(periods) + np.max(T_values)) / 2, atol
     )
