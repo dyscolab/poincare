@@ -87,14 +87,14 @@ preview = ["pixi-build"]
 backend = { name = "pixi-build-python", version = "0.4.*" }
 
 [tool.pixi.package.host-dependencies]
-uv = "*"
+uv-build = "*"
 
 [tool.pixi.package.run-dependencies]
 numpy = "*"
 pandas = "*"
 xarray = "*"
+pint-xarray = "*"
 pint = "*"
-pint-pandas = "*"
 scipy = "*"
 tabulate = "*"
 typing_extensions = "*"
@@ -102,7 +102,6 @@ symbolite = ">=0.8"
 scipy-events = ">=0.3.1"
 pytest = ">=8.4.0,<9"
 statsmodels = "*"
-matplotlib = "*"
 
 [tool.pixi.environments]
 default = ["test", "py312"]
