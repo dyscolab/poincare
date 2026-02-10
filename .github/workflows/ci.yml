@@ -44,5 +44,5 @@ jobs:
       - name: Build the package
         run: pixi run --environment build _build
       - name: Publish to PyPI
-        if: github.ref_type == 'tag'
+        if: ${{ github.ref_type == 'tag' }}
         run: pixi run --environment build _publish
