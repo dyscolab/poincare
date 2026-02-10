@@ -1,6 +1,7 @@
 from .analysis.oscillations import Oscillations
 from .analysis.steady_state import SteadyState
-from .printing.latex import model_report
+
+# from .printing.latex import model_report
 from .simulator import Simulator
 from .types import (
     Constant,
