@@ -7,10 +7,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import pandas as pd
-import xarray as xr
 import pint
 import pint_xarray
+import xarray as xr
 from numpy.typing import ArrayLike
 from scipy_events import Events
 from symbolite.core.value import Value
@@ -21,10 +20,10 @@ from ._utils import eval_content
 from .compile import (
     RHS,
     Backend,
-    Transform,
-    depends_on_at_least_one_variable_or_time,
     SystemCompiler,
+    Transform,
     compile_transform,
+    depends_on_at_least_one_variable_or_time,
 )
 from .types import (
     Array1d,
@@ -212,7 +211,7 @@ class Simulator:
         *,
         t_span: tuple[float, float] = (0, np.inf),
         save_at: ArrayLike,
-        func: Callable[[pd.DataFrame], Any] = lambda df: df.plot(),
+        func: Callable[[xr.Dataset], Any] = lambda ds: ds.to_dataframe().plot(),
     ):
         try:
             import ipywidgets

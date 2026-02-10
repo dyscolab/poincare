@@ -9,8 +9,8 @@ from typing import Any, ClassVar, Literal, Self, TypeVar, dataclass_transform, o
 from typing import get_type_hints as get_annotations
 
 import numpy as np
-import pandas as pd
 import pint
+import xarray as xr
 from symbolite import Real
 from symbolite import abstract as libabstract
 from symbolite.core import Value
@@ -502,18 +502,20 @@ class EagerNamer(type):
 
     @property
     def variables(self):
-        return (
-            pd.Series({str(x): x.initial for x in self._yield(Variable)})
-            .to_xarray()
-            .rename({"index": "variable"})
+        vars = list[self._yield(Variable)]
+        return xr.DataArray(
+            data=vars,
+            dims="variables",
+            coords={"variables": [str(var) for var in vars]},
         )
 
     @property
     def parameters(self):
-        return (
-            pd.Series({str(x): x.default for x in self._yield(Parameter | Constant)})
-            .to_xarray()
-            .rename({"index": "variable"})
+        params = list[self._yield(Parameter)]
+        return xr.DataArray(
+            data=params,
+            dims="parameters",
+            coords={"parameters": [str(param) for param in params]},
         )
 
 
