@@ -309,7 +309,11 @@ class MassAction(RateLaw):
         self.products = tuple(
             map(lambda x: Reactant.from_mul(x, parent=self), products)
         )
-        self.rate = rate
+        self.rate = (
+            Parameter(default=rate)
+            if isinstance(rate, (pint.Quantity, pint.Unit))
+            else rate
+        )  # Symbolite can't compile equations if they have explicit units, so if it has units rate must be extracted as a Parameter
         self.concentration = True
 
     @property
@@ -336,3 +340,18 @@ class MassAction(RateLaw):
             ],
             rate=substitute(self.rate, mapper),
         )
+
+    def __set_name__(self, cls: Node, name: str):
+        if cls is not None:
+            if (
+                isinstance(self.rate, Parameter)
+                and getattr(self.rate, "name", "") == ""
+            ):
+                try:
+                    if issubclass(cls, System):
+                        setattr(cls, f"_{name}_rate_law", self.rate)
+                except TypeError:
+                    pass
+                self.rate.__set_name__(cls=cls, name=f"_{name}_rate_law")
+            self.equations = tuple(self._yield_equations())
+        super().__set_name__(cls, name)
