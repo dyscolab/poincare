@@ -57,7 +57,8 @@ class Reactant(Node, Real):
 
     def __set_name__(self, cls: Node, name: str):
         super().__set_name__(cls, name)
-        self.variable.__set_name__(self, name)
+        if self.variable.name == "":
+            self.variable.__set_name__(self, name)
 
     def _copy_from(self, parent: Node) -> Self:
         variable = self.variable._copy_from(parent)
