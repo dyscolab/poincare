@@ -201,7 +201,9 @@ class Simulator:
                 _convert(t, y).assign(event=i)
                 for i, (t, y) in enumerate(zip(solution.t_events, solution.y_events))
             )
-            ds = xr.concat([ds.assign(event=np.nan), *ds_events], "time")
+            ds = xr.concat(
+                [ds.assign(event=np.nan), *ds_events], "time", data_vars="all"
+            )
         return ds
 
     def interact(
