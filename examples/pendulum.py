@@ -21,7 +21,7 @@ if __name__ == "__main__":
     for angle_0 in [1, 10, 30, 50, 70, 90]:
         model = Pendulum(angle=np.deg2rad(angle_0))
         result = Simulator(model).solve(save_at=np.linspace(0, 5, 1000))
-        (result["angle"] / angle_0).plot(ax=ax, label=angle_0)
+        (result["angle"] / angle_0).to_dataframe().plot(ax=ax, label=angle_0)
 
     plt.legend(title="Angle [°]")
     plt.ylabel("Angle relative to initial angle")

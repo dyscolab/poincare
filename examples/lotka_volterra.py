@@ -23,5 +23,5 @@ class LotkaVolterra(System):
 if __name__ == "__main__":
     sim = Simulator(LotkaVolterra)
     result = sim.solve(save_at=np.linspace(0, 100, 1000))
-    result.plot()
+    result.to_dataframe().plot()
     plt.show()
