@@ -28,6 +28,7 @@ class Sweeper:
         values: Iterable[Initial],
         other_values: Mapping[Components, Initial] | None = None,
         save_at: Iterable[ArrayLike],
+        unpack: bool = True,
     ):
         other_values = {} if other_values is None else other_values
         solutions = []
@@ -37,17 +38,32 @@ class Sweeper:
             )
             solutions.append(result)
         data_arrays = {}
-        if isinstance(solutions[0], Mapping):
-            for k in solutions[0].keys():
-                data_arrays[k] = xr.DataArray(
-                    np.array([s[k] for s in solutions]),
+        if isinstance(solutions[0], dict) and unpack:
+            try:
+                for k in solutions[0].keys():
+                    data_arrays[k] = xr.DataArray(
+                        np.asarray([s[k] for s in solutions]),
+                        dims=str(parameter),
+                        coords={str(parameter): values},
+                    )
+            except ValueError:
+                for k in solutions[0].keys():
+                    data_arrays[k] = xr.DataArray(
+                        np.asarray([s[k] for s in solutions], dtype=object),
+                        dims=str(parameter),
+                        coords={str(parameter): values},
+                    )
+        else:
+            try:
+                data_arrays["result"] = xr.DataArray(
+                    np.asarray(solutions),
                     dims=str(parameter),
                     coords={str(parameter): values},
                 )
-        else:
-            data_arrays["result"] = xr.DataArray(
-                np.array(solutions),
-                dims=str(parameter),
-                coords={str(parameter): values},
-            )
+            except ValueError:
+                data_arrays["result"] = xr.DataArray(
+                    np.asarray(solutions, dtype=object),
+                    dims=str(parameter),
+                    coords={str(parameter): values},
+                )
         return xr.Dataset(data_arrays)
