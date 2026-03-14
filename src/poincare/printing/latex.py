@@ -101,7 +101,7 @@ class ToLatex:
                 yield normalize_eq(x, transform=self.transform), str(x.default)
 
     def yield_equations(self) -> Iterator[tuple[Latex, Latex]]:
-        for der, eq in self.equations.func.items():
+        for der, eq in self.equations.func[0].items():
             d = latex_derivative(
                 normalize_eq(der.variable, transform=self.transform), der.order
             )

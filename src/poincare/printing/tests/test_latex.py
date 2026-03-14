@@ -48,3 +48,4 @@ def test_model_report_transform():
     )
     assert "\\gamma" in output
     assert "damp_rate" not in output
+    assert "damp_{rate}" not in output
