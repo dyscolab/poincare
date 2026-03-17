@@ -3,6 +3,8 @@ environments:
   build:
     channels:
     - url: https://prefix.dev/conda-forge/
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -25,6 +27,8 @@ environments:
     - url: https://prefix.dev/conda-forge/
     indexes:
     - https://pypi.org/simple
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -539,6 +543,8 @@ environments:
   lint:
     channels:
     - url: https://prefix.dev/conda-forge/
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -681,6 +687,8 @@ environments:
     - url: https://prefix.dev/conda-forge/
     indexes:
     - https://pypi.org/simple
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -894,6 +902,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - conda: .
       - pypi: https://files.pythonhosted.org/packages/97/19/5af93cae70c2e42f3ac568906f8f3909174450bdbf4d70ec420e1daef816/Pint_Pandas-0.7.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/5d/08/71ae82e9d0f0d0fdebf72d8003bfd0cdbaf1b23377e618ac0a3c59dae911/rebop-0.9.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       osx-arm64:
       - conda: https://prefix.dev/conda-forge/osx-arm64/_openmp_mutex-4.5-7_kmp_llvm.conda
       - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -1038,6 +1047,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/osx-arm64/zstd-1.5.7-h6491c7d_2.conda
       - conda: .
       - pypi: https://files.pythonhosted.org/packages/97/19/5af93cae70c2e42f3ac568906f8f3909174450bdbf4d70ec420e1daef816/Pint_Pandas-0.7.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/7c/d0/43f90426ea450443a2471c6c2cd4abf31c3091ea20f177f2ff7fca3d64a0/rebop-0.9.7-cp312-cp312-macosx_11_0_arm64.whl
       win-64:
       - conda: https://prefix.dev/conda-forge/win-64/_openmp_mutex-4.5-2_gnu.conda
       - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -1192,11 +1202,14 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/zstd-1.5.7-hbeecb71_2.conda
       - conda: .
       - pypi: https://files.pythonhosted.org/packages/97/19/5af93cae70c2e42f3ac568906f8f3909174450bdbf4d70ec420e1daef816/Pint_Pandas-0.7.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/2b/78/08c51c8d1f5c02dd55064858c5fb755acf0f2d7771b59728c81329cfca47/rebop-0.9.7-cp312-cp312-win_amd64.whl
   test-py313:
     channels:
     - url: https://prefix.dev/conda-forge/
     indexes:
     - https://pypi.org/simple
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -1409,6 +1422,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - conda: .
       - pypi: https://files.pythonhosted.org/packages/97/19/5af93cae70c2e42f3ac568906f8f3909174450bdbf4d70ec420e1daef816/Pint_Pandas-0.7.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ee/10/3a8df3e4748cfd2815bf19b50dfd59062e341bcc7e24648f87195d97f3a0/rebop-0.9.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       osx-arm64:
       - conda: https://prefix.dev/conda-forge/osx-arm64/_openmp_mutex-4.5-7_kmp_llvm.conda
       - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -1553,6 +1567,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/osx-arm64/zstd-1.5.7-h6491c7d_2.conda
       - conda: .
       - pypi: https://files.pythonhosted.org/packages/97/19/5af93cae70c2e42f3ac568906f8f3909174450bdbf4d70ec420e1daef816/Pint_Pandas-0.7.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/f1/2a/4326322f880ce08f864395ba81cc5efa97ab1477bf5b9cddba5bc693ec26/rebop-0.9.7-cp313-cp313-macosx_11_0_arm64.whl
       win-64:
       - conda: https://prefix.dev/conda-forge/win-64/_openmp_mutex-4.5-2_gnu.conda
       - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -1707,6 +1722,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/zstd-1.5.7-hbeecb71_2.conda
       - conda: .
       - pypi: https://files.pythonhosted.org/packages/97/19/5af93cae70c2e42f3ac568906f8f3909174450bdbf4d70ec420e1daef816/Pint_Pandas-0.7.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a3/b7/652d3f7c034d6631a985a57bd82f17b78ca16ff628f5b264786700e438b6/rebop-0.9.7-cp313-cp313-win_amd64.whl
 packages:
 - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
   sha256: fe51de6107f9edc7aa4f786a70f4a883943bc9d39b3bb7307c04c41410990726
@@ -6681,10 +6697,6 @@ packages:
   - python >=3.12
   - python *
   license: MIT
-  input:
-    hash: 62ba0dbdbcaf9ee658af180864e96583dbdd272d6f567fc0b786a366108056e2
-    globs:
-    - pyproject.toml
 - conda: https://prefix.dev/conda-forge/noarch/pre-commit-4.5.0-pyha770c72_0.conda
   sha256: 8481f4939b1f81cf0db12456819368b41e3f998e4463e41611de4b13752b2c08
   md5: af8d4882203bccefec6f1aeed70030c6
@@ -7604,6 +7616,90 @@ packages:
   purls: []
   size: 252359
   timestamp: 1740379663071
+- pypi: https://files.pythonhosted.org/packages/2b/78/08c51c8d1f5c02dd55064858c5fb755acf0f2d7771b59728c81329cfca47/rebop-0.9.7-cp312-cp312-win_amd64.whl
+  name: rebop
+  version: 0.9.7
+  sha256: 2bb1b0d00698b5a80c03fd1e74cb1f04c26232dcd8e122bafdd8e65318459d79
+  requires_dist:
+  - xarray>=2024.3
+  - pytest>=8.3.4,<9 ; extra == 'dev'
+  - maturin>=1.9.6,<2 ; extra == 'dev'
+  - pip>=24.3.1,<25 ; extra == 'dev'
+  - pre-commit>=4.0.1,<5 ; extra == 'dev'
+  - mkdocs>=1.6.1,<2 ; extra == 'doc'
+  - mkdocs-material>=9.5.49,<10 ; extra == 'doc'
+  - mkdocstrings[python]>=0.27.0,<0.28 ; extra == 'doc'
+  requires_python: '>=3.12'
+- pypi: https://files.pythonhosted.org/packages/5d/08/71ae82e9d0f0d0fdebf72d8003bfd0cdbaf1b23377e618ac0a3c59dae911/rebop-0.9.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  name: rebop
+  version: 0.9.7
+  sha256: e342b7029eb3d25e46d576949e4136a4fe3c71ea93a4d795fff80521a7c1a046
+  requires_dist:
+  - xarray>=2024.3
+  - pytest>=8.3.4,<9 ; extra == 'dev'
+  - maturin>=1.9.6,<2 ; extra == 'dev'
+  - pip>=24.3.1,<25 ; extra == 'dev'
+  - pre-commit>=4.0.1,<5 ; extra == 'dev'
+  - mkdocs>=1.6.1,<2 ; extra == 'doc'
+  - mkdocs-material>=9.5.49,<10 ; extra == 'doc'
+  - mkdocstrings[python]>=0.27.0,<0.28 ; extra == 'doc'
+  requires_python: '>=3.12'
+- pypi: https://files.pythonhosted.org/packages/7c/d0/43f90426ea450443a2471c6c2cd4abf31c3091ea20f177f2ff7fca3d64a0/rebop-0.9.7-cp312-cp312-macosx_11_0_arm64.whl
+  name: rebop
+  version: 0.9.7
+  sha256: 2cf52cc8eae3ea77651d425629aed387c042d6b797ced83f6734a67aaa900627
+  requires_dist:
+  - xarray>=2024.3
+  - pytest>=8.3.4,<9 ; extra == 'dev'
+  - maturin>=1.9.6,<2 ; extra == 'dev'
+  - pip>=24.3.1,<25 ; extra == 'dev'
+  - pre-commit>=4.0.1,<5 ; extra == 'dev'
+  - mkdocs>=1.6.1,<2 ; extra == 'doc'
+  - mkdocs-material>=9.5.49,<10 ; extra == 'doc'
+  - mkdocstrings[python]>=0.27.0,<0.28 ; extra == 'doc'
+  requires_python: '>=3.12'
+- pypi: https://files.pythonhosted.org/packages/a3/b7/652d3f7c034d6631a985a57bd82f17b78ca16ff628f5b264786700e438b6/rebop-0.9.7-cp313-cp313-win_amd64.whl
+  name: rebop
+  version: 0.9.7
+  sha256: 73e8888a2147a34e8413611d37d23c02604a938218430e79ee9c09a288dd3314
+  requires_dist:
+  - xarray>=2024.3
+  - pytest>=8.3.4,<9 ; extra == 'dev'
+  - maturin>=1.9.6,<2 ; extra == 'dev'
+  - pip>=24.3.1,<25 ; extra == 'dev'
+  - pre-commit>=4.0.1,<5 ; extra == 'dev'
+  - mkdocs>=1.6.1,<2 ; extra == 'doc'
+  - mkdocs-material>=9.5.49,<10 ; extra == 'doc'
+  - mkdocstrings[python]>=0.27.0,<0.28 ; extra == 'doc'
+  requires_python: '>=3.12'
+- pypi: https://files.pythonhosted.org/packages/ee/10/3a8df3e4748cfd2815bf19b50dfd59062e341bcc7e24648f87195d97f3a0/rebop-0.9.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  name: rebop
+  version: 0.9.7
+  sha256: 1c8443d87849297bd4b598e6743a6aa8d3426d0901c0d62e932fff975cdaf1dc
+  requires_dist:
+  - xarray>=2024.3
+  - pytest>=8.3.4,<9 ; extra == 'dev'
+  - maturin>=1.9.6,<2 ; extra == 'dev'
+  - pip>=24.3.1,<25 ; extra == 'dev'
+  - pre-commit>=4.0.1,<5 ; extra == 'dev'
+  - mkdocs>=1.6.1,<2 ; extra == 'doc'
+  - mkdocs-material>=9.5.49,<10 ; extra == 'doc'
+  - mkdocstrings[python]>=0.27.0,<0.28 ; extra == 'doc'
+  requires_python: '>=3.12'
+- pypi: https://files.pythonhosted.org/packages/f1/2a/4326322f880ce08f864395ba81cc5efa97ab1477bf5b9cddba5bc693ec26/rebop-0.9.7-cp313-cp313-macosx_11_0_arm64.whl
+  name: rebop
+  version: 0.9.7
+  sha256: 7e1a8ec4fdd9f66ccb453d06559bd1738d490a71e9d707204cf0436404194448
+  requires_dist:
+  - xarray>=2024.3
+  - pytest>=8.3.4,<9 ; extra == 'dev'
+  - maturin>=1.9.6,<2 ; extra == 'dev'
+  - pip>=24.3.1,<25 ; extra == 'dev'
+  - pre-commit>=4.0.1,<5 ; extra == 'dev'
+  - mkdocs>=1.6.1,<2 ; extra == 'doc'
+  - mkdocs-material>=9.5.49,<10 ; extra == 'doc'
+  - mkdocstrings[python]>=0.27.0,<0.28 ; extra == 'doc'
+  requires_python: '>=3.12'
 - conda: https://prefix.dev/conda-forge/linux-64/ruamel.yaml-0.18.16-py314h5bd0f2a_0.conda
   sha256: cf157747a72969de53e0bb275e858d0c6f2c462c2f8faf63a5c70b6bbe31cbd8
   md5: 6f54751cc148579777be1a6a2ae474cc

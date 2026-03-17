@@ -107,8 +107,8 @@ statsmodels = "*"
 default = ["test", "py312"]
 lint = { features = ["lint"], no-default-feature = true }
 build = { features = ["build"], no-default-feature = true }
-test-py312 = ["test", "py312"]
-test-py313 = ["test", "py313"]
+test-py312 = ["test", "py312", "rebop"]
+test-py313 = ["test", "py313", "rebop"]
 # test-py314 = ["test", "py314"]
 
 [tool.pixi.dependencies]
@@ -152,3 +152,6 @@ test = "pytest --doctest-modules"
 py312.dependencies = { python = "3.12.*" }
 py313.dependencies = { python = "3.13.*" }
 # py314.dependencies = { python = "3.14.*" }
+
+[tool.pixi.feature.rebop.pypi-dependencies]
+rebop = ">=0.9"
