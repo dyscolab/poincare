@@ -3,9 +3,10 @@ from dataclasses import dataclass, field
 from io import StringIO, TextIOWrapper
 
 from symbolite import Real
+from symbolite.impl import liblatex
 from symbolite.ops import substitute, translate, yield_named
 
-from ..compile import build_equation_maps
+from ..compile import build_equation_maps, replace_algebraic_equations
 from ..types import (
     Constant,
     Derivative,
@@ -40,9 +41,17 @@ class ToLatex:
     system: System | type[System]
     normalize_name: Callable[[Real], Latex] = default_name
     transform: dict[Real, str] = field(default_factory=dict)
+    replace_algebraics: bool = False
 
     def __post_init__(self):
-        self.equations = build_equation_maps(self.system)
+        if self.replace_algebraics:
+            self.equations = replace_algebraic_equations(
+                build_equation_maps(self.system)
+            )
+            self.func = self.equations.func
+        else:
+            self.equations = build_equation_maps(self.system)
+            self.func = self.equations.func[0]
 
     def yield_variables(
         self, descriptions: dict[Real, str] | None = None
@@ -101,7 +110,7 @@ class ToLatex:
                 yield normalize_eq(x, transform=self.transform), str(x.default)
 
     def yield_equations(self) -> Iterator[tuple[Latex, Latex]]:
-        for der, eq in self.equations.func[0].items():
+        for der, eq in self.func.items():
             d = latex_derivative(
                 normalize_eq(der.variable, transform=self.transform), der.order
             )
@@ -128,23 +137,14 @@ def normalize(expr, transform: dict[Real, str]) -> Latex:
 
 def normalize_eq(eq, transform) -> Latex:
     reps = {}
+    real_transform = {key: Real(value) for key, value in transform.items()}
     for named in yield_named(eq):
         if isinstance(
             named, Independent | Constant | Parameter | Variable | Derivative
         ):
-            reps[named] = Real(named.name)
+            reps[named] = real_transform.get(named, Real(named.name))
     eq = substitute(eq, reps)
-    try:
-        import sympy as smp
-        from symbolite.impl import libsympy
-        from sympy import latex
-
-        smp_exp = translate(eq, libsl=libsympy)
-        for symb, trans in transform.items():
-            smp_exp = substitute(smp_exp, {smp.Symbol(str(symb)): smp.Symbol(trans)})
-        return latex(smp.simplify(smp_exp))
-    except ImportError:
-        raise Exception("This function requires Sympy")
+    return translate(eq, liblatex).text
 
 
 def as_aligned_lines(iterable, *, align_char: Latex):
@@ -170,18 +170,24 @@ def latex_derivative(name: str, order: int, with_respect_to: str = "t") -> Latex
     return f"\\frac{{d^{order}{name}}}{{d{with_respect_to}^{order}}}"
 
 
-def latex_equations(model: type[System], transform: dict | None = None) -> Latex:
-    transform = transform if transform is not None else {}
-    return as_aligned_lines(
-        ToLatex(model, transform=transform).yield_equations(), align_char="&="
-    )
+def latex_equations(
+    model: type[System], transform: dict | None = None, latex: ToLatex | None = None
+) -> Latex:
+    if latex is None:
+        transform = transform if transform is not None else {}
+        latex = ToLatex(model, transform=transform)
+    return as_aligned_lines(latex.yield_equations(), align_char="&=")
 
 
 def parameter_table(
-    model: type[System], transform: dict | None = None, descriptions: dict | None = None
+    model: type[System],
+    transform: dict | None = None,
+    descriptions: dict | None = None,
+    latex: ToLatex | None = None,
 ) -> Latex:
-    transform = transform if transform is not None else {}
-    latex = ToLatex(model, transform=transform)
+    if latex is None:
+        transform = transform if transform is not None else {}
+        latex = ToLatex(model, transform=transform)
     parameters = latex.yield_parameters(descriptions=descriptions)
 
     if descriptions is not None:
@@ -193,10 +199,14 @@ def parameter_table(
 
 
 def variable_table(
-    model: type[System], transform: dict | None = None, descriptions: dict | None = None
+    model: type[System],
+    transform: dict | None = None,
+    descriptions: dict | None = None,
+    latex: ToLatex | None = None,
 ) -> Latex:
-    transform = transform if transform is not None else {}
-    latex = ToLatex(model, transform=transform)
+    if latex is None:
+        transform = transform if transform is not None else {}
+        latex = ToLatex(model, transform=transform)
     variables = latex.yield_variables(descriptions=descriptions)
 
     if descriptions is not None:
@@ -233,23 +243,30 @@ def make_model_report(
     transform: dict | None = None,
     descriptions: dict | None = None,
     standalone=True,
+    replace_algebraics: bool = False,
 ):
+    transform = transform if transform is not None else {}
+    latex = ToLatex(
+        system=model, transform=transform, replace_algebraics=replace_algebraics
+    )
     if standalone:
-        report.write("""\\documentclass{article}
+        report.write(
+            """\\documentclass{article}
 
-        \\usepackage{amsmath}
-        \\usepackage{float}
+\\usepackage{amsmath}
+\\usepackage{float}
 
-        \\setcounter{secnumdepth}{0}
+\\setcounter{secnumdepth}{0}
 
-        \\begin{document}
-        """)
+\\begin{document}"""
+        )
 
-    report.write("""
-    \\subsection{Equations}
+    report.write(
+        """\\subsection{Equations}
 
-    """)
-    report.write("\\[ " + latex_equations(model=model, transform=transform) + " \\]")
+    """
+    )
+    report.write("\\[ " + latex_equations(model=model, latex=latex) + " \\]")
 
     report.write("""
 
@@ -258,9 +275,7 @@ def make_model_report(
     \\begin{table}[H]
      """)
 
-    report.write(
-        variable_table(model=model, transform=transform, descriptions=descriptions)
-    )
+    report.write(variable_table(model=model, latex=latex, descriptions=descriptions))
     report.write(
         """
     \\end{table}
@@ -276,9 +291,7 @@ def make_model_report(
     """
     )
 
-    report.write(
-        parameter_table(model=model, transform=transform, descriptions=descriptions)
-    )
+    report.write(parameter_table(model=model, latex=latex, descriptions=descriptions))
     report.write(
         """
     \\end{table}
@@ -289,79 +302,6 @@ def make_model_report(
     if standalone:
         report.write("\\end{document}")
 
-    # Printing to file:
-
-    # if standalone:
-    #     print(
-    #         """\\documentclass{article}
-
-    #     \\usepackage{amsmath}
-    #     \\usepackage{float}
-
-    #     \\setcounter{secnumdepth}{0}
-
-    #     \\begin{document}
-    #     """,
-    #         file=report,
-    #     )
-
-    # print(
-    #     """
-    # \\subsection{Equations}
-
-    # """,
-    #     file=report,
-    # )
-    # print(
-    #     "\\[ " + latex_equations(model=model, transform=transform) + " \\]", file=report
-    # )
-
-    # print(
-    #     """
-
-    # \\subsection{Variables}
-
-    # \\begin{table}[H]
-    # """,
-    #     file=report,
-    # )
-
-    # print(
-    #     varaible_table(model=model, transform=transform, descriptions=descriptions),
-    #     file=report,
-    # )
-    # print(
-    #     """
-    # \\end{table}
-
-    # """,
-    #     file=report,
-    # )
-
-    # print(
-    #     """
-    # \\subsection{Parameters}
-
-    # \\begin{table}[H]
-    # """,
-    #     file=report,
-    # )
-
-    # print(
-    #     parameter_table(model=model, transform=transform, descriptions=descriptions),
-    #     file=report,
-    # )
-    # print(
-    #     """
-    # \\end{table}
-
-    # """,
-    #     file=report,
-    # )
-
-    # if standalone:
-    #     print("\\end{document}", file=report)
-
     return report
 
 
@@ -370,7 +310,8 @@ def model_report(
     path: str | None = None,
     transform: dict | None = None,
     descriptions: dict | None = None,
-    standalone=True,
+    standalone: bool = True,
+    replace_algebraics: bool = False,
 ) -> Latex | None:
     open_form = "w" if standalone else "a"
     if path is None:
@@ -381,6 +322,7 @@ def model_report(
             transform=transform,
             descriptions=descriptions,
             standalone=standalone,
+            replace_algebraics=replace_algebraics,
         ).getvalue()
 
     else:
@@ -392,4 +334,5 @@ def model_report(
                 transform=transform,
                 descriptions=descriptions,
                 standalone=standalone,
+                replace_algebraics=replace_algebraics,
             )
