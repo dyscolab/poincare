@@ -85,23 +85,7 @@ preview = ["pixi-build"]
 
 [tool.pixi.package.build]
 backend = { name = "pixi-build-python", version = "0.4.*" }
-
-[tool.pixi.package.host-dependencies]
-uv-build = "*"
-
-[tool.pixi.package.run-dependencies]
-numpy = "*"
-pandas = "*"
-xarray = "*"
-pint-xarray = "*"
-pint = "*"
-scipy = "*"
-tabulate = "*"
-typing_extensions = "*"
-symbolite = ">=1.0.0"
-scipy-events = ">=0.3.1"
-pytest = ">=8.4.0,<9"
-statsmodels = "*"
+config = { ignore-pypi-mapping = false }  # Enable automatic PyPI-to-conda mapping
 
 [tool.pixi.environments]
 default = ["test", "py312"]
