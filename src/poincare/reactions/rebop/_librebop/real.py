@@ -50,6 +50,7 @@ __all__ = [
     "pos",
     "degrees",
     "exp",
+    "hypot",
     "radians",
     "sqrt",
     "pow",

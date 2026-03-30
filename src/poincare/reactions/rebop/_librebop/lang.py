@@ -15,11 +15,11 @@ def to_bool(value: bool, libsl: Any) -> str:
 
 
 def to_int(value: int, libsl: Any) -> str:
-    return repr(value)
+    return str(value)
 
 
 def to_float(value: float, libsl: Any) -> str:
-    return repr(value)
+    return str(value)
 
 
 def to_tuple(value: tuple[Any, ...], libsl: Any) -> str:
