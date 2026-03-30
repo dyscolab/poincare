@@ -132,8 +132,14 @@ class Reactant(Node, Real):
                     )
                 )
             ):
-                rvar.stoichiometry *= st2
-                return rvar
+                # rvar.stoichiometry *= (
+                #     st2  # TODO: would it be better for a new reactant to be created?
+                # )
+                # return rvar
+                new = Reactant(rvar.variable, st2 * rvar.stoichiometry)
+                if parent is not None:
+                    new.__class__.__base__.__set_name__(new, parent, rvar.name)
+                return new
 
             case Real(
                 __symbolite_info__=ValueInfo(
@@ -215,22 +221,23 @@ class RateLaw(EquationGroup):
 
     def _copy_from(self, parent: System):
         mapper = NodeMapper(parent)
-        return self.__class__(
+        new = self.__class__(
             reactants=[
                 Reactant(substitute(v.variable, mapper), v.stoichiometry)
+                if v.parent == self
+                else substitute(v, mapper)
                 for v in self.reactants
             ],
             products=[
                 Reactant(substitute(v.variable, mapper), v.stoichiometry)
+                if v.parent == self
+                else substitute(v, mapper)
                 for v in self.products
             ],
             rate_law=substitute(self.rate_law, mapper),
         )
-        # return self.__class__(
-        #     reactants=[substitute(v, mapper) for v in self.reactants],
-        #     products=[substitute(v, mapper) for v in self.products],
-        #     rate_law=substitute(self.rate_law, mapper),
-        # )
+        new.equations = tuple(self._yield_equations())
+        return new
 
     def _yield_equations(self) -> Iterator[Equation]:
         species_stoich: dict[Variable, float] = defaultdict(float)
@@ -330,17 +337,23 @@ class MassAction(RateLaw):
 
     def _copy_from(self, parent: System):
         mapper = NodeMapper(parent)
-        return self.__class__(
+        new = self.__class__(
             reactants=[
                 Reactant(substitute(v.variable, mapper), v.stoichiometry)
+                if v.parent == self
+                else substitute(v, mapper)
                 for v in self.reactants
             ],
             products=[
                 Reactant(substitute(v.variable, mapper), v.stoichiometry)
+                if v.parent == self
+                else substitute(v, mapper)
                 for v in self.products
             ],
             rate=substitute(self.rate, mapper),
         )
+        new.equations = tuple(self._yield_equations())
+        return new
 
     def __set_name__(self, cls: Node, name: str):
         if cls is not None:
