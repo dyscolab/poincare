@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0
+
+- Added `model_report()` to generate reports with model's equations, variables and parameters in LaTeX.
+- Added support for stochastic simulations with rebop in reactions.
+- Fix: `RateLaw` now use their parents reactant when copied if available.
+- Update symbolite dependency 1o 1.1.0.
+
+## 1.0.0
+
+- Major changes for release 1.0.0.
+
 ## 0.6.3
 
 - Fix `Simulator.interact` when default values are negative (@tdinapoli).

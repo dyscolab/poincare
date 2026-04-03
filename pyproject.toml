@@ -1,7 +1,7 @@
 [project]
 name = "poincare"
 description = "Simulation of dynamical systems."
-version = "1.0.0"
+version = "1.1.0"
 authors = [
   { name = "Hernán E. Grecco", email = "hernan.grecco@gmail.com" },
   { name = "Mauro Silberberg", email = "maurosilber@gmail.com" },
@@ -29,7 +29,7 @@ dependencies = [
   "pint",
   "pint-pandas",
   "scipy",
-  "symbolite>=1.0.0",
+  "symbolite>=1.1.0",
   "tabulate",
   "typing_extensions",
   "scipy-events >= 0.3.1",
@@ -85,7 +85,24 @@ preview = ["pixi-build"]
 
 [tool.pixi.package.build]
 backend = { name = "pixi-build-python", version = "0.4.*" }
-config = { ignore-pypi-mapping = false }  # Enable automatic PyPI-to-conda mapping
+# config = { ignore-pypi-mapping = false }                    # Enable automatic PyPI-to-conda mapping
+
+[tool.pixi.package.host-dependencies]
+uv-build = "*"
+
+[tool.pixi.package.run-dependencies]
+numpy = "*"
+pandas = "*"
+xarray = "*"
+pint-xarray = "*"
+pint = "*"
+scipy = "*"
+tabulate = "*"
+typing_extensions = "*"
+# symbolite = ">=1.0.0"
+scipy-events = ">=0.3.1"
+pytest = ">=8.4.0,<9"
+statsmodels = "*"
 
 [tool.pixi.environments]
 default = ["test", "py312"]
