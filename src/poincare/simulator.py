@@ -39,6 +39,9 @@ from .types import (
 if TYPE_CHECKING:
     import ipywidgets
 
+pint.get_application_registry().force_ndarray_like = False
+# When pint-xarray is imported it sets it to true, it can break poincare compilation
+
 Components = Constant | Parameter | Variable | Derivative
 
 
@@ -76,10 +79,12 @@ class Simulator:
         *,
         backend: Backend = "numpy",
         transform: Sequence[Value] | Mapping[Hashable, Value] | None = None,
+        append_transform: bool = False,
     ):
         self.model = system
         compiler = SystemCompiler(self.model, backend=backend)
         self.compiled = compiler.compiled
+        self.append_transform = append_transform
         self.transform = self._compile_transform(transform)
 
     def _compile_transform(
@@ -88,6 +93,8 @@ class Simulator:
     ):
         if isinstance(transform, Sequence):
             transform = {str(x): x for x in transform}
+        if self.append_transform and transform is not None:
+            transform = transform | {str(v): v for v in self.compiled.variables}
         return compile_transform(self.model, self.compiled, transform)
 
     def create_problem(
@@ -194,16 +201,17 @@ class Simulator:
                     s.units._REGISTRY.force_ndarray_like = False
             return ds
 
-        ds = _convert(solution.t, solution.y)
+        all_ds = []
+        if solution is not None and len(solution.t >= 1):
+            all_ds.append(_convert(solution.t, solution.y))
 
         if len(events) > 0:
             ds_events = (
                 _convert(t, y).assign(event=i)
                 for i, (t, y) in enumerate(zip(solution.t_events, solution.y_events))
             )
-            ds = xr.concat(
-                [ds.assign(event=np.nan), *ds_events], "time", data_vars="all"
-            )
+            all_ds.append(*ds_events)
+        ds = xr.concat(all_ds, "time", data_vars="all")
         return ds
 
     def interact(

@@ -3,7 +3,7 @@ from __future__ import annotations
 import weakref
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, Literal, Protocol, assert_never
+from typing import TYPE_CHECKING, Iterable, Literal, Protocol, assert_never
 
 import numpy as np
 from numpy.typing import NDArray
@@ -73,15 +73,42 @@ def _solve_ivp_scipy(
     )
     if solution.status == -1:
         raise RuntimeError(solution.message)
-    return _transform(
-        problem,
-        Solution(
-            np.asarray(solution.t),
-            np.asarray(solution.y),
-            solution.t_events,
-            solution.y_events,
-        ),
-    )
+    if len(solution.t >= 1):
+        transformed = _transform(
+            problem,
+            Solution(
+                np.asarray(solution.t),
+                np.asarray(solution.y),
+                solution.t_events,
+                solution.y_events,
+            ),
+        )
+    else:
+        transformed = Solution(
+            np.asarray([]),
+            np.asarray([]),
+            [],
+            [],
+        )
+    if len(events) > 0:
+        transformed_events = [
+            _transform(
+                problem,
+                solution=Solution(
+                    np.asarray(t),
+                    np.asarray(y).T,
+                    [],
+                    [],
+                ),
+            )
+            for t, y in zip(solution.t_events, solution.y_events)
+        ]
+        transformed = replace(
+            transformed,
+            t_events=[event.t for event in transformed_events],
+            y_events=[event.y for event in transformed_events],
+        )
+    return transformed
 
 
 def _transform(problem: Problem, solution: Solution) -> Solution:
@@ -96,6 +123,22 @@ def _transform(problem: Problem, solution: Solution) -> Solution:
         out.T,
     ).T
     return replace(solution, y=out)
+
+
+def _transform_events(
+    problem: Problem, solution: Solution, events: Iterable[Events]
+) -> Solution:
+    out = np.empty(
+        (solution.t_events.size, len(problem.scale)),
+        dtype=solution.y_events.dtype,
+    )
+    out = problem.transform(
+        solution.t_events,
+        solution.y_events.T,
+        problem.p,
+        out.T,
+    ).T
+    return replace(solution, y=out, t=solution.t_events)
 
 
 def _solve_numbalsoda(
