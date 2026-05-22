@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from io import StringIO, TextIOWrapper
 
@@ -36,11 +36,22 @@ def math_normalize(name: Real) -> Latex:
         return string
 
 
+def parent_path(named: Node, base: Node, path):
+    parent = named.parent
+    if parent == base:
+        return path
+    else:
+        return parent_path(
+            parent, base, parent.name + "․" + path
+        )  # One dot leader, not period because it confuses attrgetter in symbolite
+
+
 @dataclass
 class ToLatex:
     system: System | type[System]
     normalize_name: Callable[[Real], Latex] = default_name
     transform: dict[Real, str] = field(default_factory=dict)
+    descriptions: dict[Real, str] | None = None
     replace_algebraics: bool = False
 
     def __post_init__(self):
@@ -54,67 +65,84 @@ class ToLatex:
             self.func = self.equations.func[0]
 
     def yield_variables(
-        self, descriptions: dict[Real, str] | None = None
+        self,
     ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex, Latex, Latex]]:
         for x in self.equations.variables:
-            name = normalize_eq(x, transform=self.transform)
-            if descriptions is not None:
+            name = normalize_eq(x, transform=self.transform, base=self.system)
+            if self.descriptions is not None:
                 try:
                     yield (
                         name,
-                        normalize(x.initial, transform=self.transform),
+                        normalize(
+                            x.initial, transform=self.transform, base=self.system
+                        ),
                         "-",
-                        "\\text{" + descriptions[x] + "}",
+                        "\\text{" + self.descriptions[x] + "}",
                     )
                 except KeyError:
-                    yield name, normalize(x.initial, transform=self.transform), "-", "-"
+                    yield (
+                        name,
+                        normalize(
+                            x.initial, transform=self.transform, base=self.system
+                        ),
+                        "-",
+                        "-",
+                    )
             else:
                 yield name, str(x.initial), "-"
             for order in range(1, x.equation_order):
                 d = x.derivatives[order]
-                if descriptions is not None:
+                if self.descriptions is not None:
                     try:
                         yield (
-                            normalize_eq(d, transform=self.transform),
-                            normalize(x.initial, transform=self.transform),
+                            normalize_eq(d, transform=self.transform, base=self.system),
+                            normalize(
+                                x.initial, transform=self.transform, base=self.system
+                            ),
                             latex_derivative(name, order),
-                            "\\text{" + descriptions[d] + "}",
+                            "\\text{" + self.descriptions[d] + "}",
                         )
                     except KeyError:
                         yield (
-                            normalize_eq(d, transform=self.transform),
-                            normalize(x.initial, transform=self.transform),
+                            normalize_eq(d, transform=self.transform, base=self.system),
+                            normalize(
+                                x.initial, transform=self.transform, base=self.system
+                            ),
                             latex_derivative(name, order),
                             "-",
                         )
                 else:
                     yield (
-                        normalize_eq(d, transform=self.transform),
+                        normalize_eq(d, transform=self.transform, base=self.system),
                         str(x.initial),
                         latex_derivative(name, order),
                     )
 
     def yield_parameters(
-        self, descriptions: dict | None = None
+        self,
     ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex]]:
-        if descriptions is not None:
+        if self.descriptions is not None:
             for x in self.equations.parameters:
                 yield (
-                    normalize_eq(x, transform=self.transform),
+                    normalize_eq(x, transform=self.transform, base=self.system),
                     str(x.default),
-                    "\\text{" + descriptions.get(x, "-") + "}",
+                    "\\text{" + self.descriptions.get(x, "-") + "}",
                 )
 
         else:
             for x in self.equations.parameters:
-                yield normalize_eq(x, transform=self.transform), str(x.default)
+                yield (
+                    normalize_eq(x, transform=self.transform, base=self.system),
+                    str(x.default),
+                )
 
     def yield_equations(self) -> Iterator[tuple[Latex, Latex]]:
         for der, eq in self.func.items():
             d = latex_derivative(
-                normalize_eq(der.variable, transform=self.transform), der.order
+                normalize_eq(der.variable, transform=self.transform, base=self.system),
+                der.order,
             )
-            eq = normalize_eq(eq, self.transform)
+            eq = normalize_eq(eq, self.transform, base=self.system)
             yield d, eq
 
 
@@ -128,23 +156,28 @@ class Normalizer(dict):
         return key
 
 
-def normalize(expr, transform: dict[Real, str]) -> Latex:
+def normalize(expr, transform: dict[Real, str], base: Node) -> Latex:
     if isinstance(expr, Real):
-        return normalize_eq(expr, transform)
+        return normalize_eq(expr, transform, base)
     else:
         return str(expr)
 
 
-def normalize_eq(eq, transform) -> Latex:
+def normalize_eq(eq, transform, base: Node) -> Latex:
     reps = {}
     real_transform = {key: Real(value) for key, value in transform.items()}
     for named in yield_named(eq):
         if isinstance(
             named, Independent | Constant | Parameter | Variable | Derivative
         ):
-            reps[named] = real_transform.get(named, Real(named.name))
+            reps[named] = real_transform.get(
+                named, Real(parent_path(named, base, named.name))
+            )
     eq = substitute(eq, reps)
-    return translate(eq, liblatex).text
+    return translate(eq, liblatex).text.replace(
+        "․",
+        ".",
+    )  # Replace one dot leaders added by parent_path by regular periods.
 
 
 def as_aligned_lines(iterable, *, align_char: Latex):
@@ -176,7 +209,7 @@ def latex_equations(
     if latex is None:
         transform = transform if transform is not None else {}
         latex = ToLatex(model, transform=transform)
-    return as_aligned_lines(latex.yield_equations(), align_char="&=")
+    return "\\[ " + as_aligned_lines(latex.yield_equations(), align_char="&=") + " \\]"
 
 
 def parameter_table(
@@ -187,15 +220,19 @@ def parameter_table(
 ) -> Latex:
     if latex is None:
         transform = transform if transform is not None else {}
-        latex = ToLatex(model, transform=transform)
-    parameters = latex.yield_parameters(descriptions=descriptions)
+        latex = ToLatex(model, transform=transform, descriptions=descriptions)
+    parameters = latex.yield_parameters()
 
-    if descriptions is not None:
+    if latex.descriptions is not None:
         headers = ["Parameter", "Default", "Description"]
     else:
         headers = ["Parameter", "Default"]
 
-    return make_latex_table(rows=parameters, headers=headers)
+    return (
+        "\\begin{table}[H]\n\\centering\n"
+        + make_latex_table(rows=parameters, headers=headers)
+        + "\n\\end{table}"
+    )
 
 
 def variable_table(
@@ -206,15 +243,19 @@ def variable_table(
 ) -> Latex:
     if latex is None:
         transform = transform if transform is not None else {}
-        latex = ToLatex(model, transform=transform)
-    variables = latex.yield_variables(descriptions=descriptions)
+        latex = ToLatex(model, transform=transform, descriptions=descriptions)
+    variables = latex.yield_variables()
 
-    if descriptions is not None:
+    if latex.descriptions is not None:
         headers = ["Variable", "Default", "Derivative", "Description"]
     else:
         headers = ["Variable", "Default", "Derivative"]
 
-    return make_latex_table(rows=variables, headers=headers)
+    return (
+        "\\begin{table}[H]\n\\centering\n"
+        + make_latex_table(rows=variables, headers=headers)
+        + "\n\\end{table}"
+    )
 
 
 def make_latex_table(
@@ -240,69 +281,48 @@ def make_latex_table(
 def make_model_report(
     model: type[System],
     report: TextIOWrapper | StringIO,
-    transform: dict | None = None,
-    descriptions: dict | None = None,
-    standalone=True,
-    replace_algebraics: bool = False,
+    transform: dict | None,
+    descriptions: dict | None,
+    standalone,
+    replace_algebraics: bool,
+    sections: Mapping[str, Callable[[System, ToLatex], str]],
+    packages: Iterable[str],
 ):
     transform = transform if transform is not None else {}
     latex = ToLatex(
-        system=model, transform=transform, replace_algebraics=replace_algebraics
+        system=model,
+        transform=transform,
+        descriptions=descriptions,
+        replace_algebraics=replace_algebraics,
     )
     if standalone:
         report.write(
             """\\documentclass{article}
 
-\\usepackage{amsmath}
-\\usepackage{float}
-
-\\setcounter{secnumdepth}{0}
-
-\\begin{document}"""
+"""
         )
+        for package in packages:
+            report.write(f"\\usepackage{{{package}}}\n")
+        report.write("\\usepackage[margin=2cm]{geometry}\n")
+        report.write("""\\setcounter{secnumdepth}{0}
 
-    report.write(
-        """\\subsection{Equations}
-
-    """
-    )
-    report.write("\\[ " + latex_equations(model=model, latex=latex) + " \\]")
-
-    report.write("""
-
-    \\subsection{Variables}
-
-    \\begin{table}[H]
-     """)
-
-    report.write(variable_table(model=model, latex=latex, descriptions=descriptions))
-    report.write(
-        """
-    \\end{table}
-
-    """
-    )
-
-    report.write(
-        """
-    \\subsection{Parameters}
-
-    \\begin{table}[H]
-    """
-    )
-
-    report.write(parameter_table(model=model, latex=latex, descriptions=descriptions))
-    report.write(
-        """
-    \\end{table}
-
-    """
-    )
-
+\\begin{document}
+""")
+    for title, writer in sections.items():
+        report.write(f"\\subsection{{{title}}}" + "\n")
+        report.write(writer(model, latex=latex) + "\n\n")
     if standalone:
         report.write("\\end{document}")
 
     return report
+
+
+default_sections = {
+    "Equations": latex_equations,
+    "Variables": variable_table,
+    "Parameters": parameter_table,
+}
+default_packages = ["amsmath", "float"]
 
 
 def model_report(
@@ -312,18 +332,22 @@ def model_report(
     descriptions: dict | None = None,
     standalone: bool = True,
     replace_algebraics: bool = False,
+    sections: Mapping[str, Callable[[System, ToLatex], str]] = default_sections,
+    packages: Iterable[str] = default_packages,
 ) -> Latex | None:
     open_form = "w" if standalone else "a"
     if path is None:
-        write_to = StringIO("")
-        return make_model_report(
-            model=model,
-            report=write_to,
-            transform=transform,
-            descriptions=descriptions,
-            standalone=standalone,
-            replace_algebraics=replace_algebraics,
-        ).getvalue()
+        with StringIO("") as write_to:
+            return make_model_report(
+                model=model,
+                report=write_to,
+                transform=transform,
+                descriptions=descriptions,
+                standalone=standalone,
+                replace_algebraics=replace_algebraics,
+                sections=sections,
+                packages=packages,
+            ).getvalue()
 
     else:
         write_to = path
@@ -335,4 +359,6 @@ def model_report(
                 descriptions=descriptions,
                 standalone=standalone,
                 replace_algebraics=replace_algebraics,
+                sections=sections,
+                packages=packages,
             )
