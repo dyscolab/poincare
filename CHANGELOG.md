@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1
+
+- Fix: transform now handles events properly.
+- Variables and parameters belonging ton nested systems are now
+
 ## 1.1.0
 
 - Added `model_report()` to generate reports with model's equations, variables and parameters in LaTeX.
