@@ -27,7 +27,6 @@ dependencies = [
   "xarray",
   "pint-xarray",
   "pint",
-  "pint-pandas",
   "scipy",
   "symbolite>=1.1.0",
   "tabulate",

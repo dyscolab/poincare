@@ -168,7 +168,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pillow-12.0.0-py312h50c33e8_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pixman-0.46.4-h54a6638_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -334,7 +333,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/pillow-12.0.0-py312h95c711c_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pluggy-1.6.0-pyhd8ed1ab_0.conda
@@ -480,7 +478,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/pcre2-10.46-h3402e2f_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pillow-12.0.0-py312h31f0997_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pixman-0.46.4-h5112557_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -823,7 +820,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pillow-12.0.0-py312h50c33e8_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pixman-0.46.4-h54a6638_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -990,7 +986,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/pillow-12.0.0-py312h95c711c_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pluggy-1.6.0-pyhd8ed1ab_0.conda
@@ -1137,7 +1132,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/pcre2-10.46-h3402e2f_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pillow-12.0.0-py312h31f0997_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pixman-0.46.4-h5112557_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -1339,7 +1333,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pillow-12.0.0-py313h80991f8_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pixman-0.46.4-h54a6638_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -1506,7 +1499,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/pillow-12.0.0-py313ha86496b_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pluggy-1.6.0-pyhd8ed1ab_0.conda
@@ -1653,7 +1645,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/pcre2-10.46-h3402e2f_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pillow-12.0.0-py313h38f99e1_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pixman-0.46.4-h5112557_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -6610,20 +6601,6 @@ packages:
   - pkg:pypi/pint?source=compressed-mapping
   size: 245230
   timestamp: 1773969991837
-- conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
-  sha256: 5ad3543678aa537c853a95610eaeeec4085d90d6d1c2012a6b208437cac0fd5c
-  md5: 1564451ef233296f30f2a907cfe57790
-  depends:
-  - packaging >=26.0
-  - pandas >=3.0
-  - pint >=0.24
-  - python >=3.11
-  license: BSD-3-Clause
-  license_family: BSD
-  purls:
-  - pkg:pypi/pint-pandas?source=hash-mapping
-  size: 34172
-  timestamp: 1774056223448
 - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
   sha256: c020a7dce38efe1c88b39985fa793d0c8241a48e4588ea129e52fee8719e037c
   md5: 4315c8d39fd8b0541d7ff73c4cf91a8a
@@ -6704,7 +6681,6 @@ packages:
   - xarray
   - pint-xarray
   - pint
-  - pint-pandas
   - scipy
   - symbolite >=1.1.0
   - tabulate
