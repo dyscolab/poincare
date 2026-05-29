@@ -25,8 +25,6 @@ environments:
   default:
     channels:
     - url: https://prefix.dev/conda-forge/
-    indexes:
-    - https://pypi.org/simple
     options:
       pypi-prerelease-mode: if-necessary-or-explicit
     packages:
@@ -170,6 +168,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pillow-12.0.0-py312h50c33e8_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pixman-0.46.4-h54a6638_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -197,6 +196,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/statsmodels-0.14.6-py312h4f23490_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/symbolite-1.1.0-pyhc364b38_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh2585a3b_105.conda
       - conda: https://prefix.dev/conda-forge/noarch/tabulate-0.10.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/tk-8.6.13-noxft_ha0e22de_103.conda
@@ -238,8 +238,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/zlib-ng-2.3.1-hde8ca8f_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - conda: .
-      - pypi: https://files.pythonhosted.org/packages/0a/ac/c71db56079a5966ea365d29be0dafee6fd5ab9b8c7914b6507bc1a179134/pint_pandas-0.8.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/51/9d/d580ae9bf9ce130102228215dc85aad5ba055ad78218057246b583f44fc5/symbolite-1.1.0-py3-none-any.whl
       osx-arm64:
       - conda: https://prefix.dev/conda-forge/osx-arm64/_openmp_mutex-4.5-7_kmp_llvm.conda
       - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -336,6 +334,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/pillow-12.0.0-py312h95c711c_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pluggy-1.6.0-pyhd8ed1ab_0.conda
@@ -360,6 +359,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/statsmodels-0.14.6-py312ha11c99a_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/symbolite-1.1.0-pyhc364b38_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh2585a3b_105.conda
       - conda: https://prefix.dev/conda-forge/noarch/tabulate-0.10.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/tk-8.6.13-h892fb3f_3.conda
@@ -380,8 +380,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/osx-arm64/zlib-ng-2.3.1-h3470cca_0.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/zstd-1.5.7-h6491c7d_2.conda
       - conda: .
-      - pypi: https://files.pythonhosted.org/packages/0a/ac/c71db56079a5966ea365d29be0dafee6fd5ab9b8c7914b6507bc1a179134/pint_pandas-0.8.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/51/9d/d580ae9bf9ce130102228215dc85aad5ba055ad78218057246b583f44fc5/symbolite-1.1.0-py3-none-any.whl
       win-64:
       - conda: https://prefix.dev/conda-forge/win-64/_openmp_mutex-4.5-2_gnu.conda
       - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -482,6 +480,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/pcre2-10.46-h3402e2f_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pillow-12.0.0-py312h31f0997_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pixman-0.46.4-h5112557_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -508,6 +507,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/win-64/statsmodels-0.14.6-py312h196c9fc_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/symbolite-1.1.0-pyhc364b38_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh04b8f61_5.conda
       - conda: https://prefix.dev/conda-forge/noarch/tabulate-0.10.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/tbb-2022.3.0-hd094cb3_1.conda
@@ -533,8 +533,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/zlib-ng-2.3.1-h32d8bfd_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/zstd-1.5.7-hbeecb71_2.conda
       - conda: .
-      - pypi: https://files.pythonhosted.org/packages/0a/ac/c71db56079a5966ea365d29be0dafee6fd5ab9b8c7914b6507bc1a179134/pint_pandas-0.8.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/51/9d/d580ae9bf9ce130102228215dc85aad5ba055ad78218057246b583f44fc5/symbolite-1.1.0-py3-none-any.whl
   lint:
     channels:
     - url: https://prefix.dev/conda-forge/
@@ -825,6 +823,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pillow-12.0.0-py312h50c33e8_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pixman-0.46.4-h54a6638_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -852,6 +851,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/statsmodels-0.14.6-py312h4f23490_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/symbolite-1.1.0-pyhc364b38_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh2585a3b_105.conda
       - conda: https://prefix.dev/conda-forge/noarch/tabulate-0.10.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/tk-8.6.13-noxft_ha0e22de_103.conda
@@ -893,9 +893,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/zlib-ng-2.3.1-hde8ca8f_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - conda: .
-      - pypi: https://files.pythonhosted.org/packages/0a/ac/c71db56079a5966ea365d29be0dafee6fd5ab9b8c7914b6507bc1a179134/pint_pandas-0.8.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5d/08/71ae82e9d0f0d0fdebf72d8003bfd0cdbaf1b23377e618ac0a3c59dae911/rebop-0.9.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/51/9d/d580ae9bf9ce130102228215dc85aad5ba055ad78218057246b583f44fc5/symbolite-1.1.0-py3-none-any.whl
       osx-arm64:
       - conda: https://prefix.dev/conda-forge/osx-arm64/_openmp_mutex-4.5-7_kmp_llvm.conda
       - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -992,6 +990,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/pillow-12.0.0-py312h95c711c_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pluggy-1.6.0-pyhd8ed1ab_0.conda
@@ -1016,6 +1015,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/statsmodels-0.14.6-py312ha11c99a_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/symbolite-1.1.0-pyhc364b38_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh2585a3b_105.conda
       - conda: https://prefix.dev/conda-forge/noarch/tabulate-0.10.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/tk-8.6.13-h892fb3f_3.conda
@@ -1036,9 +1036,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/osx-arm64/zlib-ng-2.3.1-h3470cca_0.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/zstd-1.5.7-h6491c7d_2.conda
       - conda: .
-      - pypi: https://files.pythonhosted.org/packages/0a/ac/c71db56079a5966ea365d29be0dafee6fd5ab9b8c7914b6507bc1a179134/pint_pandas-0.8.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/7c/d0/43f90426ea450443a2471c6c2cd4abf31c3091ea20f177f2ff7fca3d64a0/rebop-0.9.7-cp312-cp312-macosx_11_0_arm64.whl
-      - pypi: https://files.pythonhosted.org/packages/51/9d/d580ae9bf9ce130102228215dc85aad5ba055ad78218057246b583f44fc5/symbolite-1.1.0-py3-none-any.whl
       win-64:
       - conda: https://prefix.dev/conda-forge/win-64/_openmp_mutex-4.5-2_gnu.conda
       - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -1139,6 +1137,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/pcre2-10.46-h3402e2f_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pillow-12.0.0-py312h31f0997_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pixman-0.46.4-h5112557_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -1165,6 +1164,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/win-64/statsmodels-0.14.6-py312h196c9fc_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/symbolite-1.1.0-pyhc364b38_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh04b8f61_5.conda
       - conda: https://prefix.dev/conda-forge/noarch/tabulate-0.10.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/tbb-2022.3.0-hd094cb3_1.conda
@@ -1190,9 +1190,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/zlib-ng-2.3.1-h32d8bfd_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/zstd-1.5.7-hbeecb71_2.conda
       - conda: .
-      - pypi: https://files.pythonhosted.org/packages/0a/ac/c71db56079a5966ea365d29be0dafee6fd5ab9b8c7914b6507bc1a179134/pint_pandas-0.8.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2b/78/08c51c8d1f5c02dd55064858c5fb755acf0f2d7771b59728c81329cfca47/rebop-0.9.7-cp312-cp312-win_amd64.whl
-      - pypi: https://files.pythonhosted.org/packages/51/9d/d580ae9bf9ce130102228215dc85aad5ba055ad78218057246b583f44fc5/symbolite-1.1.0-py3-none-any.whl
   test-py313:
     channels:
     - url: https://prefix.dev/conda-forge/
@@ -1341,6 +1339,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pillow-12.0.0-py313h80991f8_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pixman-0.46.4-h54a6638_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -1368,6 +1367,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/statsmodels-0.14.6-py313h29aa505_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/symbolite-1.1.0-pyhc364b38_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh2585a3b_105.conda
       - conda: https://prefix.dev/conda-forge/noarch/tabulate-0.10.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/tk-8.6.13-noxft_ha0e22de_103.conda
@@ -1408,9 +1408,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/zlib-ng-2.3.1-hde8ca8f_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - conda: .
-      - pypi: https://files.pythonhosted.org/packages/0a/ac/c71db56079a5966ea365d29be0dafee6fd5ab9b8c7914b6507bc1a179134/pint_pandas-0.8.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ee/10/3a8df3e4748cfd2815bf19b50dfd59062e341bcc7e24648f87195d97f3a0/rebop-0.9.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/51/9d/d580ae9bf9ce130102228215dc85aad5ba055ad78218057246b583f44fc5/symbolite-1.1.0-py3-none-any.whl
       osx-arm64:
       - conda: https://prefix.dev/conda-forge/osx-arm64/_openmp_mutex-4.5-7_kmp_llvm.conda
       - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -1508,6 +1506,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/pillow-12.0.0-py313ha86496b_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pluggy-1.6.0-pyhd8ed1ab_0.conda
@@ -1532,6 +1531,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/statsmodels-0.14.6-py313hc577518_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/symbolite-1.1.0-pyhc364b38_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh2585a3b_105.conda
       - conda: https://prefix.dev/conda-forge/noarch/tabulate-0.10.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/tk-8.6.13-h892fb3f_3.conda
@@ -1551,9 +1551,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/osx-arm64/zlib-ng-2.3.1-h3470cca_0.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/zstd-1.5.7-h6491c7d_2.conda
       - conda: .
-      - pypi: https://files.pythonhosted.org/packages/0a/ac/c71db56079a5966ea365d29be0dafee6fd5ab9b8c7914b6507bc1a179134/pint_pandas-0.8.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f1/2a/4326322f880ce08f864395ba81cc5efa97ab1477bf5b9cddba5bc693ec26/rebop-0.9.7-cp313-cp313-macosx_11_0_arm64.whl
-      - pypi: https://files.pythonhosted.org/packages/51/9d/d580ae9bf9ce130102228215dc85aad5ba055ad78218057246b583f44fc5/symbolite-1.1.0-py3-none-any.whl
       win-64:
       - conda: https://prefix.dev/conda-forge/win-64/_openmp_mutex-4.5-2_gnu.conda
       - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -1655,6 +1653,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/pcre2-10.46-h3402e2f_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pillow-12.0.0-py313h38f99e1_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-0.25.3-pyhc364b38_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pixman-0.46.4-h5112557_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.0-pyhcf101f3_0.conda
@@ -1681,6 +1680,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/win-64/statsmodels-0.14.6-py313h0591002_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/symbolite-1.1.0-pyhc364b38_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh04b8f61_5.conda
       - conda: https://prefix.dev/conda-forge/noarch/tabulate-0.10.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/tbb-2022.3.0-hd094cb3_1.conda
@@ -1705,9 +1705,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/zlib-ng-2.3.1-h32d8bfd_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/zstd-1.5.7-hbeecb71_2.conda
       - conda: .
-      - pypi: https://files.pythonhosted.org/packages/0a/ac/c71db56079a5966ea365d29be0dafee6fd5ab9b8c7914b6507bc1a179134/pint_pandas-0.8.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a3/b7/652d3f7c034d6631a985a57bd82f17b78ca16ff628f5b264786700e438b6/rebop-0.9.7-cp313-cp313-win_amd64.whl
-      - pypi: https://files.pythonhosted.org/packages/51/9d/d580ae9bf9ce130102228215dc85aad5ba055ad78218057246b583f44fc5/symbolite-1.1.0-py3-none-any.whl
 packages:
 - conda: https://prefix.dev/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
   sha256: fe51de6107f9edc7aa4f786a70f4a883943bc9d39b3bb7307c04c41410990726
@@ -6612,38 +6610,20 @@ packages:
   - pkg:pypi/pint?source=compressed-mapping
   size: 245230
   timestamp: 1773969991837
-- pypi: https://files.pythonhosted.org/packages/0a/ac/c71db56079a5966ea365d29be0dafee6fd5ab9b8c7914b6507bc1a179134/pint_pandas-0.8.0-py3-none-any.whl
-  name: pint-pandas
-  version: 0.8.0
-  sha256: 40ee8a85f0923695fa7dcc6927caa3043627e1561c056e9f4499fb2e7478f779
-  requires_dist:
-  - pint>=0.24
-  - pandas>=3.0
-  - packaging>=26.0
-  - pytest ; extra == 'test'
-  - pytest-mpl ; extra == 'test'
-  - pytest-cov ; extra == 'test'
-  - pytest-subtests ; extra == 'test'
-  - codecov ; extra == 'test'
-  - coveralls ; extra == 'test'
-  - nbval ; extra == 'test'
-  - pyarrow ; extra == 'test'
-  - sphinx>=6,<8.2 ; extra == 'docs'
-  - ipython<=8.12 ; extra == 'docs'
-  - nbsphinx ; extra == 'docs'
-  - jupyter-client ; extra == 'docs'
-  - ipykernel ; extra == 'docs'
-  - graphviz ; extra == 'docs'
-  - pooch ; extra == 'docs'
-  - sparse ; extra == 'docs'
-  - serialize ; extra == 'docs'
-  - pygments>=2.4 ; extra == 'docs'
-  - sphinx-book-theme>=1.1.0 ; extra == 'docs'
-  - sphinx-copybutton ; extra == 'docs'
-  - sphinx-design ; extra == 'docs'
-  - matplotlib ; extra == 'docs'
-  - uncertainties-pandas ; extra == 'docs'
-  requires_python: '>=3.11'
+- conda: https://prefix.dev/conda-forge/noarch/pint-pandas-0.8.0-pyhd8ed1ab_0.conda
+  sha256: 5ad3543678aa537c853a95610eaeeec4085d90d6d1c2012a6b208437cac0fd5c
+  md5: 1564451ef233296f30f2a907cfe57790
+  depends:
+  - packaging >=26.0
+  - pandas >=3.0
+  - pint >=0.24
+  - python >=3.11
+  license: BSD-3-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/pint-pandas?source=hash-mapping
+  size: 34172
+  timestamp: 1774056223448
 - conda: https://prefix.dev/conda-forge/noarch/pint-xarray-0.6.1-pyhd8ed1ab_0.conda
   sha256: c020a7dce38efe1c88b39985fa793d0c8241a48e4588ea129e52fee8719e037c
   md5: 4315c8d39fd8b0541d7ff73c4cf91a8a
@@ -6711,25 +6691,26 @@ packages:
   timestamp: 1747339794916
 - conda: .
   name: poincare
-  version: 1.1.0
+  version: 1.1.1
   build: pyh4616a5c_0
   subdir: noarch
   variants:
     target_platform: noarch
   depends:
+  - python >=3.12
+  - python *
   - numpy
   - pandas
   - xarray
   - pint-xarray
   - pint
+  - pint-pandas
   - scipy
+  - symbolite >=1.1.0
   - tabulate
   - typing_extensions
   - scipy-events >=0.3.1
-  - pytest >=8.4.0,<9
   - statsmodels
-  - python >=3.12
-  - python *
   license: MIT
 - conda: https://prefix.dev/conda-forge/noarch/pre-commit-4.5.0-pyha770c72_0.conda
   sha256: 8481f4939b1f81cf0db12456819368b41e3f998e4463e41611de4b13752b2c08
@@ -8143,13 +8124,19 @@ packages:
   - pkg:pypi/statsmodels?source=hash-mapping
   size: 11570614
   timestamp: 1764983430194
-- pypi: https://files.pythonhosted.org/packages/51/9d/d580ae9bf9ce130102228215dc85aad5ba055ad78218057246b583f44fc5/symbolite-1.1.0-py3-none-any.whl
-  name: symbolite
-  version: 1.1.0
-  sha256: 1271de5218e28615013fbe934e152f66bc2cdf735b7e1bbaacf04687890ba266
-  requires_dist:
-  - typing-extensions>=4.15
-  requires_python: '>=3.12'
+- conda: https://prefix.dev/conda-forge/noarch/symbolite-1.1.0-pyhc364b38_0.conda
+  sha256: a4da1454d61da043ce5c300ad9377ea25b8ee69d6855b14ebc04fbad3ffbf385
+  md5: f5d7d5281f7a0ab181f75b89056066a8
+  depends:
+  - python >=3.12
+  - typing_extensions >=4.15
+  - python
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/symbolite?source=hash-mapping
+  size: 41892
+  timestamp: 1775150807076
 - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh04b8f61_5.conda
   sha256: 60f18c60f6518254f0d28e4892e94c851cdbd650f7bd49899a6169f76cf6796b
   md5: d814547f1cbcb6f8397ca5686fee8175
