@@ -1,6 +1,7 @@
 import dataclasses
 from collections.abc import Iterable, Mapping
 from typing import Any
+from warnings import warn
 
 try:
     from rebop import Gillespie
@@ -10,14 +11,18 @@ except ImportError:
         "Stochastic simulations require the rebop library to be installed"
     )
 import pint
+import pint_xarray
 from symbolite import Real, substitute, translate
 from symbolite.ops import yield_named
 
 from ..._node import Node
-from ...simulator import Simulator
+from ...simulator import Simulator, get_scale
 from ...types import Constant, Equation, Number, Parameter, System
 from ..reactions import MassAction, RateLaw, Reactant
 from . import _librebop
+
+pint.get_application_registry().force_ndarray_like = False
+# When pint-xarray is imported it sets it to true, it can break poincare compilation
 
 
 class RebopSimulator:
@@ -65,6 +70,21 @@ class RebopSimulator:
         sparse: bool = True,
         var_names: Iterable[Reactant] | None = None,
     ):
+        upto_t_dim = getattr(upto_t, "dimensionality", None)
+        timescale = 1
+        if upto_t_dim != self.model._independent_units:
+            warn(
+                f"upto_t dimensionality {upto_t_dim} doesn't match (explicit or implicit) dimensionality of Independent {self.model._independent_units}. Unit consistency in save_at will be enforced with an error in future versions.",
+                category=FutureWarning,
+            )  # TODO: change warn to raise In future version
+        # raise pint.PintError(
+        #     f"save at dimensionality {upto_t_dim} doesn't match (explicit or implicit) dimensionality of Independent {self.model._independent_units}"
+        # )
+
+        if isinstance(upto_t, pint.Quantity):
+            timescale = get_scale(upto_t)
+            upto_t = upto_t.to_base_units().magnitude
+
         if n_points is None:
             n_points = 0
 
@@ -74,7 +94,9 @@ class RebopSimulator:
         problem = self._sim.create_problem(values)
         for s in problem.scale:
             if isinstance(s, pint.Quantity | pint.Unit):
-                raise TypeError("Stochastic simulation doesn't support units")
+                raise TypeError(
+                    "Stochastic simulation doesn't support units in values, only in upto_t"
+                )
         y = {k: int(v) for k, v in zip(self._variable_map.values(), problem.y)}
         p = dict(zip(self._sim.compiled.parameters, problem.p))
         rebop = self._build(p)
@@ -91,6 +113,11 @@ class RebopSimulator:
             name_dict={new: str(old) for old, new in self._variable_map.items()},
         )  # TODO: inplace = True would be more efficient? xarray errors when trying to set it
         ds = ds[sorted(list(ds.data_vars))]
+        if isinstance(timescale, pint.Quantity):
+            ds["time"] = ds["time"] * timescale.magnitude
+            pint_xarray.setup_registry(timescale.units._REGISTRY)
+            ds = ds.pint.quantify({"time": timescale.units})
+            timescale.units._REGISTRY.force_ndarray_like = False
         return ds
 
     def _get_rebop_rate(self, r: RateLaw, p: Mapping[Parameter:Number]):

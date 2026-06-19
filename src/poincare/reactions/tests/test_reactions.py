@@ -117,7 +117,9 @@ def test_units_in_rate_law():
 
     sim_2 = Simulator(UnitModel)
     result_2 = np.asarray(
-        sim_2.solve(save_at=np.linspace(0, 10, 10)).pint.dequantify().to_array()
+        sim_2.solve(save_at=np.linspace(0, 10, 10) * ureg.s)
+        .pint.dequantify()
+        .to_array()
     )
 
     assert np.all(result_1 == result_2)
@@ -143,11 +145,11 @@ def test_units_in_mass_action():
     assert UnitModel._eq2_rate_law.default == 1 * ureg.mol / ureg.s
 
     sim_1 = Simulator(Model)
-    result_1 = np.asarray(sim_1.solve(save_at=np.linspace(0, 10, 10)).to_array())
+    result_1 = np.asarray(sim_1.solve(save_at=np.linspace(0, 1, 10)).to_array())
 
     sim_2 = Simulator(UnitModel)
     result_2 = np.asarray(
-        sim_2.solve(save_at=np.linspace(0, 10, 10)).pint.dequantify().to_array()
+        sim_2.solve(save_at=np.linspace(0, 1, 10) * ureg.s).pint.dequantify().to_array()
     )
 
     assert np.all(result_1 == result_2)

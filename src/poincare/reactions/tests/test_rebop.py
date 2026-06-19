@@ -1,10 +1,14 @@
 import numpy as np
+import pint
+from pytest import raises, warns
 from symbolite import real
 
 from ...simulator import Simulator
 from ...types import Constant, Parameter, System, Variable, assign, initial
 from ..reactions import MassAction, RateLaw
 from ..rebop.rebop import RebopSimulator
+
+u = pint.get_application_registry()
 
 
 def compare_rebop_and_ode(model: type[System], values={}):
@@ -85,3 +89,26 @@ def test_changed_initials():
 
     compare_rebop_and_ode(Model)
     compare_rebop_and_ode(Model, values={Model.A_0: 2e4, Model.B: 2000, Model.c: 2})
+
+
+def test_rebop_units():
+    class Model(System):
+        A: Variable = initial(default=1e4)
+        B: Variable = initial(default=1e4)
+        AB: Variable = initial(default=100)
+        reaction_rate: Parameter = assign(default=1e-9 / u.s)
+
+        eq1 = MassAction(
+            reactants=[A, 2 * B],
+            products=[AB],
+            rate=reaction_rate,
+        )
+
+    rsim = RebopSimulator(Model)
+    rsim.solve(upto_t=1 * u.s, n_points=2)
+
+    with warns(FutureWarning):
+        rsim.solve(upto_t=1, n_points=2)
+
+    with raises(TypeError):
+        rsim.solve(upto_t=1 * u.s, n_points=2, values={Model.A: 1 * u.m})

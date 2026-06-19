@@ -5,6 +5,7 @@ from collections import ChainMap
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
+from warnings import warn
 
 import numpy as np
 import pint
@@ -171,8 +172,25 @@ class Simulator:
         save_at: ArrayLike | None = None,
         solver: solvers.Solver = solvers.LSODA(),
         events: Sequence[Events] = (),
+        check_dimensionality: bool = True,
     ):
-        if save_at is not None:
+        save_at_dim = getattr(save_at, "dimensionality", None)
+        timescale = 1
+        if save_at_dim != self.model._independent_units and check_dimensionality:
+            warn(
+                f"save at dimensionality {save_at_dim} doesn't match (explicit or implicit) dimensionality of Independent {self.model._independent_units}. Unit consistency in save_at will be enforced with an error in future versions.",
+                category=FutureWarning,
+            )  # TODO: change warn to raise In future version
+            # raise pint.PintError(
+            #     f"save at dimensionality {save_at_dim} doesn't match (explicit or implicit) dimensionality of Independent {self.model._independent_units}"
+            # )
+        if isinstance(save_at, pint.Quantity):
+            timescale = get_scale(save_at)
+            save_at = np.asarray(save_at.to_base_units().magnitude)
+            if t_span is not None:
+                assert t_span.dimensionality == save_at.dimensionality
+                t_span = t_span.to_base_units().magnitude
+        elif save_at is not None:
             save_at = np.asarray(save_at)
 
         if t_span is None:
@@ -184,6 +202,7 @@ class Simulator:
         solution = solver(problem, save_at=save_at, events=events)
 
         def _convert(t, y):
+            t = t * timescale.magnitude if isinstance(timescale, pint.Quantity) else t
             ds = xr.Dataset(
                 {
                     k: xr.DataArray(
@@ -212,6 +231,10 @@ class Simulator:
             )
             all_ds.append(*ds_events)
         ds = xr.concat(all_ds, "time", data_vars="all")
+        if isinstance(timescale, pint.Quantity):
+            pint_xarray.setup_registry(timescale.units._REGISTRY)
+            ds = ds.pint.quantify({"time": timescale.units})
+            timescale.units._REGISTRY.force_ndarray_like = False
         return ds
 
     def interact(
@@ -227,7 +250,7 @@ class Simulator:
             import ipywidgets
         except ImportError:
             raise ImportError(
-                "must install ipywidgets to use interactuve."
+                "must install ipywidgets to use interactive."
                 " Run `pip install ipywidgets`."
             )
 

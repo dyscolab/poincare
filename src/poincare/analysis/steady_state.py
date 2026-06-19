@@ -39,6 +39,7 @@ class SteadyState:
             t_span=(0, self.t_end),
             save_at=(self.t_end,),
             events=[Event(condition=self.condition, terminal=True)],
+            check_dimensionality=False,
         )
 
     def sweep(

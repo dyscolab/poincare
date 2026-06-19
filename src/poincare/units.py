@@ -10,6 +10,8 @@ from symbolite.ops import translate
 if TYPE_CHECKING:
     from .types import Derivative
 
+ureg = pint.get_application_registry()
+
 
 def register_with_pint[T](cls: T) -> T:
     """Register type with Pint to  to return NotImplemented
@@ -31,7 +33,7 @@ def try_eval_units(value):
         return None
 
 
-def check_equations_units(lhs: Derivative, rhs):
+def equation_implicit_dimensionality(lhs: Derivative, rhs) -> pint.util.UnitsContainer:
     order = 0
     if (value := lhs.variable.initial) is None:
         # Maybe a derivative has a unit already assigned
@@ -47,15 +49,13 @@ def check_equations_units(lhs: Derivative, rhs):
     rhs = try_eval_units(rhs)
     if rhs is None:
         return
-    if isinstance(value, pint.Quantity):
-        time = value._REGISTRY.s
-    elif isinstance(rhs, pint.Quantity):
-        time = rhs._REGISTRY.s
-    else:
+    if not (isinstance(value, pint.Quantity) or isinstance(rhs, pint.Quantity)):
         return
 
-    _ = value / time ** (lhs.order - order) - rhs  # check units
-    return
+    return (
+        getattr(value, "dimensionality", ureg.dimensionless.dimensionality)
+        / getattr(rhs, "dimensionality", ureg.dimensionless.dimensionality)
+    ) ** (1 / (lhs.order - order))  # check units
 
 
 def check_units(var, value):
@@ -67,6 +67,8 @@ def check_units(var, value):
         return
 
 
-def check_derivative_units(derivative: Derivative, value):
+def derivative_implicit_dimensionality(
+    derivative: Derivative, value
+) -> pint.util.UnitsContainer:
     check_units(derivative, value)
-    check_equations_units(derivative, value)
+    return equation_implicit_dimensionality(derivative, value)

@@ -1,7 +1,7 @@
 import numpy as np
 import pint
-from pint import DimensionalityError
-from pytest import mark, raises
+from pint import DimensionalityError, PintError
+from pytest import mark, raises, warns
 from symbolite import real
 from symbolite.impl import libstd
 from symbolite.ops import translate
@@ -73,6 +73,69 @@ def test_single_variable():
         Model(x=1 * u.m / u.s)
 
 
+def test_explicit_unit_consistency():
+    class Model(System):
+        t = Independent(default=0 * u.s)
+        x: Variable = initial(default=1)
+        v: Derivative = x.derive(initial=1 / u.s)
+        r: Parameter = assign(default=1 / u.s**2)
+
+        eq = v.derive() << r
+
+    with raises(PintError):
+
+        class Model(System):
+            t = Independent(default=0 * u.s)
+            x: Variable = initial(default=1)
+            v: Derivative = x.derive(initial=1 / u.m)
+            r: Parameter = assign(default=1 / u.m**2)
+
+            eq = v.derive() << r
+
+    with raises(PintError):
+
+        class Model(System):
+            t = Independent(default=0 * u.s)
+            x: Variable = initial(default=1)
+            v: Derivative = x.derive(initial=1)
+            r: Parameter = assign(default=1)
+
+            eq = v.derive() << r
+
+
+def test_implicit_unit_consistency():
+    class Model(System):
+        x: Variable = initial(default=1)
+        v: Derivative = x.derive(initial=1 / u.m)
+        r: Parameter = assign(default=1 / u.m**2)
+
+        eq = v.derive() << r
+
+    with raises(PintError):
+
+        class Model(System):
+            x: Variable = initial(default=1)
+            v: Derivative = x.derive(initial=1 * u.m)
+            r: Parameter = assign(default=1)
+
+            eq = v.derive() << r
+
+    with raises(PintError):
+
+        class Model(System):
+            x: Variable = initial(default=1)
+            v: Derivative = x.derive(initial=1)
+            r: Parameter = assign(default=1 * u.m)
+
+            eq = v.derive() << r
+
+    sim = Simulator(Model)
+    with warns(FutureWarning):
+        sim.solve(save_at=list(range(3)) * u.s)
+        sim = Simulator(Model)
+    sim.solve(save_at=list(range(3)) * u.m)
+
+
 def test_single_derivative():
     class Model(System):
         x: Variable = initial(default=1 * u.m)
@@ -83,42 +146,6 @@ def test_single_derivative():
 
     with raises(DimensionalityError):
         Model(v=1 * u.m)
-
-    with raises(DimensionalityError):
-
-        class NoUnits(System):
-            x: Variable = initial(default=1 * u.m)
-            v: Derivative = x.derive(initial=1)
-
-    with raises(DimensionalityError):
-
-        class WrongUnits(System):
-            x: Variable = initial(default=1 * u.m)
-            v: Derivative = x.derive(initial=1 * u.m)
-
-
-def test_single_equation():
-    class Model(System):
-        x: Variable = initial(default=1 * u.m)
-        eq = x.derive() << 1 * u.m / u.s
-
-    with raises(DimensionalityError):
-
-        class NoUnits(System):
-            x: Variable = initial(default=1 * u.m)
-            eq = x.derive() << 1
-
-    with raises(DimensionalityError):
-
-        class WrongUnits(System):
-            x: Variable = initial(default=1 * u.m)
-            eq = x.derive() << 1 * u.m
-
-    with raises(DimensionalityError):
-
-        class WrongVariableUnits(System):
-            x: Variable = initial(default=1 * u.m)
-            eq = x.derive() << x
 
 
 def test_time():
@@ -231,7 +258,7 @@ def test_problem_with_transform_units():
     assert problem.scale == [100 * u.cm * 1000 * u.ms]
 
 
-def test_simulator_values():
+def test_simulator_values_and_save_at():
     class Model(System):
         x: Variable = initial(default=1)
         T: Parameter = assign(default=1 * u.s)
@@ -240,12 +267,14 @@ def test_simulator_values():
     sim = Simulator(Model)
 
     with raises(DimensionalityError):
-        sim.solve(save_at=range(3), values={Model.x: 1 * u.m})
+        sim.solve(save_at=list(range(3)) * u.s, values={Model.x: 1 * u.m})
 
     with raises(DimensionalityError):
-        sim.solve(save_at=range(3), values={Model.T: 1})
+        sim.solve(save_at=list(range(3)) * u.s, values={Model.T: 1})
+    with warns(FutureWarning):
+        sim.solve(save_at=list(range(3)))
 
-    sim.solve(save_at=range(3), values={Model.T: 1 * u.ms})
+    sim.solve(save_at=list(range(3)) * u.s, values={Model.T: 1 * u.ms})
 
 
 def test_normalization():
@@ -256,7 +285,7 @@ def test_normalization():
         eq_x = x.derive() << (x - y) / T
         eq_y = y.derive() << (x + y) / T
 
-    t = np.linspace(0, 1, 10)
+    t = np.linspace(0, 1, 10) * u.s
     sim = Simulator(Model)
     ds = sim.solve(save_at=t)
     ds_cm = sim.solve(values={Model.y: 100 * u.cm}, save_at=t)
@@ -272,7 +301,7 @@ def test_unit_in_equation():
         eq = x.derive() << x / (1 * u.s)
 
     sim = Simulator(Model)
-    sim.solve(save_at=np.linspace(0, 1, 10))
+    sim.solve(save_at=np.linspace(0, 1, 10) * u.s)
 
 
 def test_zero_initial_with_unit():
@@ -281,7 +310,7 @@ def test_zero_initial_with_unit():
         T: Parameter = assign(default=1 * u.s)
         eq = x.derive() << x / T
 
-    times = np.linspace(0, 1, 10)
+    times = np.linspace(0, 1, 10) * u.s
     sim = Simulator(Model)
     sim.solve(save_at=times)
 

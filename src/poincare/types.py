@@ -238,7 +238,9 @@ class Derivative(Node, Real):
         self.variable = variable
         self.order = order
         self.initial = initial
-        units.check_derivative_units(self, initial)
+        self._independent_units = units.derivative_implicit_dimensionality(
+            self, initial
+        )
 
     def __set_name__(self, cls: Node, name: str):
         super().__set_name__(cls, name)
@@ -277,7 +279,9 @@ class Derivative(Node, Real):
                 # this creates an internal variable, which will be an error
                 # if it is going to be assigned to an outside variable
                 derivative: Derivative = getattr(obj, self.name)
-                units.check_derivative_units(derivative, value)
+                self._independent_units = units.derivative_implicit_dimensionality(
+                    derivative, value
+                )
                 derivative.initial = value
         else:
             # derivative has been assigned -> variable has been assigned
@@ -288,7 +292,9 @@ class Derivative(Node, Real):
                         "derivative corresponds to an external variable, cannot change its initial condition here."
                     )
                 else:
-                    units.check_derivative_units(derivative, value)
+                    self._independent_units = units.derivative_implicit_dimensionality(
+                        derivative, value
+                    )
                     derivative.initial = value
             elif isinstance(value, Derivative) and value is not derivative:
                 raise TypeError("assigned wrong derivative")
@@ -337,7 +343,9 @@ class Equation(Node):
     rhs: Initial | Value
 
     def __post_init__(self):
-        units.check_equations_units(self.lhs, self.rhs)
+        self._independent_units = units.equation_implicit_dimensionality(
+            self.lhs, self.rhs
+        )
 
     def __set_name__(self, cls, name):
         super().__set_name__(cls, name)
@@ -621,6 +629,7 @@ class System(Node, metaclass=EagerNamer):
             )
 
         cls.__signature__ = inspect.Signature(parameters)
+        cls._independent_units = infer_independent_units(cls)
 
     def __getattribute__(self, name: str) -> Any:
         value = super().__getattribute__(name)
@@ -646,6 +655,8 @@ class System(Node, metaclass=EagerNamer):
         self._kwargs = kwargs
         for k, v in kwargs.items():
             setattr(self, k, v)
+        # TODO: is it necessary to also check independent units when an instance is created, or is checking at class creation enough?
+        self._independent_units = infer_independent_units(self)
 
     def _copy_from(self, parent: Node):
         # Create a new instance by replacing previous arguments,
@@ -671,3 +682,27 @@ class System(Node, metaclass=EagerNamer):
         name = self.__class__.__name__
         kwargs = ",".join(f"{k}={v}" for k, v in self._kwargs.items())
         return f"{name}({kwargs})"
+
+
+def infer_independent_units(system: System | type[System]) -> pint.util.UnitsContainer:
+    implicit_set = set()
+    for obj in system._yield(Derivative | Equation | EquationGroup):
+        if isinstance(obj, EquationGroup):
+            for eq in obj.equations:
+                implicit_set.add(eq._independent_units)
+        else:
+            implicit_set.add(obj._independent_units)
+
+    explicit_set = set(
+        getattr(indep.default, "dimensionality", None)
+        for indep in system._yield(Independent)
+    )
+    dimensionality_set = implicit_set | explicit_set
+    if len(dimensionality_set) > 1:
+        raise pint.PintError(
+            "Units are defined inconsistently. All derivatives must have dimensionality variable.dimensionality / indpendent.dimensionality, which is inferred by consensus if not explicitly defined."
+        )
+    elif len(dimensionality_set) < 1:
+        return
+    else:
+        return dimensionality_set.pop()

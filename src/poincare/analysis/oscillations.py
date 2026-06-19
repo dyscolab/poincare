@@ -5,12 +5,15 @@ from dataclasses import dataclass
 from warnings import warn
 
 import numpy as np
+import pint
 import xarray as xr
 
 from .. import solvers
 from ..analysis.period_methods import autoperiod, fft_peak
 from ..simulator import Components, Simulator
 from ..types import Initial
+
+ureg = pint.get_application_registry()
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -38,9 +41,10 @@ class Oscillations:
             solver=self.solver,
             save_at=save_at,
         )
+        # TODO: How should units be handled? (currently stripping them with dequantify())
         output = {
             var: self.process_result(
-                series=np.array(result[str(var)].values),
+                series=np.array(result[str(var)].pint.dequantify().values),
                 variable=var,
                 values=values,
                 parameter=parameter,
@@ -60,9 +64,9 @@ class Oscillations:
         sim: Simulator,
         /,
         *,
-        T_min: float,
-        T_max: float,
-        rel_time: float,
+        T_min: float | pint.Quantity,
+        T_max: float | pint.Quantity,
+        rel_time: float | pint.Quantity,
         variables: Components | Iterable[Components] | None = None,
         values: Iterable[Initial],
         parameter: Components,
@@ -72,7 +76,12 @@ class Oscillations:
     ) -> xr.Dataset:
         timestep = T_min / timesteps_in_T
         t_end = rel_time + T_after_rel * T_max
-        save_at = np.arange(0, t_end + (T_after_rel + 0.5) * timestep, timestep)
+        save_at = pint_arange(
+            0,
+            t_end + (T_after_rel + 0.5) * timestep,
+            timestep,
+            target_dimensionality=sim.model._independent_units,
+        )  # Units compatible wrapper for np.arange
         if variables is None:
             try:
                 used_vars = list(sim.compiled.variables)
@@ -130,7 +139,6 @@ class Oscillations:
             period_finder = methods[method]
         except KeyError:
             raise KeyError(f"{method} is  not a valid method")
-        # fft of result normalized by its mean
         series = np.asarray(series)
         data = (series - np.mean(series))[int(np.ceil(T_r / timestep)) :]
         T, verified = period_finder(data, timestep)
@@ -139,7 +147,11 @@ class Oscillations:
                 f"could not verifiy period for {variable} with {parameter} = {values[parameter]}, returning period with maximum power"
             )
         if T_max >= T >= T_min:
-            T_Dt = round(T / timestep)
+            T_Dt = (
+                round(T / timestep).magnitude
+                if isinstance(T, pint.Quantity)
+                else round(T / timestep)
+            )
             periods = np.reshape(data[-T_Dt * T_after_rel :], (T_after_rel, T_Dt))
             A = (
                 np.mean(np.max(periods, axis=1) - np.min(periods, axis=1)) / 2
@@ -150,11 +162,15 @@ class Oscillations:
                     for i in range(T_after_rel - 1)
                 ]
             )
+            T, A, difference_rms = (
+                getattr(x, "magnitude", x) for x in (T, A, difference_rms)
+            )  # TODO: How should units be handled (the current multidimensional output won't work with different units)
             return (T, A, difference_rms)
         elif T > 0:
             warn(
                 f"Period out of range for {parameter} = {values[parameter]}, returning -1 for amplitude and diffence rms"
             )
+            T = getattr(T, "magnitude", T)
             return (T, -1, -1)
         else:
             warn(
@@ -165,3 +181,37 @@ class Oscillations:
 
 def mean_quad_dif(series1: Iterable[float], series2: Iterable[float]) -> float:
     return np.sqrt(np.mean((np.asarray(series1) - np.asarray(series2)) ** 2))
+
+
+def pint_arange(start, stop, step, target_dimensionality=None):
+    target_unit = None
+    for arg in (start, stop, step):
+        if isinstance(arg, pint.Quantity):
+            target_unit = arg.units
+            break
+    if getattr(target_unit, "dimensionality", None) != target_dimensionality:
+        warn(
+            f"save at dimensionality {target_unit.dimensionality} doesn't match (explicit or implicit) dimensionality of Independent {target_dimensionality}. Unit consistency in save_at will be enforced with an error in future versions.",
+            category=FutureWarning,
+        )  # TODO: change warn to raise In future version
+        # raise pint.PintError(
+        #     f"Target dimensionality {target_unit.dimensionality} is not compatible with the dimensionality of the system's independent variable {target_dimensionality}."
+        # )
+
+    def to_magnitude(val):
+        if hasattr(val, "units"):
+            if target_unit is None:
+                return val.magnitude
+            return val.to(target_unit).magnitude
+        return val
+
+    start_m = to_magnitude(start)
+    stop_m = to_magnitude(stop)
+    step_m = to_magnitude(step)
+
+    magnitude_array = np.arange(start_m, stop_m, step_m)
+
+    if target_unit is not None:
+        return magnitude_array * target_unit
+
+    return magnitude_array
