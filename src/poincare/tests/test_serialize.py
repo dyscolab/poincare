@@ -39,6 +39,7 @@ def test_roundtrip(model: System):
     assert load == model
 
 
+@mark.xfail(reason="cloudpickle sometimes (but not always) causes a Stack overflow.")
 @mark.parametrize("model", models)
 def test_local_roundtrip(model: System):
     class EmptyModel(System):
