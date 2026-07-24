@@ -64,7 +64,7 @@ class RebopSimulator:
         self,
         values: Mapping = {},
         *,
-        upto_t: float,
+        upto_t: float | pint.Quantity,
         n_points: int | None = None,
         rng: RNGLike | SeedLike | None = None,
         sparse: bool = True,
