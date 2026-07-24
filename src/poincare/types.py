@@ -698,9 +698,11 @@ def infer_independent_units(system: System | type[System]) -> pint.util.UnitsCon
     for obj in system._yield(Derivative | Equation | EquationGroup):
         if isinstance(obj, EquationGroup):
             for eq in obj.equations:
-                implicit_set.add(eq._independent_units)
+                if eq._independent_units is not units.MISSING:
+                    implicit_set.add(eq._independent_units)
         else:
-            implicit_set.add(obj._independent_units)
+            if obj._independent_units is not units.MISSING:
+                implicit_set.add(obj._independent_units)
 
     explicit_set = set(
         getattr(indep.default, "dimensionality", None)

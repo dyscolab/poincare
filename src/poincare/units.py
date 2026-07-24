@@ -13,6 +13,18 @@ if TYPE_CHECKING:
 ureg = pint.get_application_registry()
 
 
+class _Missing:
+    """Sentinel type to distinguish that the implicit dimensionality has no units (None)
+    from implicit dimensionality not defined (MISSING).
+    """
+
+    def __repr__(self):
+        return "MISSING"
+
+
+MISSING = _Missing()
+
+
 def register_with_pint[T](cls: T) -> T:
     """Register type with Pint to  to return NotImplemented
     on methods that can be reflected, such as __add__,
@@ -34,6 +46,8 @@ def try_eval_units(value):
 
 
 def equation_implicit_dimensionality(lhs: Derivative, rhs) -> pint.util.UnitsContainer:
+    """Infer implicit Independent diemensionality from an equation. Resturns None if there is a value
+    but no units and MISSING if there is no value (the inital of some Variable is not defined)"""
     order = 0
     if (value := lhs.variable.initial) is None:
         # Maybe a derivative has a unit already assigned
@@ -43,12 +57,12 @@ def equation_implicit_dimensionality(lhs: Derivative, rhs) -> pint.util.UnitsCon
         else:
             # No unit assigned. Only check that rhs is consistent.
             try_eval_units(rhs)
-            return
+            return MISSING
 
     value = try_eval_units(value)
     rhs = try_eval_units(rhs)
     if rhs is None:
-        return
+        return MISSING
     if not (isinstance(value, pint.Quantity) or isinstance(rhs, pint.Quantity)):
         return
 
