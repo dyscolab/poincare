@@ -186,10 +186,16 @@ class Simulator:
             # )
         if isinstance(save_at, pint.Quantity):
             timescale = get_scale(save_at)
-            save_at = np.asarray(save_at.to_base_units().magnitude)
             if t_span is not None:
-                assert t_span.dimensionality == save_at.dimensionality
-                t_span = t_span.to_base_units().magnitude
+                try:
+                    assert t_span.dimensionality == save_at.dimensionality
+                    t_span = t_span.to_base_units().magnitude
+                except (AttributeError, pint.DimensionalityError):
+                    raise pint.PintError(
+                        "if save_at is a pint Quantity then t_span must also be ona and have the same dimensionality"
+                    )
+            save_at = np.asarray(save_at.to_base_units().magnitude)
+
         elif save_at is not None:
             save_at = np.asarray(save_at)
 
