@@ -687,6 +687,9 @@ class System(Node, metaclass=EagerNamer):
 
         return all(getattr(self, k) == getattr(other, k) for k in self._annotations)
 
+    def __hash__(self) -> int:
+        return super().__hash__()
+
     def __repr__(self):
         name = self.__class__.__name__
         kwargs = ",".join(f"{k}={v}" for k, v in self._kwargs.items())
