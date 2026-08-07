@@ -8,7 +8,6 @@ from types import ModuleType
 from typing import (
     Any,
     ClassVar,
-    Iterable,
     Literal,
     Self,
     TypeVar,

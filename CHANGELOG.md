@@ -2,7 +2,7 @@
 
 ## 1.1.2
 
-- Independent variable units are now inferred from equations and derivatives. 
+- Independent variable units are now inferred from equations and derivatives.
 - Units in save_at are now handled properly, raises `FutureWarning` if they don't match the implicit units.
 
 ## 1.1.1
