@@ -1,16 +1,21 @@
 # Changelog
 
+## 1.1.2
+
+- Independent variable units are now inferred from equations and derivatives. 
+- Units in save_at are now handled properly, raises `FutureWarning` if they don't match the implicit units.
+
 ## 1.1.1
 
 - Fix: transform now handles events properly.
-- Variables and parameters belonging ton nested systems are now
+- Variables and parameters belonging to nested systems are now printed in latex with full path.
 
 ## 1.1.0
 
 - Added `model_report()` to generate reports with model's equations, variables and parameters in LaTeX.
 - Added support for stochastic simulations with rebop in reactions.
 - Fix: `RateLaw` now use their parents reactant when copied if available.
-- Update symbolite dependency 1o 1.1.0.
+- Update symbolite dependency 1 to 1.1.0.
 
 ## 1.0.0
 
