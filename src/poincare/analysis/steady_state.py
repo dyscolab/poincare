@@ -9,7 +9,6 @@ from numpy.typing import NDArray
 from scipy_events import Event, SmallDerivatives
 from scipy_events.typing import Condition
 
-from .. import solvers
 from ..simulator import Components, Simulator
 from ..types import (
     Initial,
@@ -22,7 +21,6 @@ class SteadyState:
 
     By default, the condition is that the derivatives are small."""
 
-    solver: solvers.Solver = solvers.LSODA()
     condition: Condition = SmallDerivatives()
     t_end: float = np.finfo(np.float64).max
 
@@ -33,9 +31,7 @@ class SteadyState:
         *,
         values: Mapping[Components, Initial] = {},
     ):
-        return sim.solve(
-            values=values,
-            solver=self.solver,
+        return sim.with_values(values).solve(
             t_span=(0, self.t_end),
             save_at=(self.t_end,),
             events=[Event(condition=self.condition, terminal=True)],
@@ -85,7 +81,7 @@ class SteadyState:
     ):
         class Values(dict):
             def update_from_problem(self, values: dict):
-                prob = sim.create_problem(values)
+                prob = sim.with_values(values).create_problem()
                 self.update(zip(sim.compiled.variables, prob.y))
                 self.update(zip(sim.compiled.parameters, prob.p))
 
@@ -138,9 +134,9 @@ class SteadyState:
         factor: float = 1,
     ):
         if atol is None:
-            atol: float = np.max(factor * self.solver.atol)
+            atol: float = np.max(factor * sim.solver.atol)
         if rtol is None:
-            rtol: float = np.max(factor * self.solver.rtol)
+            rtol: float = np.max(factor * sim.solver.rtol)
 
         up, down = "up", "down"
         uad = self.sweep_up_and_down(

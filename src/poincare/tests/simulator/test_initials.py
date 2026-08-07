@@ -32,7 +32,7 @@ def assert_initials(
     expected_variables: dict[Variable, float],
 ):
     sim = Simulator(system)
-    problem = sim.create_problem(values)
+    problem = sim.with_values(values).create_problem()
     assert dict(zip(sim.compiled.parameters, problem.p)) == expected_parameters
     assert dict(zip(sim.compiled.variables, problem.y)) == expected_variables
 
@@ -98,7 +98,7 @@ def test_override_with_constants():
 
 def test_cyclic_initials():
     with raises(ValueError, match="Cyclic"):
-        Simulator(Model).create_problem(values={Model.k0: Model.k2})
+        Simulator(Model).with_values({Model.k0: Model.k2}).create_problem()
 
 
 @mark.xfail(

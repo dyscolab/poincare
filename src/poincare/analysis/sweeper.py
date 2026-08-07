@@ -26,16 +26,12 @@ class Sweeper:
         *,
         parameter: Components,
         values: Iterable[Initial],
-        other_values: Mapping[Components, Initial] | None = None,
         save_at: Iterable[ArrayLike],
         unpack: bool = True,
     ):
-        other_values = {} if other_values is None else other_values
         solutions = []
         for v in values:
-            result = self.func(
-                sim.solve(save_at=save_at, values={parameter: v} | other_values)
-            )
+            result = self.func(sim.with_values({parameter: v}).solve(save_at=save_at))
             solutions.append(result)
         data_arrays = {}
         if isinstance(solutions[0], dict) and unpack:

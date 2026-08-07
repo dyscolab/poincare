@@ -233,7 +233,7 @@ def test_problem_units():
     assert problem.p == np.array([1])
     assert problem.scale == [1 * u.m]
 
-    problem = sim.create_problem(values={Model.x: 10 * u.cm, Model.T: 10 * u.ms})
+    problem = sim.with_values({Model.x: 10 * u.cm, Model.T: 10 * u.ms}).create_problem()
     assert problem.y == np.array([0.1])
     assert problem.p == np.array([0.01])
     assert problem.scale == [100 * u.cm]
@@ -245,14 +245,14 @@ def test_problem_with_transform_units():
         T: Parameter = assign(default=1 * u.s)
         eq = x.derive() << -x / T
 
-    sim = Simulator(Model, transform={"x": Model.x * Model.T})
+    sim = Simulator(Model).with_transform({"x": Model.x * Model.T})
 
     problem = sim.create_problem()
     assert problem.y == np.array([1])
     assert problem.p == np.array([1])
     assert problem.scale == [1 * u.m * u.s]
 
-    problem = sim.create_problem(values={Model.x: 10 * u.cm, Model.T: 10 * u.ms})
+    problem = sim.with_values({Model.x: 10 * u.cm, Model.T: 10 * u.ms}).create_problem()
     assert problem.y == np.array([0.1])
     assert problem.p == np.array([0.01])
     assert problem.scale == [100 * u.cm * 1000 * u.ms]
@@ -267,14 +267,14 @@ def test_simulator_values_and_save_at():
     sim = Simulator(Model)
 
     with raises(DimensionalityError):
-        sim.solve(save_at=list(range(3)) * u.s, values={Model.x: 1 * u.m})
+        sim.with_values({Model.x: 1 * u.m}).solve(save_at=list(range(3)) * u.s)
 
     with raises(DimensionalityError):
-        sim.solve(save_at=list(range(3)) * u.s, values={Model.T: 1})
+        sim.with_values({Model.T: 1}).solve(save_at=list(range(3)) * u.s)
     with warns(FutureWarning):
         sim.solve(save_at=list(range(3)))
 
-    sim.solve(save_at=list(range(3)) * u.s, values={Model.T: 1 * u.ms})
+    sim.with_values({Model.T: 1 * u.ms}).solve(save_at=list(range(3)) * u.s)
 
 
 def test_normalization():
@@ -288,7 +288,7 @@ def test_normalization():
     t = np.linspace(0, 1, 10) * u.s
     sim = Simulator(Model)
     ds = sim.solve(save_at=t)
-    ds_cm = sim.solve(values={Model.y: 100 * u.cm}, save_at=t)
+    ds_cm = sim.with_values({Model.y: 100 * u.cm}).solve(save_at=t)
     assert np.allclose((ds - ds_cm).pint.dequantify().to_dataarray(), 0)
     assert ds["y"].pint.units == u.m
     assert ds_cm["y"].pint.units == u.cm

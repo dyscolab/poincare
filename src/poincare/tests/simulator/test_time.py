@@ -14,7 +14,7 @@ def test_time():
     problem = Simulator(Model).create_problem()
 
     with raises(ValueError, match="recompile"):
-        Simulator(Model).create_problem(values={Model.p: 2 * Model.t})
+        Simulator(Model).with_values({Model.p: 2 * Model.t}).create_problem()
 
     problem_2 = Simulator(Model(p=2 * Model.t)).create_problem()
 
@@ -35,10 +35,10 @@ def test_no_time_dependent_parameters():
     sim.solve(save_at=range(2))
     assert set(sim.compiled.parameters) == {Model.p}
 
-    sim.create_problem(values={Model.p: 1})
+    sim.with_values({Model.p: 1}).create_problem()
 
     with raises(ValueError, match="recompile"):
-        sim.create_problem(values={Model.p: Model.t})
+        sim.with_values({Model.p: Model.t}).create_problem()
 
     Simulator(Model(p=Model.t))
 
@@ -55,10 +55,10 @@ def test_time_dependent_parameters():
     assert len(sim.compiled.parameters) == 0
 
     with raises(ValueError, match="recompile"):
-        sim.create_problem(values={Model.p: 1})
+        sim.with_values({Model.p: 1}).create_problem()
 
     with raises(ValueError, match="recompile"):
-        sim.create_problem(values={Model.p: Model.t})
+        sim.with_values({Model.p: Model.t}).create_problem()
 
     Simulator(Model(p=Model.t))
 
@@ -76,7 +76,7 @@ def test_variable_dependent_parameters():
     assert len(sim.compiled.parameters) == 0
 
     with raises(ValueError, match="recompile"):
-        sim.create_problem(values={Model.p: 1})
+        sim.with_values({Model.p: 1}).create_problem()
 
 
 def test_parameter_dependent_parameters():
@@ -93,17 +93,17 @@ def test_parameter_dependent_parameters():
     assert set(sim.compiled.parameters) == {Model.p}
     # but initial values can be modified through p0
     assert sim.create_problem().p[0] == 0
-    assert sim.create_problem(values={Model.p: 1}).p[0] == 1
-    assert sim.create_problem(values={Model.p0: 1}).p[0] == 1
+    assert sim.with_values({Model.p: 1}).create_problem().p[0] == 1
+    assert sim.with_values({Model.p0: 1}).create_problem().p[0] == 1
 
     func = Model.t
 
     # must recompile to assign a function to p or p0
     with raises(ValueError, match="recompile"):
-        sim.create_problem(values={Model.p: func})
+        sim.with_values({Model.p: func}).create_problem()
 
     with raises(ValueError, match="recompile"):
-        sim.create_problem(values={Model.p0: func})
+        sim.with_values({Model.p0: func}).create_problem()
 
     # recompilation moves from parameter vector to parameter func
     model = Model(p=func)

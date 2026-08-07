@@ -24,7 +24,7 @@ times = np.linspace(0, 10, 100)
 
 def test_one_variable():
     ds_all = Simulator(Model).solve(save_at=times)
-    ds = Simulator(Model, transform={"x": Model.x}).solve(save_at=times)
+    ds = Simulator(Model).with_transform({"x": Model.x}).solve(save_at=times)
 
     assert ds.sizes["time"] == ds_all.sizes["time"]
     assert (ds["x"].values == ds_all["x"].values).all()
@@ -33,7 +33,9 @@ def test_one_variable():
 
 def test_sum_variable():
     ds_all = Simulator(Model).solve(save_at=times)
-    ds = Simulator(Model, transform={"sum": Model.x + Model.y}).solve(save_at=times)
+    ds = (
+        Simulator(Model).with_transform({"sum": Model.x + Model.y}).solve(save_at=times)
+    )
 
     assert ds.sizes["time"] == ds_all.sizes["time"]
     assert (ds["sum"].values == (ds_all["x"].values + ds_all["y"].values)).all()
@@ -53,7 +55,7 @@ def test_non_variable():
 
 
 def test_number():
-    sim = Simulator(Model, transform={"my_number": 1})
+    sim = Simulator(Model).with_transform({"my_number": 1})
     ds = sim.solve(save_at=times)
     assert np.all(ds["my_number"].values == 1)
 

@@ -24,9 +24,10 @@ def test_backends(backend):
     t = np.linspace(0, 10, 100)
 
     sim = Simulator(Oscillator, backend=backend)
-    result = sim.solve(
+    result = sim.with_solver(
+        solvers.LSODA(atol=SOLVE_TOLERANCE, rtol=SOLVE_TOLERANCE)
+    ).solve(
         save_at=t,
-        solver=solvers.LSODA(atol=SOLVE_TOLERANCE, rtol=SOLVE_TOLERANCE),
     )
     assert np.allclose(
         result["x"],
@@ -41,9 +42,8 @@ def test_solvers(solver):
     t = np.linspace(0, 10, 100)
 
     sim = Simulator(Oscillator)
-    result = sim.solve(
+    result = sim.with_solver(solver(atol=SOLVE_TOLERANCE, rtol=SOLVE_TOLERANCE)).solve(
         save_at=t,
-        solver=solver(atol=SOLVE_TOLERANCE, rtol=SOLVE_TOLERANCE),
     )
     assert np.allclose(
         result["x"],

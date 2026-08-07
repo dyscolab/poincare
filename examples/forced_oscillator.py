@@ -29,9 +29,8 @@ if __name__ == "__main__":
     result.to_dataframe().plot()
 
     # No recompilation necessary to change parameter value
-    result = sim.solve(
+    result = sim.with_values({Oscillator.phase: -1.3}).solve(
         save_at=np.linspace(0, 50, 1000),
-        values={Oscillator.phase: -1.3},
     )
     result.to_dataframe().plot()
 

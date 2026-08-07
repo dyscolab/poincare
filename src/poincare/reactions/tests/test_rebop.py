@@ -13,9 +13,9 @@ u = pint.get_application_registry()
 
 def compare_rebop_and_ode(model: type[System], values={}):
     sim = Simulator(model)
-    sol = sim.solve(save_at=np.arange(0, 51, 1), values=values)
+    sol = sim.with_values(values).solve(save_at=np.arange(0, 51, 1))
     rsim = RebopSimulator(model)
-    r_sol = rsim.solve(n_points=50, upto_t=50, rng=1, values=values)
+    r_sol = rsim.with_values(values).solve(n_points=50, upto_t=50, rng=1)
     tolerance = 0.1
     assert np.abs(((sol - r_sol) / (sol + r_sol) * 2 <= tolerance).to_array()).all()
 

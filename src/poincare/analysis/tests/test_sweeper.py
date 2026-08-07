@@ -69,11 +69,10 @@ def test_other_values_in_sweep():
     parameter_values = np.linspace(1, 10, 50)
     sweep = Sweeper(double_mean)
     result = sweep.sweep(
-        sim,
+        sim.with_values({LotkaVolterra.prey: 0, LotkaVolterra.predator: 0}),
         save_at=np.linspace(0, 10, 50),
         parameter=LotkaVolterra.predator_birth_rate,
         values=parameter_values,
-        other_values={LotkaVolterra.prey: 0, LotkaVolterra.predator: 0},
     )
     assert np.all(result["prey"] == np.zeros_like(parameter_values))
     assert np.all(result["predator"] == np.zeros_like(parameter_values))

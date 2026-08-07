@@ -36,9 +36,7 @@ class Oscillations:
         T_min: float,
         T_max: float,
     ) -> Mapping[Components, tuple[float, float, float]]:
-        result = sim.solve(
-            values=values,
-            solver=self.solver,
+        result = sim.with_values(values).solve(
             save_at=save_at,
         )
         # TODO: How should units be handled? (currently stripping them with dequantify())

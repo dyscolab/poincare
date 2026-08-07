@@ -1,6 +1,6 @@
 import dataclasses
 from collections.abc import Iterable, Mapping
-from typing import Any
+from typing import Any, Self
 from warnings import warn
 
 try:
@@ -16,8 +16,8 @@ from symbolite import Real, substitute, translate
 from symbolite.ops import yield_named
 
 from ..._node import Node
-from ...simulator import Simulator, get_scale
-from ...types import Constant, Equation, Number, Parameter, System
+from ...simulator import Components, Simulator, get_scale
+from ...types import Constant, Equation, Initial, Number, Parameter, System
 from ..reactions import MassAction, RateLaw, Reactant
 from . import _librebop
 
@@ -39,6 +39,15 @@ class RebopSimulator:
         self._variable_map = {
             k: str(k).replace(".", "__") for k in self._sim.compiled.variables
         }
+
+    def with_values(
+        self, values: Mapping[Components, Initial], /, *, append: bool = True
+    ) -> Self:
+        rsim = self.__class__.__new__(self.__class__)
+        rsim.model = self.model
+        rsim._sim = self._sim.with_values(values, append=append)
+        rsim._variable_map = self._variable_map
+        return rsim
 
     def _build(self, p: Mapping[Parameter, float], /):
         rebop = Gillespie()
@@ -62,7 +71,6 @@ class RebopSimulator:
 
     def solve(
         self,
-        values: Mapping = {},
         *,
         upto_t: float | pint.Quantity,
         n_points: int | None = None,
@@ -91,7 +99,7 @@ class RebopSimulator:
         if var_names is not None:
             var_names = [self._variable_map[v.variable] for v in var_names]
 
-        problem = self._sim.create_problem(values)
+        problem = self._sim.create_problem()
         for s in problem.scale:
             if isinstance(s, pint.Quantity | pint.Unit):
                 raise TypeError(

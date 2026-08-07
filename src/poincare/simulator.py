@@ -79,28 +79,66 @@ class Simulator:
         /,
         *,
         backend: Backend = "numpy",
-        transform: Sequence[Value] | Mapping[Hashable, Value] | None = None,
-        append_transform: bool = False,
+        solver: solvers.Solver = solvers.LSODA(),
     ):
         self.model = system
         compiler = SystemCompiler(self.model, backend=backend)
         self.compiled = compiler.compiled
-        self.append_transform = append_transform
-        self.transform = self._compile_transform(transform)
+        self.transform = self._compile_transform(None)
+        self.values = {}
+        self.solver = solvers.LSODA()
+
+    def with_values(
+        self, values: Mapping[Components, Initial], /, *, append: bool = True
+    ) -> Simulator:
+        sim = self.__class__.__new__(self.__class__)
+        sim.model = self.model
+        sim.compiled = self.compiled
+        sim.transform = self.transform
+        sim.values = values if not append else self.values | values
+        sim.solver = self.solver
+
+        return sim
+
+    def with_solver(self, solver: solvers.Solver, /) -> Simulator:
+        sim = self.__class__.__new__(self.__class__)
+        sim.model = self.model
+        sim.compiled = self.compiled
+        sim.transform = self.transform
+        sim.values = self.values
+        sim.solver = solver
+
+        return sim
+
+    def with_transform(
+        self,
+        transform: Sequence[Value] | Mapping[Hashable, Value] | None = None,
+        /,
+        *,
+        append: bool = False,
+    ) -> Simulator:
+        sim = self.__class__.__new__(self.__class__)
+        sim.model = self.model
+        sim.compiled = self.compiled
+        sim.transform = sim._compile_transform(transform, append)
+        sim.values = self.values
+        sim.solver = self.solver
+
+        return sim
 
     def _compile_transform(
         self,
         transform: Sequence[Value] | Mapping[Hashable, Value] | None,
+        append: bool = False,
     ):
         if isinstance(transform, Sequence):
             transform = {str(x): x for x in transform}
-        if self.append_transform and transform is not None:
+        if append and transform is not None:
             transform = transform | {str(v): v for v in self.compiled.variables}
         return compile_transform(self.model, self.compiled, transform)
 
     def create_problem(
         self,
-        values: Mapping[Components, Initial | Value] = {},
         *,
         t_span: tuple[float, float] = (0, np.inf),
         transform: Sequence[Value] | Mapping[Hashable, Value] | None = None,
@@ -113,11 +151,11 @@ class Simulator:
         if any(
             depends_on_at_least_one_variable_or_time(self.compiled.mapper[k])
             or depends_on_at_least_one_variable_or_time(v)
-            for k, v in values.items()
+            for k, v in self.values.items()
         ):
             raise ValueError("must recompile to change time-dependent assignments")
 
-        for k, v in values.items():
+        for k, v in self.values.items():
             default = self.compiled.mapper[k]
             match [v, default]:
                 case [pint.Quantity() as q1, pint.Quantity() as q2]:
@@ -132,7 +170,7 @@ class Simulator:
                         )
 
         content = ChainMap(
-            values,
+            self.values,
             self.compiled.mapper,
             self.transform.output,
             {self.compiled.independent[0]: t_span[0]},
@@ -166,11 +204,11 @@ class Simulator:
 
     def solve(
         self,
-        values: Mapping[Components, Initial | Value] = {},
+        # values: Mapping[Components, Initial | Value] = {},
         *,
         t_span: tuple[float, float] | None = None,
         save_at: ArrayLike | None = None,
-        solver: solvers.Solver = solvers.LSODA(),
+        # solver: solvers.Solver = solvers.LSODA(),
         events: Sequence[Events] = (),
         check_dimensionality: bool = True,
     ):
@@ -204,8 +242,8 @@ class Simulator:
                 raise TypeError("must provide t_span and/or save_at.")
             t_span = (0, save_at[-1])
 
-        problem = self.create_problem(values, t_span=t_span)
-        solution = solver(problem, save_at=save_at, events=events)
+        problem = self.create_problem(t_span=t_span)
+        solution = self.solver(problem, save_at=save_at, events=events)
 
         def _convert(t, y):
             t = t * timescale.magnitude if isinstance(timescale, pint.Quantity) else t
