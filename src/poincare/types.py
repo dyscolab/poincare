@@ -518,7 +518,7 @@ class EagerNamer(type):
 
     @property
     def variables(self):
-        vars = list[self._yield(Variable)]
+        vars = list(self._yield(Variable))
         return xr.DataArray(
             data=vars,
             dims="variables",
@@ -527,10 +527,10 @@ class EagerNamer(type):
 
     @property
     def parameters(self):
-        params = list[self._yield(Parameter)]
+        params = list(self._yield(Parameter))
         return xr.DataArray(
             data=params,
-            dims="parameters",
+            dims=["parameters"],
             coords={"parameters": [str(param) for param in params]},
         )
 
@@ -719,3 +719,4 @@ def infer_independent_units(system: System | type[System]) -> pint.util.UnitsCon
         return
     else:
         return dimensionality_set.pop()
+
