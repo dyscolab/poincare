@@ -232,7 +232,7 @@ def particular_fit_result(
         save_at = fitter.units.get_save_at(results)
         def simulation_function(x):
             return sim.with_values(
-            {fitter.fit_parzameters[i]: val for i, val in enumerate(x)}
+            {fitter.fit_parameters[i]: val for i, val in enumerate(x)}
         ).solve(
             save_at=save_at,
         )
