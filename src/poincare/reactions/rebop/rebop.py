@@ -128,7 +128,7 @@ class RebopSimulator:
             timescale.units._REGISTRY.force_ndarray_like = False
         return ds
 
-    def _get_rebop_rate(self, r: RateLaw, p: Mapping[Parameter:Number]):
+    def _get_rebop_rate(self, r: RateLaw, p: Mapping[Parameter, Number]):
         if isinstance(r, MassAction):
             if isinstance(r.rate, Number):
                 return r.rate
