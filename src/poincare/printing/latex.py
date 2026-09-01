@@ -174,7 +174,8 @@ def normalize_eq(eq, transform, base: Node) -> Latex:
                 named, Real(parent_path(named, base, named.name))
             )
     eq = substitute(eq, reps)
-    return translate(eq, liblatex).text.replace(
+    translated = translate(eq, liblatex)
+    return getattr(translated, "text", translated).replace(
         "․",
         ".",
     )  # Replace one dot leaders added by parent_path by regular periods.
