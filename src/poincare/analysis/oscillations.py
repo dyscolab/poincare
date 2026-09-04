@@ -188,13 +188,9 @@ def pint_arange(start, stop, step, target_dimensionality=None):
             target_unit = arg.units
             break
     if getattr(target_unit, "dimensionality", None) != target_dimensionality:
-        warn(
-            f"save at dimensionality {target_unit.dimensionality} doesn't match (explicit or implicit) dimensionality of Independent {target_dimensionality}. Unit consistency in save_at will be enforced with an error in future versions.",
-            category=FutureWarning,
-        )  # TODO: change warn to raise In future version
-        # raise pint.PintError(
-        #     f"Target dimensionality {target_unit.dimensionality} is not compatible with the dimensionality of the system's independent variable {target_dimensionality}."
-        # )
+        raise pint.PintError(
+            f"Target dimensionality {target_unit.dimensionality} is not compatible with the dimensionality of the system's independent variable {target_dimensionality}."
+        )
 
     def to_magnitude(val):
         if hasattr(val, "units"):

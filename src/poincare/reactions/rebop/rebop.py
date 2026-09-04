@@ -81,13 +81,9 @@ class RebopSimulator:
         upto_t_dim = getattr(upto_t, "dimensionality", None)
         timescale = 1
         if upto_t_dim != self.model._independent_units:
-            warn(
-                f"upto_t dimensionality {upto_t_dim} doesn't match (explicit or implicit) dimensionality of Independent {self.model._independent_units}. Unit consistency in save_at will be enforced with an error in future versions.",
-                category=FutureWarning,
-            )  # TODO: change warn to raise In future version
-        # raise pint.PintError(
-        #     f"save at dimensionality {upto_t_dim} doesn't match (explicit or implicit) dimensionality of Independent {self.model._independent_units}"
-        # )
+            raise pint.PintError(
+                f"save at dimensionality {upto_t_dim} doesn't match (explicit or implicit) dimensionality of Independent {self.model._independent_units}"
+            )
 
         if isinstance(upto_t, pint.Quantity):
             timescale = get_scale(upto_t)

@@ -215,13 +215,9 @@ class Simulator:
         save_at_dim = getattr(save_at, "dimensionality", None)
         timescale = 1
         if save_at_dim != self.model._independent_units and check_dimensionality:
-            warn(
-                f"save at dimensionality {save_at_dim} doesn't match (explicit or implicit) dimensionality of Independent {self.model._independent_units}. Unit consistency in save_at will be enforced with an error in future versions.",
-                category=FutureWarning,
-            )  # TODO: change warn to raise In future version
-            # raise pint.PintError(
-            #     f"save at dimensionality {save_at_dim} doesn't match (explicit or implicit) dimensionality of Independent {self.model._independent_units}"
-            # )
+            raise pint.PintError(
+                f"save at dimensionality {save_at_dim} doesn't match (explicit or implicit) dimensionality of Independent {self.model._independent_units}"
+            )
         if isinstance(save_at, pint.Quantity):
             timescale = get_scale(save_at)
             if t_span is not None:
