@@ -1,7 +1,7 @@
 import numpy as np
 import pint
 from pint import DimensionalityError, PintError
-from pytest import mark, raises, warns
+from pytest import mark, raises
 from symbolite import real
 from symbolite.impl import libstd
 from symbolite.ops import translate
@@ -130,7 +130,7 @@ def test_implicit_unit_consistency():
             eq = v.derive() << r
 
     sim = Simulator(Model)
-    with warns(FutureWarning):
+    with raises(PintError):
         sim.solve(save_at=list(range(3)) * u.s)
         sim = Simulator(Model)
     sim.solve(save_at=list(range(3)) * u.m)
@@ -271,7 +271,7 @@ def test_simulator_values_and_save_at():
 
     with raises(DimensionalityError):
         sim.with_values({Model.T: 1}).solve(save_at=list(range(3)) * u.s)
-    with warns(FutureWarning):
+    with raises(PintError):
         sim.solve(save_at=list(range(3)))
 
     sim.with_values({Model.T: 1 * u.ms}).solve(save_at=list(range(3)) * u.s)

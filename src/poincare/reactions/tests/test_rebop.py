@@ -1,5 +1,6 @@
 import numpy as np
 import pint
+from pint import PintError
 from pytest import raises, warns
 from symbolite import real
 
@@ -107,7 +108,7 @@ def test_rebop_units():
     rsim = RebopSimulator(Model)
     rsim.solve(upto_t=1 * u.s, n_points=2)
 
-    with warns(FutureWarning):
+    with raises(PintError):
         rsim.solve(upto_t=1, n_points=2)
 
     with raises(TypeError):
