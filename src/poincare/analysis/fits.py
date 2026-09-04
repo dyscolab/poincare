@@ -54,7 +54,7 @@ class UnitsHandler:
             except pint.DimensionalityError as err:
                 raise pint.PintError(f"Unexpected units in {var}: {err}")
             except AttributeError:
-                raise pint.PintError(f"units given in {param} when none were excpected")
+                raise pint.PintError(f"units given in {var} when none were excpected")
         else:
             if self.var_units[var] is not None:
                 raise (

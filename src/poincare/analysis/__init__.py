@@ -3,4 +3,4 @@ from .oscillations import Oscillations
 from .steady_state import SteadyState
 from .sweeper import Sweeper
 
-all = ["Oscillations", "SteadyState", "fit_result", "Sweeper"]
+__all__ = ["Oscillations", "SteadyState", "Sweeper", "fit_result"]
