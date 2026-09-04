@@ -64,6 +64,7 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 extend-select = ["I"]
+ignore = ["PIE794", "B008", "RUF009", "B023"]
 
 [tool.pyright]
 typeCheckingMode = "standard"
