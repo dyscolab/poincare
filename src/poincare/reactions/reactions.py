@@ -1,8 +1,9 @@
 from collections import defaultdict
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from functools import singledispatch
 from types import ModuleType
-from typing import Any, Iterator, Self, Sequence
+from typing import Any, Self
 
 import pint
 from symbolite import Real

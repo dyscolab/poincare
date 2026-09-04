@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import weakref
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, Iterable, Literal, Protocol, assert_never
+from typing import TYPE_CHECKING, Literal, Protocol, assert_never
 
 import numpy as np
 from numpy.typing import NDArray
@@ -17,12 +17,12 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "BDF",
+    "DOP853",
     "LSODA",
     "RK23",
     "RK45",
-    "DOP853",
     "Radau",
-    "BDF",
 ]
 
 _cache = weakref.WeakKeyDictionary()

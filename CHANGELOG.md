@@ -1,11 +1,12 @@
 # Changelog
 
 ## 1.2.0
+
 - Breaxing: Simulation time (`save_at` and `upto_t`) dimensionality is now enforced with errors instead of warnings.
 - Breaking: Simulation times are now set on simulator with `with_values` instead of at simualtion time, solvers an transform get a similar API. All simulation functions now take simulators as inputs.
 - Added `fit_result` to `analysis`.
 - fix: normalize_eq in `printing.latex` can now handle equations which compile to `str` instead of `LatexExpr`.
-  
+
 ## 1.1.2
 
 - Independent variable units are now inferred from equations and derivatives.

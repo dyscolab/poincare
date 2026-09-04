@@ -5,7 +5,6 @@ from collections import ChainMap
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
-from warnings import warn
 
 import numpy as np
 import pint
@@ -335,7 +334,9 @@ class Simulator:
             unit_map[name] = unit
 
         def solve_and_plot(**kwargs):
-            result = self.with_values({name_map[k]: v * unit_map.get(k, 1) for k, v in kwargs.items()}).solve(
+            result = self.with_values(
+                {name_map[k]: v * unit_map.get(k, 1) for k, v in kwargs.items()}
+            ).solve(
                 t_span=t_span,
                 save_at=save_at,
             )

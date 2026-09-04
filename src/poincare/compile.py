@@ -168,12 +168,11 @@ def depends_on_at_least_one_variable_or_time(value: Any) -> bool:
         return False
 
     for named in yield_named(value):
-        if isinstance(named, Independent):
-            return True
-        elif isinstance(named, Variable | Derivative):
-            return True
-        elif isinstance(named, Parameter) and depends_on_at_least_one_variable_or_time(
-            named.default
+        if (
+            isinstance(named, Independent)
+            or isinstance(named, Variable | Derivative)
+            or isinstance(named, Parameter)
+            and depends_on_at_least_one_variable_or_time(named.default)
         ):
             return True
     return False
@@ -321,9 +320,7 @@ def replace_algebraic_equations(
             root.update(v.derivatives[order] for order in range(1, v.equation_order))
 
     def is_root(x):
-        if isinstance(x, Number | pint.Quantity):
-            return True
-        elif x in root:
+        if isinstance(x, Number | pint.Quantity) or x in root:
             return True
         else:
             return False
@@ -485,9 +482,7 @@ def compile_transform(
     }
 
     def is_root(x):
-        if isinstance(x, Number | pint.Quantity):
-            return True
-        elif x in root:
+        if isinstance(x, Number | pint.Quantity) or x in root:
             return True
         else:
             return False

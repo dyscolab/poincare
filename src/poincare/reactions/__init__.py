@@ -7,9 +7,9 @@ from .reactions import (
 )
 
 __all__ = [
-    "RateLaw",
     "AbsoluteRateLaw",
     "MassAction",
+    "RateLaw",
     "Reactant",
     "reaction_initial",
 ]

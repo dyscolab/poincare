@@ -119,5 +119,4 @@ class NodeMapper:
                 return item
             else:
                 path.append(item)
-        else:
-            return item
+        return item

@@ -1,7 +1,7 @@
 import numpy as np
 import pint
 from pint import PintError
-from pytest import raises, warns
+from pytest import raises
 from symbolite import real
 
 from ...simulator import Simulator

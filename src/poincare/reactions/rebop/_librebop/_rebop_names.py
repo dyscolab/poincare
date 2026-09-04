@@ -14,10 +14,10 @@ latex_names = {
     abstract_real.truediv: "{} / {}",
     abstract_real.neg: "-{}",
     abstract_real.pos: "+{}",
-    abstract_real.degrees: "{} *" + f"180/{str(np.pi)}",
-    abstract_real.exp: f"{str(np.e)}" + "^{}",
+    abstract_real.degrees: "{} *" + f"180/{np.pi!s}",
+    abstract_real.exp: f"{np.e!s}" + "^{}",
     abstract_real.hypot: "({}^2 + {}^2)^0.5",
-    abstract_real.radians: "{} *" + f"{str(np.pi)} */180",
+    abstract_real.radians: "{} *" + f"{np.pi!s} */180",
     abstract_real.sqrt: "({}^0.5)",
     abstract_real.pow: "{}^{}",
 }

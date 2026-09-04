@@ -44,7 +44,7 @@ class Constant(Node, Real):
     def _copy_from(self, parent: Node):
         return self.__class__(default=substitute(self.default, NodeMapper(parent)))
 
-    def __eq__(self, other: Any):
+    def __eq__(self, other: object):
         if other.__class__ is not self.__class__:
             return NotImplemented
 
@@ -116,7 +116,7 @@ class Parameter(Node, Real):
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def __eq__(self, other: Any):
+    def __eq__(self, other: object):
         if other.__class__ is not self.__class__:
             return NotImplemented
 
@@ -204,7 +204,7 @@ class Variable(Node, Real):
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def __eq__(self, other: Any):
+    def __eq__(self, other: object):
         if other.__class__ is not self.__class__:
             return NotImplemented
 
@@ -318,7 +318,7 @@ class Derivative(Node, Real):
     def __hash__(self) -> int:
         return hash((self.variable, self.order))
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if other.__class__ is not self.__class__:
             return NotImplemented
 
@@ -459,7 +459,7 @@ class Independent(Node, Real):
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def __eq__(self, other: Any):
+    def __eq__(self, other: object):
         if other.__class__ is not self.__class__:
             return NotImplemented
 
@@ -719,4 +719,3 @@ def infer_independent_units(system: System | type[System]) -> pint.util.UnitsCon
         return
     else:
         return dimensionality_set.pop()
-

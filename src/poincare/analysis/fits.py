@@ -1,14 +1,13 @@
-from collections.abc import Mapping, Sequence, Callable
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pint
 import xarray as xr
-from numpy.typing import ArrayLike
 from scipy.optimize import least_squares
 
 from .._node import Node
 from ..simulator import Components, Simulator
-from ..types import Initial, Number, Parameter
+from ..types import Initial, Number
 
 
 def get_default_or_inital(obj: Node) -> Initial:
@@ -58,7 +57,11 @@ class UnitsHandler:
                 raise pint.PintError(f"units given in {param} when none were excpected")
         else:
             if self.var_units[var] is not None:
-                raise(pint.PintError(f"No units given for variable {var}, expected dimensionality {self.var_units[var].dimensionality}"))
+                raise (
+                    pint.PintError(
+                        f"No units given for variable {var}, expected dimensionality {self.var_units[var].dimensionality}"
+                    )
+                )
             return obj
 
     def quantify_parameter(
@@ -95,17 +98,25 @@ class UnitsHandler:
             return index.pint.dequantify().to_numpy() * index.pint.units
         else:
             return index.to_numpy()
-        
-    def dequantify_bounds(self, bounds: Mapping[Components, tuple[Initial, Initial]], param: Components, i: int) ->  tuple[Number]:
+
+    def dequantify_bounds(
+        self,
+        bounds: Mapping[Components, tuple[Initial, Initial]],
+        param: Components,
+        i: int,
+    ) -> tuple[Number]:
         try:
-            return self.dequantify_parameter(bounds[param][i], param) 
+            return self.dequantify_parameter(bounds[param][i], param)
         except KeyError:
-            return (-1)**(i+1) * np.inf
-        
+            return (-1) ** (i + 1) * np.inf
+
+
 def fit_result(
     sim: Simulator,
     results: xr.Dataset,
-    p0: Mapping[Components, Initial |tuple[Initial | None, Initial, Initial] | None] = {},  # read only
+    p0: Mapping[
+        Components, Initial | tuple[Initial | None, Initial, Initial] | None
+    ] = {},  # read only
     scale: Mapping[Components | str, Number] | None = None,
     **kwargs,
 ):
@@ -114,17 +125,24 @@ def fit_result(
         fit_parameters = list(p0.keys())
     else:
         fit_parameters = list(param for param in sim.model.parameters.values)
-    clean_p0, bounds = parse_p0(p0) 
+    clean_p0, bounds = parse_p0(p0)
     if scale is not None:
         scale = np.array([[scale.get(var, 1)] for var in fit_variables])
     else:
         scale = np.array([[1] for var in fit_variables])
     units = UnitsHandler(fit_variables, fit_parameters, results, clean_p0)
-    bounds = tuple(np.array([units.dequantify_bounds(bounds=bounds, param=param, i = i) for param in fit_parameters]) for i in range(2))
-    y0 = np.array(
-        [units.dequantify_result(results[var], var) for var in fit_variables]
+    bounds = tuple(
+        np.array(
+            [
+                units.dequantify_bounds(bounds=bounds, param=param, i=i)
+                for param in fit_parameters
+            ]
+        )
+        for i in range(2)
     )
+    y0 = np.array([units.dequantify_result(results[var], var) for var in fit_variables])
     save_at = units.get_save_at(results)
+
     def f(x):
         x = [
             units.quantify_parameter(x[i], param)
@@ -149,7 +167,7 @@ def fit_result(
             for param in fit_parameters
         ]
     )
-    solution = least_squares(f, x0, bounds = bounds, **kwargs)
+    solution = least_squares(f, x0, bounds=bounds, **kwargs)
     formatted_solution = {
         var: units.quantify_parameter(solution.x[i], var)
         for i, var in enumerate(fit_parameters)
@@ -157,7 +175,9 @@ def fit_result(
     return formatted_solution
 
 
-def parse_p0(p0: Mapping[Components, None | Initial| Sequence[Initial]]) -> tuple[Mapping[Components, Initial], Mapping[Components, tuple[Initial, Initial]]]:    
+def parse_p0(
+    p0: Mapping[Components, None | Initial | Sequence[Initial]],
+) -> tuple[Mapping[Components, Initial], Mapping[Components, tuple[Initial, Initial]]]:
     clean_p0 = {}
     bounds = {}
     is_tuple = False
@@ -170,9 +190,11 @@ def parse_p0(p0: Mapping[Components, None | Initial| Sequence[Initial]]) -> tupl
 
         if is_tuple:
             if n != 3:
-                raise TypeError("p0 values must be None, an initial condition or a tuple (initial condition, lower bound, upper bound)")
+                raise TypeError(
+                    "p0 values must be None, an initial condition or a tuple (initial condition, lower bound, upper bound)"
+                )
             if value[0] is not None:
-                clean_p0[param] = value[0] 
+                clean_p0[param] = value[0]
             bounds[param] = (value[1], value[2])
         elif value is not None:
             clean_p0[param] = value
@@ -184,7 +206,6 @@ def make_target(
     save_at: Sequence | pint.Quantity,
 ) -> xr.Dataset:
     ureg = pint.get_application_registry()
-
 
     ureg.force_ndarray_like = True
 
@@ -202,7 +223,7 @@ def make_target(
         for key, value in results.items():
             if isinstance(value, pint.Quantity):
                 units_map[key] = value.units
-                dequantified_value = value.magnitude  
+                dequantified_value = value.magnitude
             else:
                 dequantified_value = value
 

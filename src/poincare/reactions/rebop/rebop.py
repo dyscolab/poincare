@@ -1,7 +1,6 @@
 import dataclasses
 from collections.abc import Iterable, Mapping
 from typing import Any, Self
-from warnings import warn
 
 try:
     from rebop import Gillespie
