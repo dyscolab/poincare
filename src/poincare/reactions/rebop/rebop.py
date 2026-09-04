@@ -115,7 +115,7 @@ class RebopSimulator:
         ds = ds.rename_vars(
             name_dict={new: str(old) for old, new in self._variable_map.items()},
         )  # TODO: inplace = True would be more efficient? xarray errors when trying to set it
-        ds = ds[sorted(list(ds.data_vars))]
+        ds = ds[sorted(ds.data_vars)]
         if isinstance(timescale, pint.Quantity):
             ds["time"] = ds["time"] * timescale.magnitude
             pint_xarray.setup_registry(timescale.units._REGISTRY)

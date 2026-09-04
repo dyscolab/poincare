@@ -93,7 +93,7 @@ class UnitsHandler:
             return obj.to_numpy()
 
     def get_save_at(self, ds: xr.Dataset) -> Sequence | pint.Quantity:
-        index = ds[list(ds.coords)[0]]
+        index = ds[next(iter(ds.coords))]
         if index.pint.units is not None:
             return index.pint.dequantify().to_numpy() * index.pint.units
         else:
@@ -124,7 +124,7 @@ def fit_result(
     if p0:
         fit_parameters = list(p0.keys())
     else:
-        fit_parameters = list(param for param in sim.model.parameters.values)
+        fit_parameters = list(sim.model.parameters.values)
     clean_p0, bounds = parse_p0(p0)
     if scale is not None:
         scale = np.array([[scale.get(var, 1)] for var in fit_variables])

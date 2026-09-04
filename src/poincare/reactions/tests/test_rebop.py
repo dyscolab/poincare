@@ -12,7 +12,9 @@ from ..rebop.rebop import RebopSimulator
 u = pint.get_application_registry()
 
 
-def compare_rebop_and_ode(model: type[System], values={}):
+def compare_rebop_and_ode(model: type[System], values=None):
+    if values is None:
+        values = {}
     sim = Simulator(model)
     sol = sim.with_values(values).solve(save_at=np.arange(0, 51, 1))
     rsim = RebopSimulator(model)

@@ -35,14 +35,14 @@ class Sweeper:
         data_arrays = {}
         if isinstance(solutions[0], dict) and unpack:
             try:
-                for k in solutions[0].keys():
+                for k in solutions[0]:
                     data_arrays[k] = xr.DataArray(
                         np.asarray([s[k] for s in solutions]),
                         dims=str(parameter),
                         coords={str(parameter): values},
                     )
             except ValueError:
-                for k in solutions[0].keys():
+                for k in solutions[0]:
                     data_arrays[k] = xr.DataArray(
                         np.asarray([s[k] for s in solutions], dtype=object),
                         dims=str(parameter),

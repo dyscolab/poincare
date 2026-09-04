@@ -227,7 +227,7 @@ class LSODA(_Base, solver=integrate.LSODA):
     """
 
     min_step: float = 0
-    implementation: Literal["LSODA", "odeint", "numbalsoda", None] = None
+    implementation: Literal["LSODA", "odeint", "numbalsoda"] | None = None
 
     def __call__(
         self,
@@ -274,13 +274,13 @@ class LSODA(_Base, solver=integrate.LSODA):
         return _solve_ivp_scipy(
             problem,
             self._solver_class,
-            options=dict(
-                rtol=self.rtol,
-                atol=self.atol,
-                first_step=self.first_step,
-                max_step=self.max_step,
-                min_step=self.min_step,
-            ),
+            options={
+                "rtol": self.rtol,
+                "atol": self.atol,
+                "first_step": self.first_step,
+                "max_step": self.max_step,
+                "min_step": self.min_step,
+            },
             save_at=save_at,
             events=events,
         )

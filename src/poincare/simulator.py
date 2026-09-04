@@ -191,7 +191,7 @@ class Simulator:
             dtype=float,
             count=len(self.compiled.parameters),
         )
-        scale = [get_scale(result[k]) for k in self.transform.output.keys()]
+        scale = [get_scale(result[k]) for k in self.transform.output]
         return Problem(
             rhs=self.compiled.func,
             t=t_span,

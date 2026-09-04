@@ -536,11 +536,11 @@ class EagerNamer(type):
 
 
 def _as_table(self: type[System], *, max_width: int | None) -> Table:
-    types = dict(
-        variables=list(self._yield(Variable)),
-        parameters=list(self._yield(Parameter | Constant)),
-        equations=list(self._yield(Equation | EquationGroup)),
-    )
+    types = {
+        "variables": list(self._yield(Variable)),
+        "parameters": list(self._yield(Parameter | Constant)),
+        "equations": list(self._yield(Equation | EquationGroup)),
+    }
 
     return Table(
         table=[
@@ -706,10 +706,10 @@ def infer_independent_units(system: System | type[System]) -> pint.util.UnitsCon
             if obj._independent_units is not units.MISSING:
                 implicit_set.add(obj._independent_units)
 
-    explicit_set = set(
+    explicit_set = {
         getattr(indep.default, "dimensionality", None)
         for indep in system._yield(Independent)
-    )
+    }
     dimensionality_set = implicit_set | explicit_set
     if len(dimensionality_set) > 1:
         raise pint.PintError(

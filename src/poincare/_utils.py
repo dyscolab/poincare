@@ -37,7 +37,9 @@ class class_and_instance_method[S, **P, R]:
 TH = TypeVar("TH", bound=Hashable)
 
 
-def solve_dependencies(dependencies: Mapping[TH, set[TH]]) -> Iterator[set[TH]]:
+def solve_dependencies[TH: Hashable](
+    dependencies: Mapping[TH, set[TH]],
+) -> Iterator[set[TH]]:
     """Solve a dependency graph.
 
     Parameters

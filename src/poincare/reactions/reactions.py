@@ -207,12 +207,8 @@ class RateLaw(EquationGroup):
         rate_law: float | Real,
         concentration: bool = True,
     ):
-        self.reactants = tuple(
-            map(lambda x: Reactant.from_mul(x, parent=self), reactants)
-        )
-        self.products = tuple(
-            map(lambda x: Reactant.from_mul(x, parent=self), products)
-        )
+        self.reactants = tuple(Reactant.from_mul(x, parent=self) for x in reactants)
+        self.products = tuple(Reactant.from_mul(x, parent=self) for x in products)
         self.rate_law = (
             Parameter(default=rate_law)
             if isinstance(rate_law, (pint.Quantity, pint.Unit))
@@ -312,12 +308,8 @@ class MassAction(RateLaw):
         products: Sequence[Real],
         rate: float | Real,
     ):
-        self.reactants = tuple(
-            map(lambda x: Reactant.from_mul(x, parent=self), reactants)
-        )
-        self.products = tuple(
-            map(lambda x: Reactant.from_mul(x, parent=self), products)
-        )
+        self.reactants = tuple(Reactant.from_mul(x, parent=self) for x in reactants)
+        self.products = tuple(Reactant.from_mul(x, parent=self) for x in products)
         self.rate = (
             Parameter(default=rate)
             if isinstance(rate, (pint.Quantity, pint.Unit))

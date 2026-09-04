@@ -524,7 +524,7 @@ class Autoperiod:
             from matplotlib.patches import Rectangle
 
             n_plots = 3 if self._detrend and self._trend is not None else 2
-            fig, axs = plt.subplots(n_plots, 1, sharex="col")
+            _fig, axs = plt.subplots(n_plots, 1, sharex="col")
             axs[0].set_title("Original time series")
             axs[0].set_xlabel("time")
 
@@ -570,7 +570,7 @@ class Autoperiod:
             axs[-1].legend()
             # plt.show()
 
-        periods = list(x[3] for x in ranges)
+        periods = [x[3] for x in ranges]
         if len(periods) > 0:
             verified = True
             return list(

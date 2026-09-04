@@ -169,8 +169,7 @@ def depends_on_at_least_one_variable_or_time(value: Any) -> bool:
 
     for named in yield_named(value):
         if (
-            isinstance(named, Independent)
-            or isinstance(named, Variable | Derivative)
+            isinstance(named, (Independent, Variable | Derivative))
             or isinstance(named, Parameter)
             and depends_on_at_least_one_variable_or_time(named.default)
         ):
@@ -320,10 +319,7 @@ def replace_algebraic_equations(
             root.update(v.derivatives[order] for order in range(1, v.equation_order))
 
     def is_root(x):
-        if isinstance(x, Number | pint.Quantity) or x in root:
-            return True
-        else:
-            return False
+        return bool(isinstance(x, Number | pint.Quantity) or x in root)
 
     content = {
         **maps.mapper,
@@ -339,7 +335,7 @@ def replace_algebraic_equations(
         is_dependency=lambda x: isinstance(x, Node),
     )
 
-    equations = {k: content[k] for k in maps.func[0].keys()}
+    equations = {k: content[k] for k in maps.func[0]}
     return Compiled(
         independent=maps.independent,
         variables=maps.variables,
@@ -482,10 +478,7 @@ def compile_transform(
     }
 
     def is_root(x):
-        if isinstance(x, Number | pint.Quantity) or x in root:
-            return True
-        else:
-            return False
+        return bool(isinstance(x, Number | pint.Quantity) or x in root)
 
     content = {
         **expresions,

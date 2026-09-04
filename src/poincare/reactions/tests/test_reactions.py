@@ -167,15 +167,19 @@ def test_reactant():
             rate=A.variable ** (1 / 2),
         )
 
-    assert set(Model._yield(Variable)) == set(
-        [Model.A.variable, Model.B.variable, Model.AB.variable]
-    )
+    assert set(Model._yield(Variable)) == {
+        Model.A.variable,
+        Model.B.variable,
+        Model.AB.variable,
+    }
 
     dnsim = Simulator(Model)
 
-    assert set(dnsim.compiled.variables) == set(
-        [Model.A.variable, Model.B.variable, Model.AB.variable]
-    )
+    assert set(dnsim.compiled.variables) == {
+        Model.A.variable,
+        Model.B.variable,
+        Model.AB.variable,
+    }
 
     assert np.all(
         dnsim.compiled.func(0, [4, 0, 2], [], [0, 0, 0]) == np.array([-32, 32, -64])
@@ -210,30 +214,26 @@ def test_nested_reactant():
         nested = Nested(A=3 * A)
         eq = MassAction(reactants=[A], products=[B], rate=0.2)
 
-    assert set(Model._yield(Variable)) == set(
-        [
-            Model.A.variable,
-            Model.B.variable,
-            Model.nested.B.variable,
-            Model.nested.dnested.A.variable,
-            Model.nested.dnested.B.variable,
-            Model.nested.dnested.AB.variable,
-        ]
-    )
+    assert set(Model._yield(Variable)) == {
+        Model.A.variable,
+        Model.B.variable,
+        Model.nested.B.variable,
+        Model.nested.dnested.A.variable,
+        Model.nested.dnested.B.variable,
+        Model.nested.dnested.AB.variable,
+    }
 
     assert Model.nested.A.stoichiometry == 3
 
     sim = Simulator(Model)
 
-    assert set(sim.compiled.variables) == set(
-        [
-            Model.A.variable,
-            Model.B.variable,
-            Model.nested.B.variable,
-            Model.nested.dnested.A.variable,
-            Model.nested.dnested.B.variable,
-            Model.nested.dnested.AB.variable,
-        ]
-    )
+    assert set(sim.compiled.variables) == {
+        Model.A.variable,
+        Model.B.variable,
+        Model.nested.B.variable,
+        Model.nested.dnested.A.variable,
+        Model.nested.dnested.B.variable,
+        Model.nested.dnested.AB.variable,
+    }
 
     sim.solve(save_at=np.linspace(0, 10, 10))

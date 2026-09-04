@@ -5,7 +5,7 @@ from .. import Derivative, Variable
 T = TypeVar("T", Variable, Derivative)
 
 
-def is_same_variable(x: T, y: T, /) -> bool:
+def is_same_variable[T: (Variable, Derivative)](x: T, y: T, /) -> bool:
     return x == y
 
 
