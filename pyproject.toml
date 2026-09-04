@@ -28,7 +28,7 @@ dependencies = [
   "pint-xarray",
   "pint",
   "scipy",
-  "symbolite>=1.1.0",
+  "symbolite>=1.1.1",
   "tabulate",
   "typing_extensions",
   "scipy-events >= 0.3.1",
@@ -78,7 +78,7 @@ project-excludes = [".pixi", "**/__pycache__"]
 python = ".pixi/envs/default"
 
 [tool.pixi.workspace]
-channels = ["https://prefix.dev/conda-forge"]
+channels = ["https://conda.anaconda.org/conda-forge/"]
 platforms = ["linux-64", "osx-arm64", "win-64"]
 preview = ["pixi-build"]
 
@@ -90,7 +90,7 @@ config = { ignore-pypi-mapping = false }                # Enable automatic PyPI-
 uv-build = "*"
 
 [tool.pixi.environments]
-default = ["test", "py312"]
+default = ["test", "py312", "rebop"]
 lint = { features = ["lint"], no-default-feature = true }
 build = { features = ["build"], no-default-feature = true }
 test-py312 = ["test", "py312", "rebop"]
