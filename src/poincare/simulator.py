@@ -204,7 +204,6 @@ class Simulator:
 
     def solve(
         self,
-        # values: Mapping[Components, Initial | Value] = {},
         *,
         t_span: tuple[float, float] | None = None,
         save_at: ArrayLike | None = None,
@@ -336,8 +335,7 @@ class Simulator:
             unit_map[name] = unit
 
         def solve_and_plot(**kwargs):
-            result = self.solve(
-                {name_map[k]: v * unit_map.get(k, 1) for k, v in kwargs.items()},
+            result = self.with_values({name_map[k]: v * unit_map.get(k, 1) for k, v in kwargs.items()}).solve(
                 t_span=t_span,
                 save_at=save_at,
             )
