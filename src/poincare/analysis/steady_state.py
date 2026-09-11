@@ -28,10 +28,8 @@ class SteadyState:
         self,
         sim: Simulator,
         /,
-        *,
-        values: Mapping[Components, Initial] = {},
     ):
-        return sim.with_values(values).solve(
+        return sim.solve(
             t_span=(0, self.t_end),
             save_at=(self.t_end,),
             events=[Event(condition=self.condition, terminal=True)],
@@ -46,7 +44,7 @@ class SteadyState:
         variable: Components,
         values: Iterable[Initial],
     ):
-        results = {v: self.solve(sim, values={variable: v}) for v in values}
+        results = {v: self.solve(sim.with_values({variable: v})) for v in values}
         return xr.Dataset(
             {
                 str(var): xr.DataArray(
@@ -99,7 +97,7 @@ class SteadyState:
             for v in vals:
                 current_values.update_from_problem({variable: v})
                 current_values.update_from_result(result)
-                output[direction][v] = result = self.solve(sim, values=current_values)
+                output[direction][v] = result = self.solve(sim.with_values(current_values))
         return xr.Dataset(
             {
                 str(var): xr.DataArray(
