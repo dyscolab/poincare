@@ -205,8 +205,7 @@ class Simulator:
         self,
         *,
         t_span: tuple[float, float] | None = None,
-        save_at: ArrayLike | None = None,
-        # solver: solvers.Solver = solvers.LSODA(),
+        save_at: ArrayLike | None = None, # TODO: maybe allow to be positional?
         events: Sequence[Events] = (),
         check_dimensionality: bool = True,
     ):
