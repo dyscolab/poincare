@@ -114,7 +114,7 @@ def _solve_ivp_scipy(
 def _transform(problem: Problem, solution: Solution) -> Solution:
     out = np.empty(
         (solution.t.size, len(problem.scale)),
-        dtype=solution.y.dtype,
+        # dtype=solution.y.dtype, # TODO: always cast to float? Or configurable type?
     )
     out = problem.transform(
         solution.t,
