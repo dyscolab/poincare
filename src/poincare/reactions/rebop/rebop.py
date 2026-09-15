@@ -1,5 +1,5 @@
 import dataclasses
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence, Hashable
 from typing import Any, Self
 
 try:
@@ -11,9 +11,12 @@ except ImportError:
     )
 import pint
 import pint_xarray
+import xarray as xr
 from symbolite import Real, substitute, translate
 from symbolite.ops import yield_named
 
+
+from ...solvers import _transform, Solution
 from ..._node import Node
 from ...simulator import Components, Simulator, get_scale
 from ...types import Constant, Equation, Initial, Number, Parameter, System
@@ -45,6 +48,18 @@ class RebopSimulator:
         rsim = self.__class__.__new__(self.__class__)
         rsim.model = self.model
         rsim._sim = self._sim.with_values(values, append=append)
+        rsim._variable_map = self._variable_map
+        return rsim
+    
+    def with_transform(
+        self,
+        transform: Sequence[Real] | Mapping[Hashable, Real] | None = None,
+        /,
+        *,
+        append: bool = False,    ) -> Self:
+        rsim = self.__class__.__new__(self.__class__)
+        rsim.model = self.model
+        rsim._sim = self._sim.with_transform(transform, append=append)
         rsim._variable_map = self._variable_map
         return rsim
 
@@ -95,11 +110,11 @@ class RebopSimulator:
             var_names = [self._variable_map[v.variable] for v in var_names]
 
         problem = self._sim.create_problem()
-        for s in problem.scale:
-            if isinstance(s, pint.Quantity | pint.Unit):
-                raise TypeError(
-                    "Stochastic simulation doesn't support units in values, only in upto_t"
-                )
+        # for s in problem.scale:
+        #     if isinstance(s, pint.Quantity | pint.Unit):
+        #         raise TypeError(
+        #             "Stochastic simulation doesn't support units in values, only in upto_t"
+        #         )
         y = {k: int(v) for k, v in zip(self._variable_map.values(), problem.y)}
         p = dict(zip(self._sim.compiled.parameters, problem.p))
         rebop = self._build(p)
@@ -111,11 +126,31 @@ class RebopSimulator:
             sparse=sparse,
             var_names=var_names,
         )
-        # Replace "__" for "." in output dataset and sort data_vars alphabetically to make output consistent with the rest of poincare
-        ds = ds.rename_vars(
-            name_dict={new: str(old) for old, new in self._variable_map.items()},
-        )  # TODO: inplace = True would be more efficient? xarray errors when trying to set it
-        ds = ds[sorted(ds.data_vars)]
+        ds = ds[sorted(ds.data_vars)] # Sort data Variables to make order consistent with  the rest of Poincare
+
+        # Apply transform
+        solved_y = ds.to_dataarray().values
+        t = ds["time"].values
+        sol = Solution(t, solved_y)
+        solution = _transform(problem=problem, solution= sol)
+        y = solution.y
+
+        ds = xr.Dataset(
+            {
+                k: xr.DataArray(
+                    data=x * s.magnitude, dims="time", coords={"time": t}
+                ).pint.quantify(
+                    s.units, pint_xarray.setup_registry(s.units._REGISTRY)
+                )
+                if isinstance(s, pint.Quantity)
+                else xr.DataArray(data=x * s, dims="time", coords={"time": t})
+                for k, s, x in zip(self._sim.transform.output.keys(), problem.scale, y.T)
+            }
+        )
+
+        for s in problem.scale:
+            if isinstance(s, pint.Quantity):
+                s.units._REGISTRY.force_ndarray_like = False
         if isinstance(timescale, pint.Quantity):
             ds["time"] = ds["time"] * timescale.magnitude
             pint_xarray.setup_registry(timescale.units._REGISTRY)
