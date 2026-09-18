@@ -48,7 +48,7 @@ class SteadyState:
         return xr.Dataset(
             {
                 str(var): xr.DataArray(
-                    np.array([results[v][var].item() for v in values]),
+                    np.array([results[v][var].item() for v in values]), # TODO: handle units in save_at
                     dims=str(variable),
                     coords={str(variable): values},
                 )
