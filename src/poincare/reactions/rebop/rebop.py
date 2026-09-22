@@ -1,5 +1,5 @@
 import dataclasses
-from collections.abc import Iterable, Mapping, Sequence, Hashable
+from collections.abc import Hashable, Iterable, Mapping, Sequence
 from typing import Any, Self
 
 try:
@@ -15,10 +15,9 @@ import xarray as xr
 from symbolite import Real, substitute, translate
 from symbolite.ops import yield_named
 
-
-from ...solvers import _transform, Solution
 from ..._node import Node
-from ...simulator import Components, Simulator, get_scale
+from ...simulator import Components, Simulator
+from ...solvers import Solution, _transform
 from ...types import Constant, Equation, Initial, Number, Parameter, System
 from ..reactions import MassAction, RateLaw, Reactant
 from . import _librebop
@@ -93,15 +92,18 @@ class RebopSimulator:
         var_names: Iterable[Reactant] | None = None,
     ):
         upto_t_dim = getattr(upto_t, "dimensionality", None)
-        timescale = 1
+        user_units = getattr(upto_t, "units", None)
         if upto_t_dim != self.model._independent_units:
             raise pint.PintError(
                 f"save at dimensionality {upto_t_dim} doesn't match (explicit or implicit) dimensionality of Independent {self.model._independent_units}"
             )
 
         if isinstance(upto_t, pint.Quantity):
-            timescale = get_scale(upto_t)
-            upto_t = upto_t.to_base_units().magnitude
+            base_units = upto_t.to_base_units().units
+            tmax = upto_t.to_base_units().magnitude
+        else:
+            base_units = None
+            tmax = upto_t
 
         if n_points is None:
             n_points = 0
@@ -120,7 +122,7 @@ class RebopSimulator:
         rebop = self._build(p)
         ds = rebop.run(
             y,
-            tmax=upto_t,
+            tmax=tmax,
             nb_steps=n_points,
             rng=rng,
             sparse=sparse,
@@ -151,11 +153,11 @@ class RebopSimulator:
         for s in problem.scale:
             if isinstance(s, pint.Quantity):
                 s.units._REGISTRY.force_ndarray_like = False
-        if isinstance(timescale, pint.Quantity):
-            ds["time"] = ds["time"] * timescale.magnitude
-            pint_xarray.setup_registry(timescale.units._REGISTRY)
-            ds = ds.pint.quantify({"time": timescale.units})
-            timescale.units._REGISTRY.force_ndarray_like = False
+        if user_units is not None:
+            pint_xarray.setup_registry(user_units._REGISTRY)
+            ds = ds.pint.quantify({"time": base_units})
+            ds = ds.pint.to({"time": user_units})
+            user_units._REGISTRY.force_ndarray_like = False
         return ds
 
     def _get_rebop_rate(self, r: RateLaw, p: Mapping[Parameter, Number]):

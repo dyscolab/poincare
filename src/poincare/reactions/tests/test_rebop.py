@@ -108,7 +108,11 @@ def test_rebop_units():
         )
 
     rsim = RebopSimulator(Model)
-    rsim.solve(upto_t=1 * u.s, n_points=2)
+    ds_s = rsim.solve(upto_t=1 * u.s, n_points=2)
+    assert ds_s.time.pint.units == u.s
+
+    ds_ms = rsim.solve(upto_t=1000 * u.ms, n_points=2)
+    assert ds_ms.time.pint.units == u.ms
 
     with raises(PintError):
         rsim.solve(upto_t=1, n_points=2)
