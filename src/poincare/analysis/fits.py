@@ -1,5 +1,5 @@
 from collections.abc import Mapping, Sequence, Callable
-
+from typing import Self
 import numpy as np
 import pint
 import xarray as xr
@@ -275,7 +275,7 @@ class Fitter:
     def __init__(self,     
         sim: Simulator,
         results: xr.Dataset,
-        simulation_function_generator: Callable[[Fitter], Callable[list[Initial], xr.Dataset]],
+        simulation_function_generator: Callable[[Self], Callable[list[Initial], xr.Dataset]],
         units_handler: type[UnitsHandler] = UnitsHandler, 
         p0: Mapping[Components, Initial | tuple[Initial | None, Initial, Initial] | None] = {},  # read only
         scale: Mapping[Components | str, Number] | None = None,
