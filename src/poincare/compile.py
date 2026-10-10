@@ -105,9 +105,9 @@ def get_libsl(backend: Backend) -> ModuleType:
 
             return libnumpy
         case "numba":
-            from symbolite.impl import libnumpy
+            from symbolite.impl import libnumba
 
-            return libnumpy
+            return libnumba
         case "jax":
             from symbolite.impl import libjax
 
