@@ -220,10 +220,6 @@ def build_equation_maps(
     variables: set[Variable] = set()
 
     def add_to_initials(name: real.Real, value):
-        if value is None:
-            raise TypeError(
-                f"Missing initial value for {name}. System must be instantiated."
-            )
         initials[name] = value
         if not isinstance(value, real.Real):
             return

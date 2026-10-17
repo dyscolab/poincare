@@ -174,6 +174,13 @@ class Simulator:
             self.transform.output,
             {self.compiled.independent[0]: t_span[0]},
         )
+
+        for k, v in content.items():
+            if v is None:
+                raise TypeError(
+                    f"Missing initial value for {k}. Add an initial value with Simulator.with_values()."
+                )
+
         assert self.compiled.libsl is not None
         result = eval_content(
             content,

@@ -10,6 +10,8 @@ from ...types import (
     Parameter,
     System,
     Variable,
+    assign,
+    initial,
 )
 
 
@@ -129,3 +131,64 @@ def test_time_dependent_parameter_outside_rate_equations():
         eq = x.derive() << -x
 
     Simulator(Model)
+
+
+def test_none_initial_variable():
+    class Model(System):
+        x: Variable = initial()
+        eq = x.derive() << -x
+
+    sim = Simulator(Model)
+    with raises(TypeError, match="Missing initial value"):
+        sim.solve(save_at=[0, 1])
+
+    with raises(TypeError, match="Missing initial value"):
+        sim.create_problem()
+
+    res = sim.with_values({Model.x: 1.0}).solve(save_at=[0, 1])
+    assert res["x"].values[0] == 1.0
+
+
+def test_none_initial_parameter():
+    class Model(System):
+        x: Variable = initial(default=1.0)
+        p: Parameter = assign()
+        eq = x.derive() << -p * x
+
+    sim = Simulator(Model)
+    with raises(TypeError, match="Missing initial value"):
+        sim.solve(save_at=[0, 1])
+
+    with raises(TypeError, match="Missing initial value"):
+        sim.create_problem()
+
+    res = sim.with_values({Model.p: 2.0}).solve(save_at=[0, 1])
+    assert res["x"].values[0] == 1.0
+
+
+def test_none_initial_derivative():
+    class Model(System):
+        x: Variable = initial(default=1.0)
+        v: Derivative = x.derive(initial=None)
+        eq = v.derive() << -x
+
+    sim = Simulator(Model)
+    with raises(TypeError, match="Missing initial value"):
+        sim.solve(save_at=[0, 1])
+
+    res = sim.with_values({Model.x.derive(): 0.0}).solve(save_at=[0, 1])
+    assert res["x"].values[0] == 1.0
+
+
+def test_none_initial_dependent():
+    class Model(System):
+        c: Constant = assign(default=None, constant=True)
+        x: Variable = initial(default=2 * c)
+        eq = x.derive() << -x
+
+    sim = Simulator(Model)
+    with raises(TypeError, match="Missing initial value"):
+        sim.solve(save_at=[0, 1])
+
+    res = sim.with_values({Model.c: 1.0}).solve(save_at=[0, 1])
+    assert res["x"].values[0] == 2.0

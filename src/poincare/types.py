@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from functools import singledispatch
 from types import ModuleType
 from typing import (
+    TYPE_CHECKING,
     Any,
     ClassVar,
     Literal,
@@ -26,7 +27,9 @@ from symbolite.ops import substitute, translate
 
 from . import units
 from ._node import Node, NodeMapper
-from .printing.table import Table
+
+if TYPE_CHECKING:
+    from .printing.table import Table
 
 T = TypeVar("T")
 
@@ -536,6 +539,8 @@ class EagerNamer(type):
 
 
 def _as_table(self: type[System], *, max_width: int | None) -> Table:
+    from .printing.table import Table
+
     types = {
         "variables": list(self._yield(Variable)),
         "parameters": list(self._yield(Parameter | Constant)),
