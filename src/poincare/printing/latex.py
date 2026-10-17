@@ -1,4 +1,5 @@
 from collections.abc import Callable, Iterable, Iterator, Mapping
+from typing import Literal
 from dataclasses import dataclass, field
 from io import StringIO, TextIOWrapper
 
@@ -205,12 +206,19 @@ def latex_derivative(name: str, order: int, with_respect_to: str = "t") -> Latex
 
 
 def latex_equations(
-    model: type[System], transform: dict | None = None, latex: ToLatex | None = None
+    model: type[System],
+    transform: dict | None = None,
+    latex: ToLatex | None = None,
+    format: Literal["latex", "markdown"] = "latex",
 ) -> Latex:
     if latex is None:
         transform = transform if transform is not None else {}
         latex = ToLatex(model, transform=transform)
-    return "\\[ " + as_aligned_lines(latex.yield_equations(), align_char="&=") + " \\]"
+    aligned = as_aligned_lines(latex.yield_equations(), align_char="&=")
+    if format == "latex":
+        return "\\[ " + aligned + " \\]"
+    # Markdown renderers escape \[ \], so use $$ display math instead.
+    return "$$\n" + aligned + "\n$$"
 
 
 def parameter_table(
@@ -218,6 +226,7 @@ def parameter_table(
     transform: dict | None = None,
     descriptions: dict | None = None,
     latex: ToLatex | None = None,
+    format: Literal["latex", "markdown"] = "latex",
 ) -> Latex:
     if latex is None:
         transform = transform if transform is not None else {}
@@ -228,12 +237,11 @@ def parameter_table(
         headers = ["Parameter", "Default", "Description"]
     else:
         headers = ["Parameter", "Default"]
-
     return (
         "\\begin{table}[H]\n\\centering\n"
-        + make_latex_table(rows=parameters, headers=headers)
+        + make_latex_table(rows=parameters, headers=headers, format = format)
         + "\n\\end{table}"
-    )
+    ) if format == "latex" else make_latex_table(rows=parameters, headers=headers, format = "markdown")
 
 
 def variable_table(
@@ -241,6 +249,7 @@ def variable_table(
     transform: dict | None = None,
     descriptions: dict | None = None,
     latex: ToLatex | None = None,
+    format: Literal["latex", "markdown"] = "latex",
 ) -> Latex:
     if latex is None:
         transform = transform if transform is not None else {}
@@ -254,15 +263,20 @@ def variable_table(
 
     return (
         "\\begin{table}[H]\n\\centering\n"
-        + make_latex_table(rows=variables, headers=headers)
+        + make_latex_table(rows=variables, headers=headers, format = format)
         + "\n\\end{table}"
-    )
+    ) if format == "latex" else make_latex_table(rows=variables, headers=headers, format = "markdown")
+
 
 
 def make_latex_table(
-    rows: Iterable[Iterable[Latex]], headers: Iterable[Latex]
+    rows: Iterable[Iterable[Latex]], 
+    headers: Iterable[Latex],
+    format: Literal["latex", "markdown"] = "latex",
 ) -> Latex:
-    table = "\\begin{tabular}{|"
+    environment = "tabular" if format == "latex" else "array" 
+    math_marker = "$" if format == "latex" else "" 
+    table = "\\begin{" + environment + "}{|"
     table += len(headers) * "c|"
     table += "}\n"
     table += "\\hline\n"
@@ -272,10 +286,10 @@ def make_latex_table(
     table += "\\\\ \n \\hline \\hline \n"
     for row in rows:
         for element in row:
-            table += "$" + element + "$" + " & "
+            table += math_marker + element + math_marker + " & "
         table = table[:-2]
         table += "\\\\ \n \\hline \n"
-    table += "\\end{tabular}"
+    table += "\\end{" + environment + "}"
     return table
 
 
