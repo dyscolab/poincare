@@ -291,11 +291,19 @@ class LSODA(_Base, solver=integrate.LSODA):
         *,
         save_at: NDArray,
     ):
+        # odeint takes t[0] as the initial time, so the t_span bounds are added
+        # to the evaluation points when missing and removed from the output.
+        t_start, t_end = problem.t
+        add_start = save_at[0] != t_start
+        add_end = np.isfinite(t_end) and save_at[-1] != t_end
+        t = np.concatenate(
+            [[t_start] if add_start else [], save_at, [t_end] if add_end else []]
+        )
         dy = np.empty_like(problem.y)
         y = integrate.odeint(
             problem.rhs,
             tfirst=True,
-            t=save_at,
+            t=t,
             y0=problem.y,
             args=(problem.p, dy),
             atol=self.atol,
@@ -304,6 +312,7 @@ class LSODA(_Base, solver=integrate.LSODA):
             hmin=self.min_step,
             hmax=self.max_step if self.max_step is not np.inf else 0,
         )
+        y = y[int(add_start) : len(t) - int(add_end)]
         return _transform(problem, Solution(save_at, y.T))
 
 

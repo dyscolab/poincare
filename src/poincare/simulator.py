@@ -78,7 +78,6 @@ class Simulator:
         /,
         *,
         backend: Backend = "numpy",
-        solver: solvers.Solver = solvers.LSODA(),
     ):
         self.model = system
         compiler = SystemCompiler(self.model, backend=backend)
@@ -240,7 +239,7 @@ class Simulator:
         if t_span is None:
             if save_at is None:
                 raise TypeError("must provide t_span and/or save_at.")
-            t_span = (0, save_at[-1])
+            t_span = (save_at[0], save_at[-1])
 
         problem = self.create_problem(t_span=t_span)
         solution = self.solver(problem, save_at=save_at, events=events)
