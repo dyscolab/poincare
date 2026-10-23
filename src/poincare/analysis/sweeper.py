@@ -17,7 +17,7 @@ class Sweeper:
     Class to do a parameter sweep and apply a function on the output for each result.
     """
 
-    func: Callable[xr.Dataset, Mapping[str, Any] | Any]
+    func: Callable[[xr.Dataset], Mapping[str, Any] | Any]
 
     def sweep(
         self,
