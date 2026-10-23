@@ -12,6 +12,7 @@ from symbolite.core.call import Call, CallInfo
 from symbolite.core.value import ValueInfo
 from symbolite.ops import substitute, translate
 
+from .. import units
 from .._node import Node, NodeMapper, _ClassInfo
 from .._utils import class_and_instance_method
 from ..types import (
@@ -180,6 +181,20 @@ def translate_reaction_variable(obj: Reactant, libsl: ModuleType) -> Any:
 @get_default.register
 def get_default_reactant(node: Reactant) -> Initial | None:
     return node.variable.initial
+
+
+@units.strip_node.register
+def strip_reactant(node: Reactant, stripper: units.UnitStripper) -> Reactant:
+    return Reactant(stripper.get(node.variable), node.stoichiometry)
+
+
+def _strip_reactants(
+    reactants: Sequence[Reactant], reaction: "RateLaw", stripper: units.UnitStripper
+) -> list[Reactant]:
+    return [
+        strip_reactant(r, stripper) if r.parent == reaction else stripper.get(r)
+        for r in reactants
+    ]
 
 
 @dataclass
@@ -362,3 +377,21 @@ class MassAction(RateLaw):
                 self.rate.__set_name__(cls=cls, name=f"_{name}_rate_law")
             self.equations = tuple(self._yield_equations())
         super().__set_name__(cls, name)
+
+
+@units.strip_node.register
+def strip_rate_law(node: RateLaw, stripper: units.UnitStripper) -> RateLaw:
+    return node.__class__(
+        reactants=_strip_reactants(node.reactants, node, stripper),
+        products=_strip_reactants(node.products, node, stripper),
+        rate_law=stripper.substitute(node.rate_law),
+    )
+
+
+@units.strip_node.register
+def strip_mass_action(node: MassAction, stripper: units.UnitStripper) -> MassAction:
+    return node.__class__(
+        reactants=_strip_reactants(node.reactants, node, stripper),
+        products=_strip_reactants(node.products, node, stripper),
+        rate=stripper.substitute(node.rate),
+    )

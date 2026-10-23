@@ -12,6 +12,7 @@ from .types import (
     assign,
     initial,
 )
+from .units import strip_units
 
 __all__ = [
     "Constant",
@@ -26,4 +27,5 @@ __all__ = [
     "assign",
     "initial",
     "model_report",
+    "strip_units",
 ]

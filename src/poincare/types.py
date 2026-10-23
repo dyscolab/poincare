@@ -136,6 +136,13 @@ def translate_constant_parameter(obj: Constant | Parameter, libsl: ModuleType) -
         return translate(obj.default, libsl)
 
 
+@units.strip_node.register
+def strip_constant_parameter(
+    node: Constant | Parameter, stripper: units.UnitStripper
+) -> Constant | Parameter:
+    return node.__class__(default=stripper.substitute(node.default))
+
+
 @units.register_with_pint
 class Variable(Node, Real):
     initial: Initial | None
@@ -348,6 +355,17 @@ def translate_variable_derivative(obj: Variable | Derivative, libsl: ModuleType)
         return translate(obj.initial, libsl)
 
 
+@units.strip_node.register
+def strip_variable(node: Variable, stripper: units.UnitStripper) -> Variable:
+    copy = node.__class__(initial=stripper.substitute(node.initial))
+    for order, der in node.derivatives.items():
+        copy.derivatives[order] = Derivative(
+            copy, initial=stripper.substitute(der.initial), order=order
+        )
+    copy.equation_order = node.equation_order
+    return copy
+
+
 @dataclass
 class Equation(Node):
     lhs: Derivative
@@ -393,6 +411,18 @@ class EquationGroup(Node):
 
     def __hash__(self) -> int:
         return super().__hash__()
+
+
+@units.strip_node.register
+def strip_equation(node: Equation, stripper: units.UnitStripper) -> Equation:
+    return node.__class__(stripper.get(node.lhs), stripper.substitute(node.rhs))
+
+
+@units.strip_node.register
+def strip_equation_group(
+    node: EquationGroup, stripper: units.UnitStripper
+) -> EquationGroup:
+    return node.__class__(*(strip_equation(eq, stripper) for eq in node.equations))
 
 
 @overload
@@ -479,6 +509,11 @@ def translate_independent(obj: Independent, libsl: ModuleType) -> Any:
         return translate(obj.default, libsl)
 
 
+@units.strip_node.register
+def strip_independent(node: Independent, stripper: units.UnitStripper) -> Independent:
+    return node.__class__(default=stripper.substitute(node.default))
+
+
 class OwnedNamerDict(dict):
     def __setitem__(self, key, value):
         if key in self:
@@ -495,16 +530,15 @@ class EagerNamer(type):
     def __prepare__(
         cls, name, bases: tuple[type, ...], *, abstract: bool = False, **kwargs
     ):
-        def is_abstract(x):
-            return isinstance(x, cls) and not x._abstract
-
-        if not abstract:
-            # Prevent subclassing System subclassses
-            for base in filter(is_abstract, bases):
-                if any(map(is_abstract, base.__bases__)):
-                    raise TypeError(f"cannot subclass {base.__name__}")
+        # Only abstract Systems can be subclassed
+        for base in bases:
+            if isinstance(base, cls) and not base._abstract:
+                raise TypeError(f"cannot subclass {base.__name__}")
 
         return OwnedNamerDict()
+
+    def __new__(mcls, name, bases, namespace, *, abstract: bool = False, **kwargs):
+        return super().__new__(mcls, name, bases, namespace, **kwargs)
 
     def __init__(self, name, bases, namespace, *, abstract: bool = False, **kwargs):
         super().__init__(name, bases, namespace)
@@ -598,7 +632,7 @@ def get_default_parameter(node: Parameter | Constant) -> Initial | None:
     return node.default
 
 
-class System(Node, metaclass=EagerNamer):
+class System(Node, metaclass=EagerNamer, abstract=True):
     parent: System
     _kwargs: dict
     _required: ClassVar[set[str]]
@@ -698,6 +732,13 @@ class System(Node, metaclass=EagerNamer):
         name = self.__class__.__name__
         kwargs = ",".join(f"{k}={v}" for k, v in self._kwargs.items())
         return f"{name}({kwargs})"
+
+
+@units.strip_node.register
+def strip_system(node: System, stripper: units.UnitStripper) -> System:
+    cls = stripper.strip_class(node.__class__)
+    return cls(**{k: stripper.substitute(v) for k, v in node._kwargs.items()})
+
 
 
 def infer_independent_units(system: System | type[System]) -> pint.util.UnitsContainer:

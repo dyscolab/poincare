@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from types import UnionType
-from typing import Self
+from typing import Any, Self
 
 from ._utils import class_and_instance_method
 
@@ -91,13 +91,24 @@ class Node:
         else:
             cls = self
 
-        for k, v in cls.__dict__.items():
+        for k, v in class_namespace(cls).items():
             if isinstance(v, type) and not isinstance(v, exclude):
                 yield getattr(self, k)
 
             if recursive and isinstance(v, Node):
                 v: Node = getattr(self, k)
                 yield from v._yield(type, exclude=exclude, recursive=recursive)
+
+
+def class_namespace(cls: type) -> dict[str, Any]:
+    """Attributes defined in cls and its bases.
+
+    Base classes come first, and subclasses override their attributes.
+    """
+    namespace = {}
+    for base in reversed(cls.__mro__):
+        namespace.update(vars(base))
+    return namespace
 
 
 class NodeMapper:
