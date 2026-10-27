@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added `n_runs` to `RebopSimulator.solve` to repeat the stochastic simulation with independent random streams and return the average (requires `n_points`).
+- fix: `RebopSimulator` passes `MassAction` rates that resolve to a number (parameters with units, products of parameters) to rebop as numbers, so reactions can no longer fire without enough reactant molecules and give negative counts.
+
 ## 1.2.0
 
 - Breaxing: Simulation time (`save_at` and `upto_t`) dimensionality is now enforced with errors instead of warnings.

@@ -1,5 +1,6 @@
 import numpy as np
 import pint
+import xarray as xr
 from pint import PintError
 from pytest import raises
 from symbolite import real
@@ -119,3 +120,54 @@ def test_rebop_units():
 
     with raises(TypeError):
         rsim.solve(upto_t=1 * u.s, n_points=2, values={Model.A: 1 * u.m})
+
+
+def test_mass_action_rate_expression_respects_stoichiometry():
+    # A rate that is an expression of parameters must still follow mass action,
+    # so 2 A -> B cannot fire with a single A molecule left.
+    class Model(System):
+        A: Variable = initial(default=3)
+        B: Variable = initial(default=0)
+        k1: Parameter = assign(default=1)
+        k2: Parameter = assign(default=1)
+
+        eq = MassAction(reactants=[2 * A], products=[B], rate=k1 * k2)
+
+    rsim = RebopSimulator(Model)
+    p = dict(zip(rsim._sim.compiled.parameters, rsim._sim.create_problem().p))
+    assert rsim._get_rebop_rate(Model.eq, p) == 1
+    for seed in range(10):
+        sol = rsim.solve(upto_t=10, n_points=10, rng=seed)
+        assert sol["A"].values[-1] == 1
+        assert sol["B"].values[-1] == 1
+
+
+def test_rebop_n_runs():
+    class Model(System):
+        A: Variable = initial(default=20)
+        B: Variable = initial(default=0)
+        k: Parameter = assign(default=0.1)
+
+        eq = MassAction(reactants=[A], products=[B], rate=k)
+
+    rsim = RebopSimulator(Model)
+    averaged = rsim.solve(upto_t=30, n_points=30, rng=1, n_runs=200)
+    assert "run" not in averaged.dims
+
+    # Same seed gives the same average, and runs are independent of each other.
+    repeated = rsim.solve(upto_t=30, n_points=30, rng=1, n_runs=200)
+    xr.testing.assert_identical(averaged, repeated)
+    single = rsim.solve(upto_t=30, n_points=30, rng=1)
+    assert not averaged.identical(single)
+
+    # The average approaches the analytic decay. With 200 runs of 20 molecules the
+    # standard error of the mean is below 0.16.
+    t = averaged.time.values
+    expected_A = 20 * np.exp(-0.1 * t)
+    np.testing.assert_allclose(averaged["A"].values, expected_A, atol=0.8)
+    np.testing.assert_allclose(averaged["A"] + averaged["B"], 20)
+
+    with raises(ValueError):
+        rsim.solve(upto_t=30, n_points=30, n_runs=0)
+    with raises(ValueError):
+        rsim.solve(upto_t=30, n_runs=2)

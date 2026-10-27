@@ -9,13 +9,16 @@ except ImportError:
     raise ImportError(
         "Stochastic simulations require the rebop library to be installed"
     )
+import numpy as np
 import pint
 import pint_xarray
 import xarray as xr
 from symbolite import Real, substitute, translate
+from symbolite.impl import libstd
 from symbolite.ops import yield_named
 
 from ..._node import Node
+from ...compile import depends_on_at_least_one_variable_or_time
 from ...simulator import Components, Simulator
 from ...solvers import Solution, _transform
 from ...types import Constant, Equation, Initial, Number, Parameter, System
@@ -88,9 +91,16 @@ class RebopSimulator:
         upto_t: float | pint.Quantity,
         n_points: int | None = None,
         rng: RNGLike | SeedLike | None = None,
+        n_runs: int = 1,
         sparse: bool = True,
         var_names: Iterable[Reactant] | None = None,
     ):
+        """Run a stochastic simulation with rebop.
+
+        With ``n_runs > 1``, the simulation is repeated ``n_runs`` times with
+        independent random streams drawn from ``rng`` and the average is returned.
+        Averaging requires ``n_points`` so that every run shares the same time grid.
+        """
         upto_t_dim = getattr(upto_t, "dimensionality", None)
         user_units = getattr(upto_t, "units", None)
         if upto_t_dim != self.model._independent_units:
@@ -108,6 +118,13 @@ class RebopSimulator:
         if n_points is None:
             n_points = 0
 
+        if n_runs < 1:
+            raise ValueError(f"n_runs must be a positive integer, got {n_runs}.")
+        if n_runs > 1 and n_points == 0:
+            raise ValueError(
+                "n_points is required when n_runs > 1, so that all runs share the same time points."
+            )
+
         if var_names is not None:
             var_names = [self._variable_map[v.variable] for v in var_names]
 
@@ -120,22 +137,29 @@ class RebopSimulator:
         y = {k: int(v) for k, v in zip(self._variable_map.values(), problem.y)}
         p = dict(zip(self._sim.compiled.parameters, problem.p))
         rebop = self._build(p)
-        ds = rebop.run(
-            y,
-            tmax=tmax,
-            nb_steps=n_points,
-            rng=rng,
-            sparse=sparse,
-            var_names=var_names,
-        )
-        ds = ds[sorted(ds.data_vars)] # Sort data Variables to make order consistent with  the rest of Poincare
+        # A single generator gives each run an independent random stream, even when
+        # rng is an integer seed.
+        rng = np.random.default_rng(rng)
+        init = y
+        ys = []
+        for _ in range(n_runs):
+            ds = rebop.run(
+                init,
+                tmax=tmax,
+                nb_steps=n_points,
+                rng=rng,
+                sparse=sparse,
+                var_names=var_names,
+            )
+            ds = ds[sorted(ds.data_vars)] # Sort data Variables to make order consistent with  the rest of Poincare
 
-        # Apply transform
-        solved_y = ds.to_dataarray().values
-        t = ds["time"].values
-        sol = Solution(t, solved_y)
-        solution = _transform(problem=problem, solution= sol)
-        y = solution.y
+            # Apply transform
+            solved_y = ds.to_dataarray().values
+            t = ds["time"].values
+            sol = Solution(t, solved_y)
+            solution = _transform(problem=problem, solution= sol)
+            ys.append(solution.y)
+        y = ys[0] if n_runs == 1 else np.mean(ys, axis=0)
 
         ds = xr.Dataset(
             {
@@ -168,6 +192,17 @@ class RebopSimulator:
                 return get_by_name(p, r.rate)
             if isinstance(r.rate, Parameter) and isinstance(r.rate.default, Number):
                 return p[r.rate]
+            # Check if the rate can be compiled to a constant
+            if not depends_on_at_least_one_variable_or_time(r.rate):
+                rate = substitute(
+                    r.rate,
+                    {
+                        named: replace_algebraic_expressions(named, p)
+                        for named in yield_named(r.rate)
+                        if isinstance(named, Parameter | Constant)
+                    },
+                )
+                return float(translate(rate, libstd))
 
         # Replace parameters and constant for numeric values or expressions that depend only on Variables
         new_expression = {}
