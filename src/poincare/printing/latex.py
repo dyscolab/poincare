@@ -91,7 +91,7 @@ class ToLatex:
                     )
             else:
                 yield name, str(x.initial), "-"
-            for order in range(1, x.equation_order):
+            for order in range(1, x.equation_order or 1):
                 d = x.derivatives[order]
                 if self.descriptions is not None:
                     try:
