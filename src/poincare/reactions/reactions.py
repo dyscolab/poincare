@@ -46,13 +46,19 @@ def as_real(value) -> Real:
 
 
 class Reactant(Node, Real):
+    """A species taking part in a reaction with a given stoichiometry.
+
+    The species is usually a `Variable`. A `Parameter` acts as a constant
+    species: it enters the rate law but has no equation of its own.
+    """
+
     def __init__(
         self,
-        variable: Variable | Initial,
+        variable: Variable | Parameter | Initial,
         stoichiometry: float = 1,
     ):
         super().__init__()
-        if not isinstance(variable, Variable):
+        if not isinstance(variable, Variable | Parameter):
             variable = Variable(initial=variable)
         self.variable = variable  # TODO: define interface for accessing variable
         self.stoichiometry = stoichiometry
@@ -99,17 +105,14 @@ class Reactant(Node, Real):
         exclude: _ClassInfo = (),
         recursive: bool = True,
     ) -> Iterator[T]:
-        try:
-            if issubclass(type, Variable) and not isinstance(self.variable, exclude):
-                yield self.variable
-        except TypeError:
-            pass
-        super()._yield(type, exclude=exclude, recursive=recursive)
+        if isinstance(self.variable, type) and not isinstance(self.variable, exclude):
+            yield self.variable
+        yield from super()._yield(type, exclude=exclude, recursive=recursive)
 
     @classmethod
     def from_mul(cls, expr: Real, parent: Node | None = None):
         match expr:
-            case Variable() as var:
+            case Variable() | Parameter() as var:
                 new = Reactant(var, 1)
                 if parent is not None:
                     new.__class__.__base__.__set_name__(new, parent, var.name)
@@ -148,10 +151,13 @@ class Reactant(Node, Real):
                     value=Call(
                         __symbolite_info__=CallInfo(
                             func=real.mul,
-                            args=(int(st) | float(st), Variable() as var),
+                            args=(
+                                int(st) | float(st),
+                                Variable() | Parameter() as var,
+                            ),
                         )
                         | (
-                            Variable() as var,
+                            Variable() | Parameter() as var,
                             int(st) | float(st),
                         ),
                     )
@@ -180,7 +186,7 @@ def translate_reaction_variable(obj: Reactant, libsl: ModuleType) -> Any:
 
 @get_default.register
 def get_default_reactant(node: Reactant) -> Initial | None:
-    return node.variable.initial
+    return get_default(node.variable)
 
 
 @units.strip_node.register
@@ -259,6 +265,9 @@ class RateLaw(EquationGroup):
             species_stoich[p.variable] += p.stoichiometry
 
         for s, st in species_stoich.items():
+            if not isinstance(s, Variable):
+                # Constant species (Parameter) have no equation
+                continue
             yield (
                 s.derive()
                 << compensate_volume(

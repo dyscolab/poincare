@@ -3,7 +3,7 @@ import pint
 from pytest import mark
 
 from ...simulator import Simulator
-from ...types import Constant, System, Variable, assign, initial
+from ...types import Constant, Parameter, System, Variable, assign, initial
 from ..reactions import MassAction, RateLaw, Reactant, reaction_initial
 
 ureg = pint.UnitRegistry()
@@ -237,3 +237,52 @@ def test_nested_reactant():
     }
 
     sim.solve(save_at=np.linspace(0, 10, 10))
+
+
+@mark.parametrize("f", [non_instance, instance])
+def test_constant_species(f):
+    class Model(System):
+        G: Parameter = assign(default=2)
+        x: Variable = initial(default=0)
+        k: Parameter = assign(default=3)
+        eq = MassAction(reactants=[2 * G], products=[x], rate=k)
+
+    model: Model = f(Model)
+    assert model.eq.reactants[0].variable is model.G
+    assert model.eq.reactants[0].stoichiometry == 2
+    # Only x has an equation, G only enters the rate law
+    assert set(model.eq.equations) == {model.x.derive() << 1.0 * (model.k * model.G**2)}
+    assert set(model._yield(Variable)) == {model.x}
+
+    sim = Simulator(Model)
+    assert sim.compiled.variables == [Model.x]
+    t = np.linspace(0, 1, 5)
+    result = sim.solve(save_at=t)
+    np.testing.assert_allclose(result["x"], 3 * 2**2 * t, rtol=1e-6)
+
+
+def test_constant_species_from_parent():
+    class Nested(System):
+        G: Parameter = assign(default=2)
+        x: Variable = initial(default=0)
+        eq = MassAction(reactants=[G], products=[x], rate=1)
+
+    class Model(System):
+        G: Parameter = assign(default=5)
+        nested = Nested(G=G)
+
+    assert Model.nested.eq.reactants[0].variable is Model.G
+    t = np.linspace(0, 1, 5)
+    result = Simulator(Model).solve(save_at=t)
+    np.testing.assert_allclose(result["nested.x"], 5 * t, rtol=1e-6)
+
+
+def test_reactant_yields_its_species_by_type():
+    class Model(System):
+        G: Parameter = assign(default=2)
+        R: Reactant = Reactant(G)
+        X: Reactant = reaction_initial(default=1)
+
+    assert set(Model._yield(Variable)) == {Model.X.variable}
+    assert set(Model._yield(Parameter)) == {Model.G}
+    assert set(Model._yield(Parameter | Variable)) == {Model.G, Model.X.variable}

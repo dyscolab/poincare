@@ -78,6 +78,9 @@ class RebopSimulator:
 
     def _yield_reactants(self, reactants: Iterable[Reactant], /):
         for r in reactants:
+            if isinstance(r.variable, Parameter):
+                # Constant species are folded into the rate (see _get_rebop_rate)
+                continue
             if not r.stoichiometry.is_integer():
                 raise NotImplementedError("Only integer stoichiometries are allowed")
 
@@ -186,19 +189,23 @@ class RebopSimulator:
 
     def _get_rebop_rate(self, r: RateLaw, p: Mapping[Parameter, Number]):
         if isinstance(r, MassAction):
-            if isinstance(r.rate, Number):
-                return r.rate
-            if isinstance(r.rate, Constant):
-                return get_by_name(p, r.rate)
-            if isinstance(r.rate, Parameter) and isinstance(r.rate.default, Number):
-                return p[r.rate]
+            rate = r.rate
+            for reactant in r.reactants:
+                if isinstance(reactant.variable, Parameter):
+                    rate = rate * reactant.variable**reactant.stoichiometry
+            if isinstance(rate, Number):
+                return rate
+            if isinstance(rate, Constant):
+                return get_by_name(p, rate)
+            if isinstance(rate, Parameter) and isinstance(rate.default, Number):
+                return p[rate]
             # Check if the rate can be compiled to a constant
-            if not depends_on_at_least_one_variable_or_time(r.rate):
+            if not depends_on_at_least_one_variable_or_time(rate):
                 rate = substitute(
-                    r.rate,
+                    rate,
                     {
                         named: replace_algebraic_expressions(named, p)
-                        for named in yield_named(r.rate)
+                        for named in yield_named(rate)
                         if isinstance(named, Parameter | Constant)
                     },
                 )

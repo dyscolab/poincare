@@ -171,3 +171,14 @@ def test_rebop_n_runs():
         rsim.solve(upto_t=30, n_points=30, n_runs=0)
     with raises(ValueError):
         rsim.solve(upto_t=30, n_runs=2)
+
+
+def test_constant_species_in_rebop():
+    class Model(System):
+        G: Parameter = assign(default=100)
+        A: Variable = initial(default=1000)
+
+        eq1 = MassAction(reactants=[G], products=[A], rate=50)
+        eq2 = MassAction(reactants=[A], products=[G], rate=1)
+
+    compare_rebop_and_ode(Model)

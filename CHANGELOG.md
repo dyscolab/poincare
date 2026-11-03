@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Reactions accept a `Parameter` as a constant species: it enters the `MassAction` rate law but has no equation of its own. Supported by `RebopSimulator`, which folds it into the reaction rate.
 - Added `n_runs` to `RebopSimulator.solve` to repeat the stochastic simulation with independent random streams and return the average (requires `n_points`).
 - fix: `RebopSimulator` passes `MassAction` rates that resolve to a number (parameters with units, products of parameters) to rebop as numbers, so reactions can no longer fire without enough reactant molecules and give negative counts.
 
