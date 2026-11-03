@@ -1,10 +1,13 @@
 from collections.abc import Callable, Iterable, Iterator, Mapping
-from typing import Literal
 from dataclasses import dataclass, field
 from io import StringIO, TextIOWrapper
+from types import ModuleType
+from typing import Any, Literal
 
+import pint
 from symbolite import Real
 from symbolite.impl import liblatex
+from symbolite.impl.liblatex._latexexpr import LatexExpr
 from symbolite.ops import substitute, translate, yield_named
 
 from ..compile import build_equation_maps, replace_algebraic_equations
@@ -65,77 +68,39 @@ class ToLatex:
             self.equations = build_equation_maps(self.system)
             self.func = self.equations.func[0]
 
+    def _name(self, x: Real) -> Latex:
+        return normalize_eq(x, transform=self.transform, base=self.system)
+
+    def _value(self, value) -> Latex:
+        return normalize(value, transform=self.transform, base=self.system)
+
+    def _description(self, x: Real) -> tuple[Latex, ...]:
+        if self.descriptions is None:
+            return ()
+        if x in self.descriptions:
+            return ("\\text{" + self.descriptions[x] + "}",)
+        return ("-",)
+
     def yield_variables(
         self,
     ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex, Latex, Latex]]:
         for x in self.equations.variables:
-            name = normalize_eq(x, transform=self.transform, base=self.system)
-            if self.descriptions is not None:
-                try:
-                    yield (
-                        name,
-                        normalize(
-                            x.initial, transform=self.transform, base=self.system
-                        ),
-                        "-",
-                        "\\text{" + self.descriptions[x] + "}",
-                    )
-                except KeyError:
-                    yield (
-                        name,
-                        normalize(
-                            x.initial, transform=self.transform, base=self.system
-                        ),
-                        "-",
-                        "-",
-                    )
-            else:
-                yield name, str(x.initial), "-"
+            name = self._name(x)
+            yield (name, self._value(x.initial), "-", *self._description(x))
             for order in range(1, x.equation_order or 1):
                 d = x.derivatives[order]
-                if self.descriptions is not None:
-                    try:
-                        yield (
-                            normalize_eq(d, transform=self.transform, base=self.system),
-                            normalize(
-                                x.initial, transform=self.transform, base=self.system
-                            ),
-                            latex_derivative(name, order),
-                            "\\text{" + self.descriptions[d] + "}",
-                        )
-                    except KeyError:
-                        yield (
-                            normalize_eq(d, transform=self.transform, base=self.system),
-                            normalize(
-                                x.initial, transform=self.transform, base=self.system
-                            ),
-                            latex_derivative(name, order),
-                            "-",
-                        )
-                else:
-                    yield (
-                        normalize_eq(d, transform=self.transform, base=self.system),
-                        str(x.initial),
-                        latex_derivative(name, order),
-                    )
+                yield (
+                    self._name(d),
+                    self._value(d.initial),
+                    latex_derivative(name, order),
+                    *self._description(d),
+                )
 
     def yield_parameters(
         self,
     ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex]]:
-        if self.descriptions is not None:
-            for x in self.equations.parameters:
-                yield (
-                    normalize_eq(x, transform=self.transform, base=self.system),
-                    str(x.default),
-                    "\\text{" + self.descriptions.get(x, "-") + "}",
-                )
-
-        else:
-            for x in self.equations.parameters:
-                yield (
-                    normalize_eq(x, transform=self.transform, base=self.system),
-                    str(x.default),
-                )
+        for x in self.equations.parameters:
+            yield (self._name(x), self._value(x.default), *self._description(x))
 
     def yield_equations(self) -> Iterator[tuple[Latex, Latex]]:
         for der, eq in self.func.items():
@@ -158,10 +123,39 @@ class Normalizer(dict):
 
 
 def normalize(expr, transform: dict[Real, str], base: Node) -> Latex:
+    """LaTeX for a default value: an expression, a number or a pint quantity."""
+    if expr is None:
+        return "-"
+    if isinstance(expr, pint.Quantity):
+        magnitude = normalize(expr.magnitude, transform, base)
+        units = f"{expr.units:~L}"
+        return f"{magnitude}\\ {units}" if units else magnitude
     if isinstance(expr, Real):
         return normalize_eq(expr, transform, base)
-    else:
+    try:
+        translated = translate(expr, liblatex)
+    except ValueError:  # Values liblatex can't translate, such as arrays.
         return str(expr)
+    return getattr(translated, "text", translated)
+
+
+@translate.register
+def translate_quantity(obj: pint.Quantity, libsl: ModuleType) -> Any:
+    """LaTeX for quantities inside expressions; other backends are unchanged."""
+    if libsl is not liblatex:
+        return translate.dispatch(object)(obj, libsl)
+    # A number times its units binds like a product (precedence of mul).
+    return LatexExpr(normalize(obj, transform={}, base=None), precedence=1)
+
+
+@translate.register
+def translate_unit(obj: pint.Unit, libsl: ModuleType) -> Any:
+    if libsl is not liblatex:
+        return translate.dispatch(object)(obj, libsl)
+    text = f"{obj:~L}"
+    # Products of units bind like mul, powers like pow, single units are atoms.
+    precedence = 1 if "\\cdot" in text else 3 if "^" in text else 100
+    return LatexExpr(text, precedence=precedence)
 
 
 def normalize_eq(eq, transform, base: Node) -> Latex:

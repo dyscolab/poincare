@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: the Default column of `variable_table` and `parameter_table` (and so of `model_report` and `notebook_report`) is translated to LaTeX with liblatex. Expression defaults no longer print their internal representation, `transform` and nested paths apply inside them, and pint quantities and units are written in LaTeX (`3\ \frac{1}{\mathrm{s}}`), also inside expressions. Derivative rows show the derivative's own initial value instead of the variable's.
+- `notebook_report` (in `poincare.printing`) takes the same `transform`, `descriptions`, `replace_algebraics` and `sections` arguments as `model_report`, so downstream packages can add their own sections. Each section returns Markdown. The default sections are in `default_notebook_sections`.
 - Reactions accept a `Parameter` as a constant species: it enters the `MassAction` rate law but has no equation of its own. Supported by `RebopSimulator`, which folds it into the reaction rate.
 - Added `n_runs` to `RebopSimulator.solve` to repeat the stochastic simulation with independent random streams and return the average (requires `n_points`).
 - fix: `RebopSimulator` passes `MassAction` rates that resolve to a number (parameters with units, products of parameters) to rebop as numbers, so reactions can no longer fire without enough reactant molecules and give negative counts.
