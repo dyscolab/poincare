@@ -7,6 +7,17 @@
 - Reactions accept a `Parameter` as a constant species: it enters the `MassAction` rate law but has no equation of its own. Supported by `RebopSimulator`, which folds it into the reaction rate.
 - Added `n_runs` to `RebopSimulator.solve` to repeat the stochastic simulation with independent random streams and return the average (requires `n_points`).
 - fix: `RebopSimulator` passes `MassAction` rates that resolve to a number (parameters with units, products of parameters) to rebop as numbers, so reactions can no longer fire without enough reactant molecules and give negative counts.
+- Breaking: reworked fits. `fit_result` returns a `FitResult`, a dict of best values (as before) with the covariance in `.pcov` (`pcov[k, k]` in units of k²). Added `sigma=` (experimental errors in the target's form), `Fitter` (several targets with shared parameters), `fit_steady_state`, and `ToleranceWarning`/`CovarianceWarning`. `make_target` and `Fitter` are exported from `poincare.analysis`. `fit_result` moved to `poincare.analysis.fit_wrappers`. Migration: import it from `poincare.analysis`.
+- Added `strip_units` to get a copy of a `System` with every quantity replaced by its magnitude in base units. The removed units are kept in `_units`.
+- Breaking: `Simulator` no longer takes `solver=`, which was ignored. Migration: use `with_solver`.
+- Breaking: `SteadyState.solve` no longer takes `values=`. Migration: `SteadyState().solve(sim.with_values(values))`.
+- `t_span` defaults to `(save_at[0], save_at[-1])`. The `odeint` path of `LSODA` honours an explicit `t_span` that starts before `save_at[0]`.
+- Missing initial values or parameter defaults are reported when solving, not when creating the `Simulator`, so they can be supplied with `with_values`.
+- `RebopSimulator` has `with_transform`, and accepts variable values with units (the magnitudes are used as copy numbers).
+- Only abstract `System`s can be subclassed. Subclassing any concrete `System` raises `TypeError`.
+- fix: reports no longer crash when a variable has no equation (for example a constant volume).
+- fix: the `numba` backend compiles with symbolite's `libnumba`.
+- fix: transform outputs are always floats, instead of taking the integer dtype of the state.
 
 ## 1.2.0
 
