@@ -61,8 +61,16 @@ def _solve_ivp_scipy(
     events: Sequence[Events] = (),
 ):
     dy = np.empty_like(problem.y)
+    _rhs = problem.rhs
+
+    def rhs(t, y, p, dy):
+        # scipy keeps the arrays it receives (for example f(t, y) while it
+        # estimates a Jacobian by finite differences), so each call fills a
+        # new array instead of the shared dy buffer.
+        return _rhs(t, y, p, np.empty_like(y))
+
     solution = solve_ivp(
-        problem.rhs,
+        rhs,
         problem.t,
         problem.y,
         method=method,
