@@ -4,6 +4,7 @@ import inspect
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from functools import singledispatch
+from numbers import Number
 from types import ModuleType
 from typing import (
     TYPE_CHECKING,
@@ -68,7 +69,6 @@ class Constant(Node, Real):
             raise TypeError(f"unexpected type {type(value)} for {self.name}")
 
 
-Number = int | float | complex
 Initial = Number | Constant | pint.Quantity
 Array1d = np.ndarray[tuple[int], np.dtype[np.floating]]
 
