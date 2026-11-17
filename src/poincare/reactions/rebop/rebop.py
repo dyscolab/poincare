@@ -157,12 +157,8 @@ class RebopSimulator:
         if var_names is not None:
             var_names = [self._variable_map[v.variable] for v in var_names]
 
+        self._check_copy_numbers()
         problem = self._sim.create_problem()
-        # for s in problem.scale:
-        #     if isinstance(s, pint.Quantity | pint.Unit):
-        #         raise TypeError(
-        #             "Stochastic simulation doesn't support units in values, only in upto_t"
-        #         )
         y = {k: int(v) for k, v in zip(self._variable_map.values(), problem.y)}
         p = dict(zip(self._sim.compiled.parameters, problem.p))
         rebop = self._build(p)
@@ -212,6 +208,28 @@ class RebopSimulator:
             ds = ds.pint.to({"time": user_units})
             user_units._REGISTRY.force_ndarray_like = False
         return ds
+
+    def _check_copy_numbers(self):
+        """Raise if a variable's initial value is not a dimensionless copy number.
+
+        Values are passed to rebop as their magnitude in base units, so an
+        amount of substance (e.g. ``u.molecule``, ``u.mol``) would silently
+        become a tiny number of moles that rounds to 0 copies. Dimensionless
+        units such as ``u.count`` are accepted. Transform outputs may have
+        units, so only the variables are checked.
+        """
+        sim = self._sim.with_transform(None)
+        scales = sim.create_problem().scale
+        for name, scale in zip(sim.transform.output, scales):
+            if isinstance(scale, pint.Quantity) and not scale.dimensionless:
+                raise pint.DimensionalityError(
+                    scale.units,
+                    "dimensionless",
+                    extra_msg=(
+                        f" for the initial value of {name}. Stochastic simulation "
+                        "needs copy numbers: use plain numbers or u.count."
+                    ),
+                )
 
     def _get_rebop_rate(self, r: RateLaw, p: Mapping[Parameter, Number]):
         if isinstance(r, MassAction):

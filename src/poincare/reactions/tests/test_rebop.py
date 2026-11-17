@@ -122,6 +122,33 @@ def test_rebop_units():
         rsim.solve(upto_t=1 * u.s, n_points=2, values={Model.A: 1 * u.m})
 
 
+def test_rebop_initial_value_units():
+    """Copy numbers must be dimensionless: an amount of substance would be
+    converted to moles and silently truncated to 0 copies."""
+
+    def make_model(value):
+        class Model(System):
+            A: Variable = initial(default=value)
+            k: Parameter = assign(default=1 / u.s)
+            decay = MassAction(reactants=[A], products=[], rate=k)
+
+        return Model
+
+    for value in (20, 20 * u.count):
+        ds = RebopSimulator(make_model(value)).solve(upto_t=1 * u.s, n_points=2, rng=0)
+        assert ds["A"].values[0] == 20
+
+    for value in (1000 * u.molecule, 1 * u.mol):
+        with raises(pint.DimensionalityError):
+            RebopSimulator(make_model(value)).solve(upto_t=1 * u.s, n_points=2)
+
+    model = make_model(20)
+    with raises(pint.DimensionalityError):
+        RebopSimulator(model).with_values({model.A: 1000 * u.molecule}).solve(
+            upto_t=1 * u.s, n_points=2
+        )
+
+
 def test_mass_action_rate_expression_respects_stoichiometry():
     # A rate that is an expression of parameters must still follow mass action,
     # so 2 A -> B cannot fire with a single A molecule left.

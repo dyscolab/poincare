@@ -17,7 +17,8 @@
 - Breaking: `SteadyState.solve` no longer takes `values=`. Migration: `SteadyState().solve(sim.with_values(values))`.
 - `t_span` defaults to `(save_at[0], save_at[-1])`. The `odeint` path of `LSODA` honours an explicit `t_span` that starts before `save_at[0]`.
 - Missing initial values or parameter defaults are reported when solving, not when creating the `Simulator`, so they can be supplied with `with_values`.
-- `RebopSimulator` has `with_transform`, and accepts variable values with units (the magnitudes are used as copy numbers).
+- `RebopSimulator` has `with_transform`, and accepts variable values in dimensionless units such as `u.count` (used as copy numbers).
+- fix: `RebopSimulator.solve` raises `DimensionalityError` when a variable's initial value is not dimensionless, such as `u.molecule` or `u.mol`. Values are passed to rebop in base units, so `1000 * u.molecule` became 1.66e-21 mol and silently 0 copies. Transform outputs may still have units.
 - Only abstract `System`s can be subclassed. Subclassing any concrete `System` raises `TypeError`.
 - fix: reports no longer crash when a variable has no equation (for example a constant volume).
 - fix: the `numba` backend compiles with symbolite's `libnumba`.
