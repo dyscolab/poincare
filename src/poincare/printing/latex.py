@@ -59,14 +59,15 @@ class ToLatex:
     replace_algebraics: bool = False
 
     def __post_init__(self):
+        maps = build_equation_maps(self.system)
         if self.replace_algebraics:
-            self.equations = replace_algebraic_equations(
-                build_equation_maps(self.system)
-            )
+            self.equations = replace_algebraic_equations(maps)
             self.func = self.equations.func
+            # Substituted into the equations, so they need no row of their own.
+            self.algebraics = {}
         else:
-            self.equations = build_equation_maps(self.system)
-            self.func = self.equations.func[0]
+            self.equations = maps
+            self.func, self.algebraics = maps.func
 
     def _name(self, x: Real) -> Latex:
         return normalize_eq(x, transform=self.transform, base=self.system)
@@ -99,7 +100,11 @@ class ToLatex:
     def yield_parameters(
         self,
     ) -> Iterator[tuple[Latex, Latex, Latex] | tuple[Latex, Latex]]:
-        for x in self.equations.parameters:
+        # Parameters that depend on variables or time are kept separately
+        # (algebraics). Unless replaced, the equations refer to them by name,
+        # so list them with their defining expression.
+        parameters = sorted({*self.equations.parameters, *self.algebraics}, key=str)
+        for x in parameters:
             yield (self._name(x), self._value(x.default), *self._description(x))
 
     def yield_equations(self) -> Iterator[tuple[Latex, Latex]]:

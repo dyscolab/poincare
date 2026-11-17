@@ -83,3 +83,26 @@ def test_variable_table_values():
     assert rows["x"] == "2\\ \\mathrm{mol}"
     assert rows["vx"] == "0.5\\ \\frac{\\mathrm{mol}}{\\mathrm{s}}"
     assert "Real#" not in variable_table(Decay) + parameter_table(Decay)
+
+
+class AlgebraicDecay(System):
+    x: Variable = initial(default=1)
+    k: Parameter = assign(default=2)
+    F: Parameter = assign(default=-k * x)
+    eq = x.derive() << F
+
+
+def test_parameter_table_algebraics():
+    descriptions = {AlgebraicDecay.F: "decay flux"}
+    rows = {
+        row[0]: row[1:]
+        for row in ToLatex(AlgebraicDecay, descriptions=descriptions).yield_parameters()
+    }
+    assert rows["F"] == ("-k \\cdot x", "\\text{decay flux}")
+    assert "k" in rows
+
+
+def test_parameter_table_algebraics_replaced():
+    rows = dict(ToLatex(AlgebraicDecay, replace_algebraics=True).yield_parameters())
+    assert "F" not in rows
+    assert "k" in rows
