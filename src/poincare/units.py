@@ -91,6 +91,41 @@ def derivative_implicit_dimensionality(
     return equation_implicit_dimensionality(derivative, value)
 
 
+def to_base_magnitude(value: pint.Quantity | pint.Unit) -> Any:
+    """Magnitude of a quantity, or of one unit, in base units."""
+    quantity: pint.Quantity = 1 * value if isinstance(value, pint.Unit) else value
+    return quantity.to_base_units().magnitude
+
+
+class _QuantityMagnitudes:
+    """Mapping-like object for symbolite.substitute that replaces
+    quantities and units by their magnitude in base units."""
+
+    def get(self, item, default=None):
+        if isinstance(item, pint.Quantity | pint.Unit):
+            return to_base_magnitude(item)
+        return default
+
+
+def strip_quantities(expr):
+    """Replace every pint quantity and unit in expr by its magnitude in base units.
+
+    Symbolite backends cannot compile explicit quantities,
+    such as the ``2 * u.m / u.s`` in ``x.derive() << 2 * u.m / u.s``.
+    The integration runs in base units, so they are replaced by their
+    base-unit magnitudes before code generation.
+    Unit consistency is checked when the System class is created.
+
+    >>> import pint
+    >>> from symbolite import real
+    >>> u = pint.get_application_registry()
+    >>> x = real.Real("x")
+    >>> str(strip_quantities(2 * u.km / u.s * x))
+    '2000.0 * x'
+    """
+    return substitute(expr, _QuantityMagnitudes())
+
+
 @singledispatch
 def strip_node(node: Node, stripper: UnitStripper) -> Node:
     """Create a copy of node with all quantities replaced by their
@@ -115,10 +150,8 @@ class UnitStripper:
         from .types import Derivative
 
         match item:
-            case pint.Quantity():
-                return item.to_base_units().magnitude
-            case pint.Unit():
-                return (1 * item).to_base_units().magnitude
+            case pint.Quantity() | pint.Unit():
+                return to_base_magnitude(item)
             case Derivative(variable=variable, order=order):
                 variable = self.get(variable)
                 try:

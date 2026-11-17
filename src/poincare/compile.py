@@ -33,6 +33,7 @@ from .types import (
     System,
     Variable,
 )
+from .units import strip_quantities
 
 _symbolite_compile: (
     Callable[[str, ModuleType], Mapping[str, Callable[..., Any]]] | None
@@ -392,7 +393,9 @@ def build_first_order_vectorized_body(
         symbolic.parameters,
     )
 
-    diff_eqs = {k: substitute(v, mapping) for k, v in symbolic.func.items()}
+    diff_eqs = {
+        k: substitute(strip_quantities(v), mapping) for k, v in symbolic.func.items()
+    }
     dy = vector.Vector("dy")
     ode_step_block = Block(
         inputs=(mapping["t"], mapping["y"], mapping["p"], dy),
@@ -495,7 +498,10 @@ def compile_transform(
         compiled.parameters,
     )
 
-    deqs = {k: substitute(v, mapping) for k, v in content_in_expresions.items()}
+    deqs = {
+        k: substitute(strip_quantities(v), mapping)
+        for k, v in content_in_expresions.items()
+    }
     out = vector.Vector("out")
     transform_block = Block(
         inputs=(mapping["t"], mapping["y"], mapping["p"], out),

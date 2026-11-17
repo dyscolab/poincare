@@ -16,7 +16,9 @@ from poincare import (
     Variable,
     assign,
     initial,
+    solvers,
 )
+from poincare.compile import Backend
 
 u = pint.UnitRegistry()
 
@@ -294,14 +296,119 @@ def test_normalization():
     assert ds_cm["y"].pint.units == u.cm
 
 
-@mark.xfail(reason="Not yet implemented")
-def test_unit_in_equation():
+LITERAL_SOLVER = solvers.LSODA(atol=1e-9, rtol=1e-9)
+
+
+@mark.parametrize("backend", Backend.__args__)
+@mark.parametrize(
+    "rate",
+    [1 / (1 * u.s), 1 / u.s, 1 / (1000 * u.ms), 60 / u.min],
+    ids=["quantity", "unit", "ms", "min"],
+)
+def test_unit_in_equation(backend, rate):
+    class Model(System):
+        x: Variable = initial(default=1 * u.m)
+        eq = x.derive() << -rate * x
+
+    t = np.linspace(0, 2, 10) * u.s
+    result = Simulator(Model, backend=backend).with_solver(LITERAL_SOLVER)
+    x = result.solve(save_at=t)["x"]
+    assert x.pint.units == u.m
+    assert np.allclose(x.pint.magnitude, np.exp(-t.magnitude), rtol=1e-6)
+
+
+def test_unit_in_equation_matches_parameter():
+    class Literal(System):
+        x: Variable = initial(default=1 * u.m)
+        eq = x.derive() << -x / (2 * u.min)
+
+    class WithParameter(System):
+        x: Variable = initial(default=1 * u.m)
+        tau: Parameter = assign(default=2 * u.min)
+        eq = x.derive() << -x / tau
+
+    t = np.linspace(0, 300, 10) * u.s
+    literal = Simulator(Literal).with_solver(LITERAL_SOLVER).solve(save_at=t)
+    parameter = Simulator(WithParameter).with_solver(LITERAL_SOLVER).solve(save_at=t)
+    assert np.allclose(literal["x"].pint.magnitude, parameter["x"].pint.magnitude)
+
+
+def test_quantity_as_equation():
     class Model(System):
         x: Variable = initial(default=0 * u.m)
-        eq = x.derive() << x / (1 * u.s)
+        eq = x.derive() << 3 * u.km / u.hour
+
+    t = np.array([0, 0.5, 1]) * u.hour
+    x = Simulator(Model).with_solver(LITERAL_SOLVER).solve(save_at=t)["x"]
+    assert np.allclose(x.pint.to(u.m).pint.magnitude, [0, 1500, 3000])
+
+
+def test_unit_in_second_order_equation():
+    class Model(System):
+        x: Variable = initial(default=1 * u.m)
+        v: Derivative = x.derive(initial=0 * u.m / u.s)
+        eq = v.derive() << -x / (1 * u.s) ** 2
+
+    t = np.linspace(0, 5, 10) * u.s
+    x = Simulator(Model).with_solver(LITERAL_SOLVER).solve(save_at=t)["x"]
+    assert np.allclose(x.pint.magnitude, np.cos(t.magnitude), atol=1e-6)
+
+
+def test_unit_in_time_dependent_parameter():
+    class Model(System):
+        time = Independent(default=0 * u.s)
+        x: Variable = initial(default=0 * u.m)
+        speed: Parameter = assign(default=2 * u.m / u.s**2 * time)
+        eq = x.derive() << speed
+
+    t = np.linspace(0, 3, 10) * u.s
+    x = Simulator(Model).with_solver(LITERAL_SOLVER).solve(save_at=t)["x"]
+    assert np.allclose(x.pint.magnitude, t.magnitude**2)
+
+
+def test_unit_in_offset_literal():
+    # Absolute temperatures are converted to kelvin, like the state.
+    class Model(System):
+        T: Variable = initial(default=u.Quantity(80, "degC").to("K"))
+        k: Parameter = assign(default=0.1 / u.s)
+        eq = T.derive() << -k * (T - u.Quantity(25, "degC"))
+
+    t = np.linspace(0, 10, 5) * u.s
+    T = Simulator(Model).with_solver(LITERAL_SOLVER).solve(save_at=t)["T"]
+    expected = 273.15 + 25 + 55 * np.exp(-0.1 * t.magnitude)
+    assert np.allclose(T.pint.magnitude, expected)
+
+
+def test_unit_in_transform():
+    class Model(System):
+        x: Variable = initial(default=1 * u.m)
+        eq = x.derive() << -x / (1 * u.s)
+
+    sim = Simulator(Model).with_transform({"y": Model.x + 1 * u.cm})
+    y = sim.solve(save_at=np.array([0]) * u.s)["y"]
+    assert y.pint.units == u.m
+    assert np.allclose(y.pint.magnitude, 1.01)
+
+
+def test_unit_in_equation_inconsistent():
+    with raises(DimensionalityError):
+
+        class Model(System):
+            time = Independent(default=0 * u.s)
+            x: Variable = initial(default=1 * u.m)
+            eq = x.derive() << -x / (1 * u.s) + 1 * u.m
+
+
+def test_unit_in_equation_implicit_time():
+    # Without an explicit Independent, the literal defines the time units.
+    class Model(System):
+        x: Variable = initial(default=1 * u.m)
+        eq = x.derive() << -(1 * u.m / u.s) * x
 
     sim = Simulator(Model)
-    sim.solve(save_at=np.linspace(0, 1, 10) * u.s)
+    with raises(PintError):
+        sim.solve(save_at=np.linspace(0, 1, 3) * u.s)
+    sim.solve(save_at=np.linspace(0, 1, 3) * u.s / u.m)
 
 
 def test_zero_initial_with_unit():

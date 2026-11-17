@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Equations and transforms accept explicit pint quantities and units, such as `x.derive() << -x / (2 * u.min)` or `x.derive() << 3 * u.km / u.hour`, including inside time-dependent parameter defaults. They are replaced by their magnitude in base units when compiling, like the state and parameters. Their units are checked when the `System` is created. Added `units.strip_quantities`.
 - fix: scipy solvers (`BDF`, `Radau`, `RK23`, `RK45`, `DOP853`, and `LSODA` through `solve_ivp`) receive a new derivative array on every call instead of the shared output buffer. scipy keeps `f(t, y)` while it estimates the Jacobian by finite differences, so the shared buffer corrupted the estimate: `BDF` and `Radau` failed on stiff systems such as Robertson's, and `RK45` needed about twice as many evaluations.
 - fix: the Default column of `variable_table` and `parameter_table` (and so of `model_report` and `notebook_report`) is translated to LaTeX with liblatex. Expression defaults no longer print their internal representation, `transform` and nested paths apply inside them, and pint quantities and units are written in LaTeX (`3\ \frac{1}{\mathrm{s}}`), also inside expressions. Derivative rows show the derivative's own initial value instead of the variable's.
 - `notebook_report` (in `poincare.printing`) takes the same `transform`, `descriptions`, `replace_algebraics` and `sections` arguments as `model_report`, so downstream packages can add their own sections. Each section returns Markdown. The default sections are in `default_notebook_sections`.
