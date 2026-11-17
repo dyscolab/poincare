@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import numbers
 from collections import ChainMap
 from collections.abc import Callable, Hashable, Mapping, Sequence
@@ -85,27 +86,33 @@ class Simulator:
         self.transform = self._compile_transform(None)
         self.values = {}
         self.solver = solvers.LSODA()
+        self.t_span = None
+        self.save_at = None
 
     def with_values(
         self, values: Mapping[Components, Initial], /, *, append: bool = True
     ) -> Simulator:
-        sim = self.__class__.__new__(self.__class__)
-        sim.model = self.model
-        sim.compiled = self.compiled
-        sim.transform = self.transform
+        sim = copy.copy(self)
         sim.values = values if not append else self.values | values
-        sim.solver = self.solver
-
         return sim
 
     def with_solver(self, solver: solvers.Solver, /) -> Simulator:
-        sim = self.__class__.__new__(self.__class__)
-        sim.model = self.model
-        sim.compiled = self.compiled
-        sim.transform = self.transform
-        sim.values = self.values
+        sim = copy.copy(self)
         sim.solver = solver
+        return sim
 
+    def with_times(
+        self,
+        *,
+        t_span: tuple[float, float] | pint.Quantity | None = None,
+        save_at: ArrayLike | None = None,
+    ) -> Simulator:
+        """Return a new simulator that integrates over ``t_span`` and saves at ``save_at``."""
+        if t_span is None and save_at is None:
+            raise TypeError("must provide t_span and/or save_at.")
+        sim = copy.copy(self)
+        sim.t_span = t_span
+        sim.save_at = save_at
         return sim
 
     def with_transform(
@@ -115,13 +122,8 @@ class Simulator:
         *,
         append: bool = False,
     ) -> Simulator:
-        sim = self.__class__.__new__(self.__class__)
-        sim.model = self.model
-        sim.compiled = self.compiled
+        sim = copy.copy(self)
         sim.transform = sim._compile_transform(transform, append)
-        sim.values = self.values
-        sim.solver = self.solver
-
         return sim
 
     def _compile_transform(
@@ -215,6 +217,15 @@ class Simulator:
         events: Sequence[Events] = (),
         check_dimensionality: bool = True,
     ):
+        """Integrate the system and return an ``xr.Dataset`` indexed by ``time``.
+
+        ``t_span`` and ``save_at`` each fall back to the value set with
+        :meth:`with_times` when not given.
+        """
+        if t_span is None:
+            t_span = self.t_span
+        if save_at is None:
+            save_at = self.save_at
         save_at_dim = getattr(save_at, "dimensionality", None)
         timescale = 1
         if save_at_dim != self.model._independent_units and check_dimensionality:
@@ -285,8 +296,8 @@ class Simulator:
         values: Mapping[Components, tuple[float, ...] | ipywidgets.Widget]
         | Sequence[Components] = {},
         *,
-        t_span: tuple[float, float] = (0, np.inf),
-        save_at: ArrayLike,
+        t_span: tuple[float, float] | None = None,
+        save_at: ArrayLike | None = None,
         func: Callable[[xr.Dataset], Any] = lambda ds: ds.to_dataframe().plot(),
     ):
         try:

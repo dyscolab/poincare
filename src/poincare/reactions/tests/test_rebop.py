@@ -182,3 +182,35 @@ def test_constant_species_in_rebop():
         eq2 = MassAction(reactants=[A], products=[G], rate=1)
 
     compare_rebop_and_ode(Model)
+
+
+def test_rebop_with_times():
+    class Model(System):
+        A: Variable = initial(default=100)
+        B: Variable = initial(default=0)
+        eq = MassAction(reactants=[A], products=[B], rate=1)
+
+    rsim = RebopSimulator(Model)
+    expected = rsim.solve(upto_t=5, n_points=10, rng=1)
+    timed = rsim.with_times(upto_t=5, n_points=10)
+    assert rsim.upto_t is None
+    xr.testing.assert_identical(timed.solve(rng=1), expected)
+
+    # stored times survive the other builders
+    assert timed.with_values({Model.A: 50}).solve(rng=1).time.size == 11
+    assert timed.with_transform([Model.A]).solve(rng=1).time.size == 11
+
+    # solve arguments fall back to the stored times independently
+    ds = timed.solve(n_points=3, rng=1)
+    assert ds.time.size == 4 and ds.time.values[-1] == 5
+    ds = timed.solve(upto_t=2, rng=1)
+    assert ds.time.size == 11 and ds.time.values[-1] == 2
+    xr.testing.assert_identical(
+        rsim.with_times(upto_t=5).solve(n_points=10, rng=1), expected
+    )
+
+    with raises(TypeError, match="upto_t"):
+        rsim.solve()
+
+    with raises(PintError):
+        RebopSimulator(Model).with_times(upto_t=1 * u.s, n_points=2).solve()

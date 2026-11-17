@@ -24,19 +24,18 @@ class Oscillator(System):
 
 
 if __name__ == "__main__":
-    sim = Simulator(Oscillator)
-    result = sim.solve(save_at=np.linspace(0, 50, 1000))
+    save_at = np.linspace(0, 50, 1000)
+    sim = Simulator(Oscillator).with_times(save_at=save_at)
+    result = sim.solve()
     result.to_dataframe().plot()
 
     # No recompilation necessary to change parameter value
-    result = sim.with_values({Oscillator.phase: -1.3}).solve(
-        save_at=np.linspace(0, 50, 1000),
-    )
+    result = sim.with_values({Oscillator.phase: -1.3}).solve()
     result.to_dataframe().plot()
 
     # To change functional form, must be recompiled
-    sim = Simulator(Oscillator(F=real.sin(Oscillator.t)))
-    result = sim.solve(save_at=np.linspace(0, 50, 1000))
+    sim = Simulator(Oscillator(F=real.sin(Oscillator.t))).with_times(save_at=save_at)
+    result = sim.solve()
     result.to_dataframe().plot()
 
     plt.legend()

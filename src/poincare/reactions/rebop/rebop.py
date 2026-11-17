@@ -1,3 +1,4 @@
+import copy
 import dataclasses
 from collections.abc import Hashable, Iterable, Mapping, Sequence
 from typing import Any, Self
@@ -43,26 +44,42 @@ class RebopSimulator:
         self._variable_map = {
             k: str(k).replace(".", "__") for k in self._sim.compiled.variables
         }
+        self.upto_t = None
+        self.n_points = None
 
     def with_values(
         self, values: Mapping[Components, Initial], /, *, append: bool = True
     ) -> Self:
-        rsim = self.__class__.__new__(self.__class__)
-        rsim.model = self.model
+        rsim = copy.copy(self)
         rsim._sim = self._sim.with_values(values, append=append)
-        rsim._variable_map = self._variable_map
         return rsim
-    
+
     def with_transform(
         self,
         transform: Sequence[Real] | Mapping[Hashable, Real] | None = None,
         /,
         *,
-        append: bool = False,    ) -> Self:
-        rsim = self.__class__.__new__(self.__class__)
-        rsim.model = self.model
+        append: bool = False,
+    ) -> Self:
+        rsim = copy.copy(self)
         rsim._sim = self._sim.with_transform(transform, append=append)
-        rsim._variable_map = self._variable_map
+        return rsim
+
+    def with_times(
+        self,
+        *,
+        upto_t: float | pint.Quantity,
+        n_points: int | None = None,
+    ) -> Self:
+        """Return a new simulator that runs until ``upto_t`` and saves ``n_points`` points.
+
+        The arguments have the same meaning and units rules as in :meth:`solve`.
+        Each one is used by :meth:`solve` when :meth:`solve` does not receive it,
+        independently of the other.
+        """
+        rsim = copy.copy(self)
+        rsim.upto_t = upto_t
+        rsim.n_points = n_points
         return rsim
 
     def _build(self, p: Mapping[Parameter, float], /):
@@ -91,7 +108,7 @@ class RebopSimulator:
     def solve(
         self,
         *,
-        upto_t: float | pint.Quantity,
+        upto_t: float | pint.Quantity | None = None,
         n_points: int | None = None,
         rng: RNGLike | SeedLike | None = None,
         n_runs: int = 1,
@@ -103,7 +120,16 @@ class RebopSimulator:
         With ``n_runs > 1``, the simulation is repeated ``n_runs`` times with
         independent random streams drawn from ``rng`` and the average is returned.
         Averaging requires ``n_points`` so that every run shares the same time grid.
+
+        ``upto_t`` and ``n_points`` each fall back to the value set with
+        :meth:`with_times` when not given.
         """
+        if upto_t is None:
+            upto_t = self.upto_t
+        if n_points is None:
+            n_points = self.n_points
+        if upto_t is None:
+            raise TypeError("must provide upto_t, here or with with_times.")
         upto_t_dim = getattr(upto_t, "dimensionality", None)
         user_units = getattr(upto_t, "units", None)
         if upto_t_dim != self.model._independent_units:
