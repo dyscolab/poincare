@@ -36,6 +36,8 @@ tools (steady state, oscillations, sweeps, fits).
 | `src/poincare/printing/` | LaTeX `model_report`, tables, notebook display | Reports |
 | `src/poincare/**/tests/` | Tests (the four `testpaths` in `pyproject.toml`) | Always |
 | `examples/` | Example scripts plus `test_examples.py` (**not** in `testpaths`) | Changing public API |
+| `skill/share/agent-skills/dyscolab-modeling/` | The agent skill for users (SKILL.md, poincare references and examples), installed as wheel data | Changing public API (see Agent skill) |
+| `src/poincare/skill.py` | `python -m poincare.skill install`/`check`: merges the skill parts of poincare, simbio and jablonski | Skill layout or installation |
 
 ## Architecture and core abstractions
 
@@ -220,7 +222,41 @@ jablonski test suites (see Ecosystem compatibility).
 - Give public classes docstrings that state units and semantics, as
   `RateLaw` and `MassAction` do. Error messages should name the offending
   component and its expected dimensionality.
-- Update the examples and CHANGELOG.md when you change the API.
+- Update the examples, the agent skill (see Agent skill) and CHANGELOG.md when you
+  change the API.
+
+## Agent skill
+
+poincare bundles the `dyscolab-modeling` agent skill, which teaches agents to *use*
+poincare, simbio and jablonski.
+
+- **Layout.** Each library keeps its part in `skill/share/agent-skills/dyscolab-modeling/`.
+  `[tool.uv.build-backend] data = { data = "skill" }` installs it to
+  `<prefix>/share/agent-skills/dyscolab-modeling/`, where the three parts merge and
+  `pixi skills` finds them. poincare ships `SKILL.md`, `references/{poincare,analysis,
+  units,workflows,api-inventory}.md` and `examples/poincare_*.py`. simbio and jablonski
+  ship only files named `simbio*`/`jablonski*` (plus `examples/data/`), so the parts never
+  overwrite each other.
+- **`poincare.skill`** finds each part through the distribution's RECORD (or the source
+  checkout for editable installs), copies the merged skill (`install`) and compares a copy
+  with the installed libraries (`check`). `simbio.skill` and `jablonski.skill` re-export
+  it.
+- **SKILL.md has a special structure.** The "Versions and environment" section sits
+  between `<!-- dyscolab-skill:versions-section:start -->` and
+  `<!-- dyscolab-skill:versions-section:end -->`. Inside it, the list of documented
+  versions sits between `<!-- dyscolab-skill:installed-versions:start -->` and
+  `<!-- dyscolab-skill:installed-versions:end -->`. `install` replaces the inner block
+  with the installed versions. The build script of github.com/dyscolab/skills replaces
+  the whole section with its own template for the separately distributed copy. Keep the
+  four markers, their order and the heading (`#versions-and-environment` is linked);
+  `tests/test_skill.py` checks them. Keep everything about how to install or update the
+  bundled skill inside that section.
+- **Content rules.** A public API change updates the skill in the same PR: the reference,
+  `references/api-inventory.md`, and an example if a pattern changes. SKILL.md may name
+  simbio and jablonski features, but their API details belong in their own references.
+  Every example ends with physics assertions and runs in `tests/test_skill.py`.
+- Content changes reach the separate copy in github.com/dyscolab/skills after the next
+  release (its `pixi run build`).
 
 ## Completion checklist
 
@@ -230,4 +266,5 @@ jablonski test suites (see Ecosystem compatibility).
 - [ ] Tests compare against analytic or independent references, with explicit tolerances.
 - [ ] `pixi run test` passes, ruff is clean on the changed files, and the examples run if the API changed.
 - [ ] simbio and jablonski tests pass against this checkout (for every change), or the user is told they were not run.
+- [ ] The agent skill (`skill/`) is updated if the public API changed.
 - [ ] CHANGELOG.md updated, and assumptions or limitations reported to the user.

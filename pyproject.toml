@@ -47,6 +47,10 @@ Documentation = "https://dyscolab.github.io/poincare"
 requires = ["uv_build>=0.9,<0.10"]
 build-backend = "uv_build"
 
+# The dyscolab-modeling agent skill, installed to <prefix>/share/agent-skills/.
+[tool.uv.build-backend]
+data = { data = "skill" }
+
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib --doctest-modules"
 pythonpath = "."
