@@ -1,29 +1,21 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 
 
-- poincare bundles the `dyscolab-modeling` agent skill. It is installed to `<environment>/share/agent-skills/dyscolab-modeling/` (found by `pixi skills`), where simbio and jablonski add their parts. `python -m poincare.skill install --dest <skills folder>` copies the merged skill into an agent's skills folder with the installed versions, and `python -m poincare.skill check <skill folder>` tells whether a copy matches the installed libraries.
-- Added `Simulator.with_times(t_span=, save_at=)` and `RebopSimulator.with_times(upto_t=, n_points=)` to store the simulation times on the simulator, like `with_values`, `with_solver` and `with_transform`. Times passed to `solve` still work. Each time argument of `solve` falls back to the stored value independently when not given. `Simulator.interact` takes `t_span` and `save_at` as optional and falls back to the stored times (its `t_span` default is no longer `(0, inf)` but the `solve` default).
-- Equations and transforms accept explicit pint quantities and units, such as `x.derive() << -x / (2 * u.min)` or `x.derive() << 3 * u.km / u.hour`, including inside time-dependent parameter defaults. They are replaced by their magnitude in base units when compiling, like the state and parameters. Their units are checked when the `System` is created. Added `units.strip_quantities`.
-- fix: scipy solvers (`BDF`, `Radau`, `RK23`, `RK45`, `DOP853`, and `LSODA` through `solve_ivp`) receive a new derivative array on every call instead of the shared output buffer. scipy keeps `f(t, y)` while it estimates the Jacobian by finite differences, so the shared buffer corrupted the estimate: `BDF` and `Radau` failed on stiff systems such as Robertson's, and `RK45` needed about twice as many evaluations.
-- fix: the Default column of `variable_table` and `parameter_table` (and so of `model_report` and `notebook_report`) is translated to LaTeX with liblatex. Expression defaults no longer print their internal representation, `transform` and nested paths apply inside them, and pint quantities and units are written in LaTeX (`3\ \frac{1}{\mathrm{s}}`), also inside expressions. Derivative rows show the derivative's own initial value instead of the variable's.
-- fix: with `replace_algebraics=False` (the default), `parameter_table` (and so `model_report` and `notebook_report`) lists the parameters that depend on variables or time, with their defining expression as the default and their entry from `descriptions`. Before, the equations referred to them by name but they were printed nowhere.
-- `notebook_report` (in `poincare.printing`) takes the same `transform`, `descriptions`, `replace_algebraics` and `sections` arguments as `model_report`, so downstream packages can add their own sections. Each section returns Markdown. The default sections are in `default_notebook_sections`.
-- Reactions accept a `Parameter` as a constant species: it enters the `MassAction` rate law but has no equation of its own. Supported by `RebopSimulator`, which folds it into the reaction rate.
-- Added `n_runs` to `RebopSimulator.solve` to repeat the stochastic simulation with independent random streams and return the average (requires `n_points`).
-- fix: `RebopSimulator` passes `MassAction` rates that resolve to a number (parameters with units, products of parameters) to rebop as numbers, so reactions can no longer fire without enough reactant molecules and give negative counts.
-- Breaking: reworked fits. `fit_result` returns a `FitResult`, a dict of best values (as before) with the covariance in `.pcov` (`pcov[k, k]` in units of k²). Added `sigma=` (experimental errors in the target's form), `Fitter` (several targets with shared parameters), `fit_steady_state`, and `ToleranceWarning`/`CovarianceWarning`. `make_target` and `Fitter` are exported from `poincare.analysis`. `fit_result` moved to `poincare.analysis.fit_wrappers`. Migration: import it from `poincare.analysis`.
-- Added `strip_units` to get a copy of a `System` with every quantity replaced by its magnitude in base units. The removed units are kept in `_units`.
-- Breaking: `Simulator` no longer takes `solver=`, which was ignored. Migration: use `with_solver`.
-- Breaking: `SteadyState.solve` no longer takes `values=`. Migration: `SteadyState().solve(sim.with_values(values))`.
-- `t_span` defaults to `(save_at[0], save_at[-1])`. The `odeint` path of `LSODA` honours an explicit `t_span` that starts before `save_at[0]`.
-- Missing initial values or parameter defaults are reported when solving, not when creating the `Simulator`, so they can be supplied with `with_values`.
-- `RebopSimulator` has `with_transform`, and accepts variable values in dimensionless units such as `u.count` (used as copy numbers).
-- fix: `RebopSimulator.solve` raises `DimensionalityError` when a variable's initial value is not dimensionless, such as `u.molecule` or `u.mol`. Values are passed to rebop in base units, so `1000 * u.molecule` became 1.66e-21 mol and silently 0 copies. Transform outputs may still have units.
-- Only abstract `System`s can be subclassed. Subclassing any concrete `System` raises `TypeError`.
-- fix: reports no longer crash when a variable has no equation (for example a constant volume).
+- Breaking: reworked fits. `fit_result` returns a `FitResult` (dict of best values with the covariance in `.pcov`) and is exported from `poincare.analysis`. Added `sigma=`, `Fitter` (several targets with shared parameters), `fit_steady_state`, `ToleranceWarning` and `CovarianceWarning`.
+- Breaking: removed the ignored `Simulator(solver=)` (use `with_solver`) and `SteadyState.solve(values=)` (use `sim.with_values(values)`).
+- Added `Simulator.with_times` and `RebopSimulator.with_times` to store simulation times on the simulator. `solve` and `interact` fall back to the stored times. `t_span` defaults to `(save_at[0], save_at[-1])`.
+- Equations and transforms accept explicit pint quantities and units. They are checked when the `System` is created and converted to base units when compiling. Added `units.strip_quantities` and `strip_units`.
+- `RebopSimulator`: added `n_runs` (averaged repeated runs), `with_transform`, `Parameter`s as constant species, and dimensionless initial values such as `u.count`. Non-dimensionless initial values raise `DimensionalityError`.
+- `notebook_report` takes the same arguments as `model_report`, plus custom `sections`.
+- Bundled the `dyscolab-modeling` agent skill, with `python -m poincare.skill install` and `check`.
+- Missing initial values or parameter defaults are reported when solving, so they can be supplied with `with_values`.
+- Only abstract `System`s can be subclassed.
+- fix: scipy solvers no longer share the derivative buffer, which corrupted finite-difference Jacobians (`BDF` and `Radau` failed on stiff systems).
+- fix: `RebopSimulator` passes numeric `MassAction` rates as numbers, preventing negative counts.
+- fix: reports render defaults in LaTeX (expressions, quantities, derivative initial values), list parameters that depend on variables or time, and no longer crash on variables without an equation.
 - fix: the `numba` backend compiles with symbolite's `libnumba`.
-- fix: transform outputs are always floats, instead of taking the integer dtype of the state.
+- fix: transform outputs are always floats.
 
 ## 1.2.0
 
