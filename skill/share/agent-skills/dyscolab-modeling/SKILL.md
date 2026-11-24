@@ -1,6 +1,9 @@
-______________________________________________________________________
-
-## name: dyscolab-modeling description: Declare, simulate and analyse dynamical models in Python with the Dyscolab libraries - poincare (ODE systems, steady states, sweeps, oscillations, fits), simbio (chemical reaction networks, compartments and volumes, SBML/BioModels import, stochastic Gillespie runs) and jablonski (photophysics - Jablonski diagrams, absorption/fluorescence/phosphorescence, energy transfer and upconversion, spectra, quantum yields, pulsed excitation). Use when the user wants to model kinetics, reaction networks, ODEs or photophysical systems, or mentions poincare, simbio or jablonski. license: MIT compatibility: Python >= 3.12. Documents the poincare, simbio and jablonski versions it was installed from (see Versions and environment).
+---
+name: dyscolab-modeling
+description: Declare, simulate and analyse dynamical models in Python with the Dyscolab libraries - poincare (ODE systems, steady states, sweeps, oscillations, fits), simbio (chemical reaction networks, compartments and volumes, SBML/BioModels import, stochastic Gillespie runs) and jablonski (photophysics - Jablonski diagrams, absorption/fluorescence/phosphorescence, energy transfer and upconversion, spectra, quantum yields, pulsed excitation). Use when the user wants to model kinetics, reaction networks, ODEs or photophysical systems, or mentions poincare, simbio or jablonski.
+license: MIT
+compatibility: Python >= 3.12. Documents the poincare, simbio and jablonski versions it was installed from (see Versions and environment).
+---
 
 # Dyscolab modeling
 

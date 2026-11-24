@@ -112,6 +112,7 @@ taplo = "*"
 ruff = "*"
 mdformat = "*"
 mdformat-ruff = "*"
+mdformat-frontmatter = "*"
 
 [tool.pixi.feature.lint.tasks]
 pre-commit-install = "pre-commit install"
