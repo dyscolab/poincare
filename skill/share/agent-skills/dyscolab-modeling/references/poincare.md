@@ -18,14 +18,23 @@ so everything here applies to them too. Notes marked **Newer than 1.2.0** descri
 ## Components
 
 ```python
-from poincare import (Constant, Derivative, Independent, Parameter, System, Variable,
-                      assign, initial)
+from poincare import (
+    Constant,
+    Derivative,
+    Independent,
+    Parameter,
+    System,
+    Variable,
+    assign,
+    initial,
+)
+
 
 class Model(System):
-    t = Independent()                               # time; only needed to use t in expressions
-    x: Variable = initial(default=1)                # state variable, initial value
-    v: Derivative = x.derive(initial=0)             # dx/dt as extra state (2nd-order systems)
-    k: Parameter = assign(default=2)                # parameter (number, quantity or expression)
+    t = Independent()  # time; only needed to use t in expressions
+    x: Variable = initial(default=1)  # state variable, initial value
+    v: Derivative = x.derive(initial=0)  # dx/dt as extra state (2nd-order systems)
+    k: Parameter = assign(default=2)  # parameter (number, quantity or expression)
     c: Constant = assign(default=1, constant=True)  # constant; can set initial values
 ```
 
@@ -52,7 +61,7 @@ poincare applies this to every concrete system, including the jablonski transiti
 ## Equations
 
 ```python
-eq = x.derive() << -k * x       # dx/dt = -k x
+eq = x.derive() << -k * x  # dx/dt = -k x
 force = v.derive() << -(w**2) * x
 ```
 
@@ -90,13 +99,14 @@ class Damping(System):
     gamma: Parameter = assign(default=0)
     damping = vx.derive() << -gamma * vx
 
+
 class DampedOscillator(System):
     x: Variable = initial(default=1)
     vx: Derivative = x.derive(initial=0)
     k: Parameter = assign(default=1)
     gamma: Parameter = assign(default=0.1)
     spring = vx.derive() << -k * x
-    damping = Damping(x=x, gamma=gamma)   # adds its equation to the same derivative
+    damping = Damping(x=x, gamma=gamma)  # adds its equation to the same derivative
 ```
 
 - Linked components share one state, and their equations add up.
@@ -115,7 +125,7 @@ import numpy as np
 from poincare import Simulator, solvers
 
 sim = (
-    Simulator(Model)                    # compiles once; accepts a class or an instance
+    Simulator(Model)  # compiles once; accepts a class or an instance
     .with_solver(solvers.LSODA(rtol=1e-8, atol=1e-10))
     .with_values({Model.k: 3, Model.x: 2})
     .with_times(save_at=np.linspace(0, 10, 101))
@@ -184,10 +194,10 @@ result = sim.solve()
 Subsystem variables are named with dots (`"sub.x"`).
 
 ```python
-result["x"]                                   # DataArray (pint-aware if the model has units)
-result.pint.dequantify().to_dataframe()       # strip units → pandas (needed for .plot())
+result["x"]  # DataArray (pint-aware if the model has units)
+result.pint.dequantify().to_dataframe()  # strip units → pandas (needed for .plot())
 result["x"].pint.to(u.mm).pint.dequantify().values
-result.to_dataframe().plot()                  # unitless models
+result.to_dataframe().plot()  # unitless models
 ```
 
 The time coordinate keeps the unit of `save_at` (for example ms). In scripts without a
@@ -206,10 +216,10 @@ stoichiometry but gets no equation.
 
 ```python
 class Model(System):
-    G: Parameter = assign(default=2)        # constant species
+    G: Parameter = assign(default=2)  # constant species
     x: Variable = initial(default=0)
     k: Parameter = assign(default=3)
-    make = MassAction(reactants=[2 * G], products=[x], rate=k)   # dx/dt = k·G²
+    make = MassAction(reactants=[2 * G], products=[x], rate=k)  # dx/dt = k·G²
 ```
 
 ## Reports and introspection
@@ -218,8 +228,7 @@ class Model(System):
 - `Model.k.default` (parameters and constants) and `Model.x.initial` (variables) give the
   declared defaults, which is useful for analytic checks.
 - `Model.variables` and `Model.parameters` return `xarray.DataArray`s of components.
-- `poincare.printing.notebook_report(Model, transform=None, descriptions=None,
-  replace_algebraics=False, sections=default_notebook_sections, level=2, show=True)`
+- `poincare.printing.notebook_report(Model, transform=None, descriptions=None, replace_algebraics=False, sections=default_notebook_sections, level=2, show=True)`
   renders a Markdown report with equations, a variable table and a parameter table in
   Jupyter or marimo. It takes the same `transform`, `descriptions` and `replace_algebraics`
   as `model_report`. With `show=False` it returns the Markdown string. `level` is the
@@ -238,8 +247,7 @@ class Model(System):
 - **Newer than 1.2.0:** the Default column of the variable and parameter tables is real
   LaTeX. Expression defaults are rendered as math, `transform` renames apply inside them,
   and quantities show their units (`3\ \frac{1}{\mathrm{s}}`).
-- `model_report(Model, path=None, transform={Model.k: "k_1"}, descriptions=None,
-  standalone=True, replace_algebraics=False)` returns (or writes to `path`) a LaTeX report
+- `model_report(Model, path=None, transform={Model.k: "k_1"}, descriptions=None, standalone=True, replace_algebraics=False)` returns (or writes to `path`) a LaTeX report
   with equations, a variable table and a parameter table.
   - simbio's `model_report` adds a reactions section.
   - jablonski's (`jablonski.plots.model_report`) adds a Jablonski diagram.

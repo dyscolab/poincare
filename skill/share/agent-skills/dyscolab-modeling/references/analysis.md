@@ -19,8 +19,8 @@ do not re-export them.
 from poincare import SteadyState, Simulator, solvers
 
 sim = Simulator(Model).with_solver(solvers.LSODA(rtol=1e-8, atol=1e-10))
-ss = SteadyState().solve(sim.with_values({Model.k: 2}))   # or just solve(sim)
-ss["x"].item(), ss["event"].item()                    # event == 0 → converged
+ss = SteadyState().solve(sim.with_values({Model.k: 2}))  # or just solve(sim)
+ss["x"].item(), ss["event"].item()  # event == 0 → converged
 ```
 
 - Pass parameter values through `sim.with_values(...)`. `SteadyState.solve` also accepts
@@ -76,9 +76,13 @@ Built-in helpers, which work only in simple cases in 1.2.0:
 ## Bistability
 
 ```python
-uad = SteadyState().sweep_up_and_down(sim, variable=Model.c, values=np.linspace(-3, 3, 30))
+uad = SteadyState().sweep_up_and_down(
+    sim, variable=Model.c, values=np.linspace(-3, 3, 30)
+)
 uad.sel(direction="up")["x"], uad.sel(direction="down")["x"]
-SteadyState().bistability(sim, variable=Model.c, values=..., atol=0.1, rtol=0.01)  # bool per value
+SteadyState().bistability(
+    sim, variable=Model.c, values=..., atol=0.1, rtol=0.01
+)  # bool per value
 ```
 
 The up/down sweep seeds each run with the previous steady state, so hysteresis shows up as
@@ -90,12 +94,21 @@ different branches.
 from poincare import Oscillations
 
 res = Oscillations().sweep(
-    sim, parameter=Model.w, values=np.linspace(1, 2, 20),
-    T_min=1.5, T_max=20,   # expected period range
-    rel_time=100,          # time to discard before the system reaches the limit cycle
-    T_after_rel=10, timesteps_in_T=10, variables=None,  # optional; None = all variables
+    sim,
+    parameter=Model.w,
+    values=np.linspace(1, 2, 20),
+    T_min=1.5,
+    T_max=20,  # expected period range
+    rel_time=100,  # time to discard before the system reaches the limit cycle
+    T_after_rel=10,
+    timesteps_in_T=10,
+    variables=None,  # optional; None = all variables
 )
-res.sel(quantity="period"), res.sel(quantity="amplitude"), res.sel(quantity="difference_rms")
+(
+    res.sel(quantity="period"),
+    res.sel(quantity="amplitude"),
+    res.sel(quantity="difference_rms"),
+)
 ```
 
 - The time step is `T_min / timesteps_in_T`, so the period resolution is about that step.
@@ -117,13 +130,17 @@ Use this only when the user provides data to fit.
 from poincare.analysis import fit_result
 from poincare.analysis.fits import make_target
 
-target = make_target({Model.x: x_data, "E": e_data}, save_at=t_data)   # quantities allowed
+target = make_target(
+    {Model.x: x_data, "E": e_data}, save_at=t_data
+)  # quantities allowed
 fit = fit_result(
-    sim,                     # may include transforms; target keys must match outputs
+    sim,  # may include transforms; target keys must match outputs
     target,
-    p0={Model.k: (0.5, 0, 10),   # (initial guess, lower, upper)
-        Model.x: 1.5},           # initial values can be fitted too
-    scale={"E": 0.5},            # optional per-output residual weight
+    p0={
+        Model.k: (0.5, 0, 10),  # (initial guess, lower, upper)
+        Model.x: 1.5,
+    },  # initial values can be fitted too
+    scale={"E": 0.5},  # optional per-output residual weight
 )
 fit[Model.k]
 ```
@@ -143,9 +160,9 @@ fit[Model.k]
   covariance in `.pcov`:
 
   ```python
-  fit[Model.k]                       # best value (quantity if the model has units)
+  fit[Model.k]  # best value (quantity if the model has units)
   fit.pcov[Model.k, Model.k] ** 0.5  # standard error, in the units of k
-  np.asarray(fit.pcov)               # plain matrix, ordered as fit.pcov.parameters
+  np.asarray(fit.pcov)  # plain matrix, ordered as fit.pcov.parameters
   ```
 
   - `sigma=` takes the experimental standard deviations in the same form as the target
@@ -155,11 +172,14 @@ fit[Model.k]
   - Warnings: `ToleranceWarning` (solver `rtol`/`atol` too loose for finite differences;
     tighten them or pass `diff_step=1e-4`) and `CovarianceWarning` (a parameter ended at a
     bound, or parameters the data cannot separate). Both are in `poincare.analysis.fits`.
+
 - `make_target` is also exported from `poincare.analysis`.
+
 - `fit_steady_state(sim, SteadyState(), Model.p, target, p0=...)` fits steady states. The
   target's coordinate holds the values of `Model.p` that the data were measured at, as in
   `xr.Dataset({"x": ("p", x_ss)}, coords={"p": p_values})`. It runs `SteadyState().sweep`
   internally, so the sweep's limitations apply (no units on state variables).
+
 - `Fitter` fits several datasets at once with shared parameters. Use one simulation
   function per target:
 
@@ -168,18 +188,21 @@ fit[Model.k]
 
   fitter = Fitter(
       sim,
-      [lambda s: s.with_times(save_at=t1).solve(),
-       lambda s: s.with_values({Model.x: 2.0}).with_times(save_at=t2).solve()],   # second experiment
+      [
+          lambda s: s.with_times(save_at=t1).solve(),
+          lambda s: s.with_values({Model.x: 2.0}).with_times(save_at=t2).solve(),
+      ],  # second experiment
       [make_target({Model.x: x1}, t1), make_target({Model.x: x2}, t2)],
       p0={Model.k: (0.5, 0, 5)},
-      sigma=None,          # or one sigma per target
+      sigma=None,  # or one sigma per target
   )
-  fit = fitter.fit()       # fit(p0=...) overrides guesses or bounds for one run
+  fit = fitter.fit()  # fit(p0=...) overrides guesses or bounds for one run
   ```
 
   A simulation function may return a Dataset (compared variable by variable) or a
   DataArray. `scales=` is a number, a `{variable: weight}` mapping, or one of those per
   target.
+
 - jablonski wraps this for spectra and time-resolved emission in `jablonski.fits`
   ([jablonski.md](jablonski.md#fits)).
 
@@ -189,10 +212,16 @@ Gillespie simulation of reaction networks (`MassAction` and `RateLaw` only) via 
 `rebop` package (`pip install rebop`).
 
 ```python
-from poincare.reactions.rebop import RebopSimulator   # also simbio.rebop, jablonski.rebop
+from poincare.reactions.rebop import (
+    RebopSimulator,
+)  # also simbio.rebop, jablonski.rebop
 
-rsim = RebopSimulator(Model).with_values({Model.A: 100}).with_times(upto_t=10, n_points=100)
-ds = rsim.solve(rng=1)   # n_points equal intervals → n_points + 1 rows
+rsim = (
+    RebopSimulator(Model)
+    .with_values({Model.A: 100})
+    .with_times(upto_t=10, n_points=100)
+)
+ds = rsim.solve(rng=1)  # n_points equal intervals → n_points + 1 rows
 # poincare 1.2.0 has no with_times: rsim.solve(upto_t=10, n_points=100, rng=1)
 ```
 

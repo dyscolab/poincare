@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -48,7 +48,9 @@ class SteadyState:
         return xr.Dataset(
             {
                 str(var): xr.DataArray(
-                    np.array([results[v][var].item() for v in values]), # TODO: handle units in save_at
+                    np.array(
+                        [results[v][var].item() for v in values]
+                    ),  # TODO: handle units in save_at
                     dims=str(variable),
                     coords={str(variable): values},
                 )
@@ -97,7 +99,9 @@ class SteadyState:
             for v in vals:
                 current_values.update_from_problem({variable: v})
                 current_values.update_from_result(result)
-                output[direction][v] = result = self.solve(sim.with_values(current_values))
+                output[direction][v] = result = self.solve(
+                    sim.with_values(current_values)
+                )
         return xr.Dataset(
             {
                 str(var): xr.DataArray(

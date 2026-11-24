@@ -121,7 +121,9 @@ class UnitsHandler:
         self.target_names = [getattr(target, "name", None) for target in targets]
 
     @staticmethod
-    def get_units(obj: Output) -> pint.Unit | None | dict[Components | str, pint.Unit | None]:
+    def get_units(
+        obj: Output,
+    ) -> pint.Unit | None | dict[Components | str, pint.Unit | None]:
         if isinstance(obj, xr.Dataset):
             return {var: obj[var].pint.units for var in obj.data_vars}
         elif isinstance(obj, xr.DataArray):
@@ -331,8 +333,10 @@ class Fitter:
         sim: Simulator,
         simulation_functions: Iterable[Callable[[Simulator], Output]],
         targets: Iterable[Output],
-        p0: P0 = {},  # read only
-        scales: Number | Mapping[Components | str, Number] | Sequence[Number | Mapping[Components | str, Number]] = 1,
+        p0: P0 = {},  # noqa: B006, read only
+        scales: Number
+        | Mapping[Components | str, Number]
+        | Sequence[Number | Mapping[Components | str, Number]] = 1,
         sigma: Sequence[Output | None] | None = None,
         *,
         units_handler: type[UnitsHandler] = UnitsHandler,
@@ -404,9 +408,7 @@ class Fitter:
                 "sigma must be a list with one Dataset, DataArray or None per target"
             )
         if len(sigma) != len(self.targets):
-            raise ValueError(
-                f"got {len(sigma)} sigma for {len(self.targets)} targets"
-            )
+            raise ValueError(f"got {len(sigma)} sigma for {len(self.targets)} targets")
 
         parsed = [
             self._units.dequantify_sigma(s, i, self._y0[i].shape)
@@ -482,7 +484,9 @@ class Fitter:
             stacklevel=3,
         )
 
-    def _jacobian(self, x: np.ndarray, bounds: tuple[np.ndarray, np.ndarray]) -> np.ndarray:
+    def _jacobian(
+        self, x: np.ndarray, bounds: tuple[np.ndarray, np.ndarray]
+    ) -> np.ndarray:
         """Central-difference Jacobian of f at x, for the covariance.
 
         The Jacobian from least_squares uses a relative step of ~1.5e-8, which
@@ -511,7 +515,7 @@ class Fitter:
         """Covariance matrix and a mask of the parameters not determined by the
         data (in the null space of a rank-deficient Jacobian)."""
         jac = self._jacobian(solution.x, bounds)
-        n, p = jac.shape
+        _, p = jac.shape
 
         # Pseudo-inverse of A = J^T J, as in scipy.optimize.curve_fit
         _, s, VT = np.linalg.svd(jac, full_matrices=False)
@@ -705,4 +709,3 @@ def make_target(
         ureg.force_ndarray_like = False
 
     return ds
-

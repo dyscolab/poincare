@@ -176,13 +176,15 @@ class RebopSimulator:
                 sparse=sparse,
                 var_names=var_names,
             )
-            ds = ds[sorted(ds.data_vars)] # Sort data Variables to make order consistent with  the rest of Poincare
+            ds = ds[
+                sorted(ds.data_vars)
+            ]  # Sort data Variables to make order consistent with  the rest of Poincare
 
             # Apply transform
             solved_y = ds.to_dataarray().values
             t = ds["time"].values
             sol = Solution(t, solved_y)
-            solution = _transform(problem=problem, solution= sol)
+            solution = _transform(problem=problem, solution=sol)
             ys.append(solution.y)
         y = ys[0] if n_runs == 1 else np.mean(ys, axis=0)
 
@@ -190,12 +192,12 @@ class RebopSimulator:
             {
                 k: xr.DataArray(
                     data=x * s.magnitude, dims="time", coords={"time": t}
-                ).pint.quantify(
-                    s.units, pint_xarray.setup_registry(s.units._REGISTRY)
-                )
+                ).pint.quantify(s.units, pint_xarray.setup_registry(s.units._REGISTRY))
                 if isinstance(s, pint.Quantity)
                 else xr.DataArray(data=x * s, dims="time", coords={"time": t})
-                for k, s, x in zip(self._sim.transform.output.keys(), problem.scale, y.T)
+                for k, s, x in zip(
+                    self._sim.transform.output.keys(), problem.scale, y.T
+                )
             }
         )
 

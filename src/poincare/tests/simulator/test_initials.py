@@ -1,6 +1,6 @@
+import numpy as np
 from pytest import mark, raises
 from symbolite import Real
-import numpy as np
 
 from ...simulator import Simulator
 from ...types import (
@@ -194,6 +194,7 @@ def test_none_initial_dependent():
     res = sim.with_values({Model.c: 1.0}).solve(save_at=[0, 1])
     assert res["x"].values[0] == 2.0
 
+
 def test_numpy_types_in_initial():
     class Model(System):
         x: Variable = initial(default=0)
@@ -201,7 +202,6 @@ def test_numpy_types_in_initial():
 
         eq = x.derive() << k
 
-
     sim = Simulator(Model)
-    
+
     sim.with_values({Model.k: np.int64(1)}).solve(t_span=(0, 1))

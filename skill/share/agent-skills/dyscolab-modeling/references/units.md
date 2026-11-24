@@ -8,6 +8,7 @@ warnings.
 
 ```python
 import pint
+
 u = pint.get_application_registry()
 ```
 

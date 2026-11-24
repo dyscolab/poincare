@@ -19,7 +19,7 @@ packages, so they are only here when the library is installed.
 | --- | --- | --- |
 | `poincare` | `System`, `Variable`, `Derivative`, `Parameter`, `Constant`, `Independent`, `initial`, `assign`, `Simulator`, `SteadyState`, `Oscillations`, `model_report`, `strip_units` *(newer)* | [poincare.md](poincare.md) |
 | `poincare.solvers` | `LSODA`, `RK23`, `RK45`, `DOP853`, `Radau`, `BDF` (and the `Solver` protocol) | [poincare.md](poincare.md#simulator) |
-| `poincare.simulator` | `Simulator`, plus the `Components` type alias (Constant \| Parameter \| Variable \| Derivative) | [poincare.md](poincare.md#simulator) |
+| `poincare.simulator` | `Simulator`, plus the `Components` type alias (Constant | Parameter | Variable | Derivative) | [poincare.md](poincare.md#simulator) |
 | `poincare.analysis` | `SteadyState`, `Oscillations`, `Sweeper`, `fit_result`; *(newer)* `Fitter`, `fit_steady_state`, `make_target` | [analysis.md](analysis.md) |
 | `poincare.analysis.fits` | `fit_result` (1.2.0 only; newer in `poincare.analysis.fit_wrappers`), `make_target`; *(newer)* `Fitter`, `FitResult`, `Covariance`, `ToleranceWarning`, `CovarianceWarning` | [analysis.md](analysis.md#fitting-parameters-to-data) |
 | `poincare.units` *(newer)* | `strip_units` | [units.md](units.md) |

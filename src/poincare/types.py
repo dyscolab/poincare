@@ -740,7 +740,6 @@ def strip_system(node: System, stripper: units.UnitStripper) -> System:
     return cls(**{k: stripper.substitute(v) for k, v in node._kwargs.items()})
 
 
-
 def infer_independent_units(system: System | type[System]) -> pint.util.UnitsContainer:
     implicit_set = set()
     for obj in system._yield(Derivative | Equation | EquationGroup):

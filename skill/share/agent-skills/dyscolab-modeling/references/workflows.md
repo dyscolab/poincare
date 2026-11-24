@@ -28,8 +28,11 @@ equations they had in mind. Prefer a notebook (Jupyter or marimo) with:
 
 ```python
 # cell 1: the report (renders Markdown + LaTeX in Jupyter and marimo)
-from poincare.printing import notebook_report  # simbio: from simbio import notebook_report
-notebook_report(MyModel)                       # jablonski: from jablonski.plots import notebook_report
+from poincare.printing import (
+    notebook_report,
+)  # simbio: from simbio import notebook_report
+
+notebook_report(MyModel)  # jablonski: from jablonski.plots import notebook_report
 
 # cell 2: one example simulation
 result = sim.with_times(save_at=...).solve()
@@ -67,14 +70,17 @@ Making the import work, in this order of preference:
 
 1. If the project already has a package or `pyproject.toml`, put the model in it and
    install the project (editable) into the environment the user already uses.
-2. If the model file sits next to the notebook or script, `from model import MyModel` works
+
+1. If the model file sits next to the notebook or script, `from model import MyModel` works
    from the notebook directory.
-3. If the notebook is in a subfolder, add the model's folder in the first cell:
+
+1. If the notebook is in a subfolder, add the model's folder in the first cell:
 
    ```python
    import sys
    from pathlib import Path
-   sys.path.insert(0, str(Path("..").resolve()))   # folder containing model.py
+
+   sys.path.insert(0, str(Path("..").resolve()))  # folder containing model.py
    from model import MyModel
    ```
 
@@ -98,8 +104,7 @@ and a folder for the *user's* data files.
 - **Reference the source.** Cite it in full (authors, title, journal, year, DOI) in the
   module docstring or the first notebook cell. Give each parameter, state and transition
   a comment with where it comes from: `# Table 1`, `# Eq. 3`, `# Fig. 1`, `# p. 39`.
-  Values that are not in the source are placeholders and say so (`# PLACEHOLDER, not in
-  the paper`).
+  Values that are not in the source are placeholders and say so (`# PLACEHOLDER, not in the paper`).
 
 ## Model conventions
 

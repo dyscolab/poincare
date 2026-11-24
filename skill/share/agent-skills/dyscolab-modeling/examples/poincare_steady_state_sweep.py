@@ -9,8 +9,16 @@ import numpy as np
 import pint
 import xarray as xr
 
-from poincare import Parameter, Simulator, SteadyState, System, Variable, assign, initial
-from poincare import solvers
+from poincare import (
+    Parameter,
+    Simulator,
+    SteadyState,
+    System,
+    Variable,
+    assign,
+    initial,
+    solvers,
+)
 
 u = pint.get_application_registry()
 
@@ -52,7 +60,9 @@ class ProductionWithUnits(System):
 sim_u = (
     Simulator(ProductionWithUnits)
     .with_solver(TIGHT)
-    .with_transform({"flux_out": ProductionWithUnits.k * ProductionWithUnits.x}, append=True)
+    .with_transform(
+        {"flux_out": ProductionWithUnits.k * ProductionWithUnits.x}, append=True
+    )
 )
 p_values = [0.5, 1, 2] * u.mM / u.s
 sweep = xr.concat(

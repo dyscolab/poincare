@@ -8,8 +8,16 @@ dequantified output.
 import numpy as np
 import pint
 
-from poincare import Derivative, Parameter, Simulator, System, Variable, assign, initial
-from poincare import solvers
+from poincare import (
+    Derivative,
+    Parameter,
+    Simulator,
+    System,
+    Variable,
+    assign,
+    initial,
+    solvers,
+)
 
 u = pint.get_application_registry()
 
@@ -43,9 +51,7 @@ np.testing.assert_allclose(energy, energy[0], rtol=1e-6)
 
 # A different parameter value reuses the compiled model (and the times).
 fast = sim.with_values({Oscillator.w: 4 / u.s}).solve()
-np.testing.assert_allclose(
-    fast["x"].pint.dequantify().values, np.cos(4 * t), atol=1e-6
-)
+np.testing.assert_allclose(fast["x"].pint.dequantify().values, np.cos(4 * t), atol=1e-6)
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt

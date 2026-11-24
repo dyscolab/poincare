@@ -1,9 +1,6 @@
----
-name: dyscolab-modeling
-description: Declare, simulate and analyse dynamical models in Python with the Dyscolab libraries - poincare (ODE systems, steady states, sweeps, oscillations, fits), simbio (chemical reaction networks, compartments and volumes, SBML/BioModels import, stochastic Gillespie runs) and jablonski (photophysics - Jablonski diagrams, absorption/fluorescence/phosphorescence, energy transfer and upconversion, spectra, quantum yields, pulsed excitation). Use when the user wants to model kinetics, reaction networks, ODEs or photophysical systems, or mentions poincare, simbio or jablonski.
-license: MIT
-compatibility: Python >= 3.12. Documents the poincare, simbio and jablonski versions it was installed from (see Versions and environment).
----
+______________________________________________________________________
+
+## name: dyscolab-modeling description: Declare, simulate and analyse dynamical models in Python with the Dyscolab libraries - poincare (ODE systems, steady states, sweeps, oscillations, fits), simbio (chemical reaction networks, compartments and volumes, SBML/BioModels import, stochastic Gillespie runs) and jablonski (photophysics - Jablonski diagrams, absorption/fluorescence/phosphorescence, energy transfer and upconversion, spectra, quantum yields, pulsed excitation). Use when the user wants to model kinetics, reaction networks, ODEs or photophysical systems, or mentions poincare, simbio or jablonski. license: MIT compatibility: Python >= 3.12. Documents the poincare, simbio and jablonski versions it was installed from (see Versions and environment).
 
 # Dyscolab modeling
 
@@ -12,6 +9,7 @@ networks) and jablonski (photophysics) build on it, so their models are poincare
 and share the same simulator, units and analysis tools.
 
 <!-- dyscolab-skill:versions-section:start -->
+
 ## Versions and environment
 
 This skill is **bundled with the libraries**. poincare ships `SKILL.md` and the poincare
@@ -20,9 +18,11 @@ references and examples. simbio and jablonski add their own (`simbio*`, `jablons
 installed lead nowhere. The skill documents these versions:
 
 <!-- dyscolab-skill:installed-versions:start -->
+
 The versions installed in the Python environment this skill folder belongs to
 (`<environment>/share/agent-skills/dyscolab-modeling`, which `pixi skills` links into the
 agent's skills folder).
+
 <!-- dyscolab-skill:installed-versions:end -->
 
 **Check it against the environment you work in** before writing code, with that
@@ -53,6 +53,7 @@ environment (pixi, conda/mamba, uv, pip, …), and don't mix tools in one enviro
 
 Notes marked "newer than" a release describe what changed after that release. If the
 installed source disagrees with this skill, the installed source wins.
+
 <!-- dyscolab-skill:versions-section:end -->
 
 ## Before writing code
@@ -67,7 +68,8 @@ installed source disagrees with this skill, the installed source wins.
 
    They mix freely: a jablonski model can contain plain poincare equations, and the analysis
    tools in [references/analysis.md](references/analysis.md) work for all three.
-2. **Use units** (pint) when the user gives physical values. jablonski always needs them.
+
+1. **Use units** (pint) when the user gives physical values. jablonski always needs them.
    Read [references/units.md](references/units.md) first.
 
 ## Core pattern
@@ -77,19 +79,21 @@ import numpy as np
 import pint
 from poincare import System, Variable, Parameter, Simulator, initial, assign, solvers
 
-u = pint.get_application_registry()   # always this registry, never pint.UnitRegistry()
+u = pint.get_application_registry()  # always this registry, never pint.UnitRegistry()
+
 
 class Decay(System):
-    x: Variable = initial(default=1 * u.mM)     # annotate every component
+    x: Variable = initial(default=1 * u.mM)  # annotate every component
     k: Parameter = assign(default=0.5 / u.s)
-    decay = x.derive() << -k * x                 # dx/dt = -k x
+    decay = x.derive() << -k * x  # dx/dt = -k x
+
 
 sim = (
     Simulator(Decay)
     .with_solver(solvers.LSODA(rtol=1e-8, atol=1e-12))
     .with_times(save_at=np.linspace(0, 10, 101) * u.s)
 )
-result = sim.solve()   # xarray Dataset with units
+result = sim.solve()  # xarray Dataset with units
 result.pint.dequantify().to_dataframe().plot()
 ```
 
@@ -178,46 +182,55 @@ needs. Some patterns that work well with poincare and its downstream libraries:
 
 - **Declaring a model** → show that the code matches the intended equations. A notebook
   works well:
+
   1. One cell with a **model report**: `notebook_report(Model)` from `poincare.printing`
      renders the equations, variables and parameters. For simbio models use
      `simbio.notebook_report` (adds the reactions), for jablonski models
      `jablonski.plots.notebook_report` (adds the Jablonski diagram).
-  2. One cell with a short example simulation and a plot.
+  1. One cell with a short example simulation and a plot.
 
   Run the notebook before handing it over (`jupyter nbconvert --execute --inplace` or
   `nbclient`). If you can't, say so and give a script you have run.
+
 - **Implementing a model from a paper** → stay close to the source: its units (a level
   given in nm is `initial(545 * u.nm)`), its symbols and its relations. Cite it, and
   give each value a comment with its table or equation. Details:
   [workflows.md](references/workflows.md#implementing-a-model-from-a-publication).
+
 - **Writing any model** → declare states, parameters and transitions directly with
   `initial`, `assign` and the library's classes, without aliases or wrapper helpers. Make
   a subsystem when it is used several times or is a physical unit (an ion, a molecule).
   Details: [workflows.md](references/workflows.md#model-conventions).
+
 - **Time-resolved runs** last until the slowest process is over (about 5× the longest
   lifetime).
+
 - **Simulating a scenario** → the simulation plus one plot or summary of the quantity of
   interest.
+
 - **Steady states, sweeps, oscillations, fits** → build them on top of a declared and
   checked model ([analysis.md](references/analysis.md)).
+
 - **Comparing with data** → use data the user provides. Don't invent "typical"
   experimental curves. When parameter values are missing, use clearly labelled
   placeholders and say so.
+
 - In poincare 1.2.0, reports of a `Compartment` with a constant `Volume` crash
   (`model_report`; fixed in newer versions). Give the volume a zero-rate equation:
   `growth_rate: Parameter = assign(default=0 * u.pL / u.s)` and
   `growth = V.derive() << growth_rate`.
+
 - Cheap sanity checks fit every model: consistent units, conserved totals, one
   limiting case. Report them in a line.
 
 Typical stages:
 
 1. Declare.
-2. Sanity-check.
-3. Simulate.
-4. Analyse: steady states, sweeps, bistability, oscillations, fits, stochastic runs.
-5. Compare with the user's data.
-6. Report: `notebook_report` in notebooks, `model_report` for LaTeX documents.
+1. Sanity-check.
+1. Simulate.
+1. Analyse: steady states, sweeps, bistability, oscillations, fits, stochastic runs.
+1. Compare with the user's data.
+1. Report: `notebook_report` in notebooks, `model_report` for LaTeX documents.
 
 ## Files
 
@@ -237,20 +250,28 @@ reusable subsystems): [references/workflows.md](references/workflows.md).
 
 - [references/poincare.md](references/poincare.md): components, equations, composition,
   Simulator, solvers, results, reports.
+
 - [references/analysis.md](references/analysis.md): steady states, sweeps, bistability,
   oscillations, fits, rebop.
+
 - [references/units.md](references/units.md): pint rules for all three libraries.
+
 - [references/simbio.md](references/simbio.md): reactions, motifs, compartments, SBML,
   BioModels, graphs.
+
 - [references/jablonski.md](references/jablonski.md): states, transitions, custom
   transitions, excitation, spectra, quantum yields, fits.
+
 - [references/workflows.md](references/workflows.md): workflow suggestions, file layout, conventions,
   validation.
+
 - [references/api-inventory.md](references/api-inventory.md),
   [references/simbio-api.md](references/simbio-api.md),
   [references/jablonski-api.md](references/jablonski-api.md): every public name, internal
   helpers, and what does *not* exist in older versions.
+
 - `examples/`: runnable, tested scripts that each end with physics checks:
+
   - `poincare_oscillator.py`, `poincare_steady_state_sweep.py`
   - `simbio_compartments.py`, `simbio_sbml.py`, `simbio_stochastic.py`
   - `jablonski_quantum_yield.py`, `jablonski_upconversion.py`

@@ -105,8 +105,6 @@ def test_strip_units_inherited():
 
     Unitless = strip_units(Model)
     assert Unitless.y.initial == approx(2)
-    assert Unitless.eq == (
-        Unitless.x.derive() << -Unitless.x / 60 + Unitless.y / 60
-    )
+    assert Unitless.eq == (Unitless.x.derive() << -Unitless.x / 60 + Unitless.y / 60)
     assert Unitless._units[Unitless.t] == u.s
     assert Unitless._units[Unitless.y] == u.mol / u.m**3

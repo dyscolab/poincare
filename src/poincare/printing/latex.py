@@ -237,10 +237,14 @@ def parameter_table(
     else:
         headers = ["Parameter", "Default"]
     return (
-        "\\begin{table}[H]\n\\centering\n"
-        + make_latex_table(rows=parameters, headers=headers, format = format)
-        + "\n\\end{table}"
-    ) if format == "latex" else make_latex_table(rows=parameters, headers=headers, format = "markdown")
+        (
+            "\\begin{table}[H]\n\\centering\n"
+            + make_latex_table(rows=parameters, headers=headers, format=format)
+            + "\n\\end{table}"
+        )
+        if format == "latex"
+        else make_latex_table(rows=parameters, headers=headers, format="markdown")
+    )
 
 
 def variable_table(
@@ -261,20 +265,23 @@ def variable_table(
         headers = ["Variable", "Default", "Derivative"]
 
     return (
-        "\\begin{table}[H]\n\\centering\n"
-        + make_latex_table(rows=variables, headers=headers, format = format)
-        + "\n\\end{table}"
-    ) if format == "latex" else make_latex_table(rows=variables, headers=headers, format = "markdown")
-
+        (
+            "\\begin{table}[H]\n\\centering\n"
+            + make_latex_table(rows=variables, headers=headers, format=format)
+            + "\n\\end{table}"
+        )
+        if format == "latex"
+        else make_latex_table(rows=variables, headers=headers, format="markdown")
+    )
 
 
 def make_latex_table(
-    rows: Iterable[Iterable[Latex]], 
+    rows: Iterable[Iterable[Latex]],
     headers: Iterable[Latex],
     format: Literal["latex", "markdown"] = "latex",
 ) -> Latex:
-    environment = "tabular" if format == "latex" else "array" 
-    math_marker = "$" if format == "latex" else "" 
+    environment = "tabular" if format == "latex" else "array"
+    math_marker = "$" if format == "latex" else ""
     table = "\\begin{" + environment + "}{|"
     table += len(headers) * "c|"
     table += "}\n"

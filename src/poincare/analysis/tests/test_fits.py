@@ -13,9 +13,9 @@ from ... import (
     Variable,
     assign,
     initial,
+    solvers,
 )
-from ... import solvers
-from ..fits import CovarianceWarning, Fitter, FitResult, ToleranceWarning, make_target
+from ..fits import CovarianceWarning, FitResult, Fitter, ToleranceWarning, make_target
 
 ureg = pint.get_application_registry()
 
@@ -132,9 +132,7 @@ def test_fit_multiple_functions():
     x2 = 3
     target_1 = make_target(results={"x": np.cos(omega_real * t)}, save_at=t)
     # DataArray target and DataArray output
-    target_2 = make_target(
-        results={"x": x2 * np.cos(omega_real * t2)}, save_at=t2
-    )["x"]
+    target_2 = make_target(results={"x": x2 * np.cos(omega_real * t2)}, save_at=t2)["x"]
 
     fitter = Fitter(
         sim,
@@ -303,9 +301,7 @@ def test_fit_result():
 def test_pcov_units():
     usim = Simulator(UnitsOscillator).with_solver(tight)
     u_t = t * ureg.s
-    target = make_target(
-        results={"x": np.cos(2 * t) * ureg.m}, save_at=u_t
-    )
+    target = make_target(results={"x": np.cos(2 * t) * ureg.m}, save_at=u_t)
     fit = Fitter(
         usim,
         [solve_at(u_t)],

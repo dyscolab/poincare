@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.3.0 
+## 1.3.0
 
 - Breaking: reworked fits. `fit_result` returns a `FitResult` (dict of best values with the covariance in `.pcov`) and is exported from `poincare.analysis`. Added `sigma=`, `Fitter` (several targets with shared parameters), `fit_steady_state`, `ToleranceWarning` and `CovarianceWarning`.
 - Breaking: removed the ignored `Simulator(solver=)` (use `with_solver`) and `SteadyState.solve(values=)` (use `sim.with_values(values)`).

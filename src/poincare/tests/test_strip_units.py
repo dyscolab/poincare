@@ -49,9 +49,7 @@ def test_magnitudes_in_base_units():
     assert Unitless.x.initial == approx(1)
     assert Unitless.k.default == approx(2 / 60)
     assert Unitless.s.default == approx(3e-3)
-    assert Unitless.eq == (
-        Unitless.x.derive() << -Unitless.k * Unitless.x + Unitless.s
-    )
+    assert Unitless.eq == (Unitless.x.derive() << -Unitless.k * Unitless.x + Unitless.s)
 
 
 def test_units_dict():
@@ -132,9 +130,7 @@ def test_subsystem():
     assert_unitless(Unitless)
     assert Unitless.sub.x is Unitless.y
     assert Unitless.sub.k.default == approx(2 / 60)
-    assert Unitless.eq == (
-        Unitless.z.derive() << Unitless.sub.k * Unitless.sub.x
-    )
+    assert Unitless.eq == (Unitless.z.derive() << Unitless.sub.k * Unitless.sub.x)
     assert Unitless._units[Unitless.sub.k] == 1 / u.s
     assert {str(k): k for k in Unitless._units}["sub.k"] is Unitless.sub.k
     assert Unitless._units[Unitless.z] == u.mol / u.m**3
@@ -207,4 +203,3 @@ def test_no_units_differs_from_dimensionless():
     assert Unitless._units[Unitless.n] is None
     assert Unitless._units[Unitless.ratio] == u.dimensionless
     assert Unitless.ratio.default == approx(1e-3)
-

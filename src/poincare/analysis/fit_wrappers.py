@@ -6,7 +6,7 @@ import xarray as xr
 
 from ..simulator import Components, Simulator
 from ..types import Initial, Number
-from .fits import Fitter, FitResult, UnitsHandler
+from .fits import FitResult, Fitter, UnitsHandler
 from .steady_state import SteadyState
 
 Output = xr.DataArray | xr.Dataset

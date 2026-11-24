@@ -233,8 +233,7 @@ poincare, simbio and jablonski.
 - **Layout.** Each library keeps its part in `skill/share/agent-skills/dyscolab-modeling/`.
   `[tool.uv.build-backend] data = { data = "skill" }` installs it to
   `<prefix>/share/agent-skills/dyscolab-modeling/`, where the three parts merge and
-  `pixi skills` finds them. poincare ships `SKILL.md`, `references/{poincare,analysis,
-  units,workflows,api-inventory}.md` and `examples/poincare_*.py`. simbio and jablonski
+  `pixi skills` finds them. poincare ships `SKILL.md`, `references/{poincare,analysis, units,workflows,api-inventory}.md` and `examples/poincare_*.py`. simbio and jablonski
   ship only files named `simbio*`/`jablonski*` (plus `examples/data/`), so the parts never
   overwrite each other.
 - **`poincare.skill`** finds each part through the distribution's RECORD (or the source
